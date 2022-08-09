@@ -282,10 +282,11 @@ impl<F: FieldExt> RangeTableChip<F> {
     }
 
     pub fn init(&self, layouter: &mut impl Layouter<F>) -> Result<(), Error> {
+        
         layouter.assign_table(
             || "u16 range table",
             |mut table| {
-                for i in 0..(1 << 16) {
+                for i in 0..(1 << 14) {
                     table.assign_cell(
                         || "range table",
                         self.config.u16_col,
@@ -296,7 +297,7 @@ impl<F: FieldExt> RangeTableChip<F> {
                 Ok(())
             },
         )?;
-
+ 
         layouter.assign_table(
             || "u8 range table",
             |mut table| {
@@ -327,6 +328,7 @@ impl<F: FieldExt> RangeTableChip<F> {
             },
         )?;
 
+        /* 
         layouter.assign_table(
             || "bitop range table",
             |mut table| {
@@ -499,7 +501,7 @@ impl<F: FieldExt> RangeTableChip<F> {
 
                 Ok(())
             },
-        )?;
+        )?;*/
 
         Ok(())
     }

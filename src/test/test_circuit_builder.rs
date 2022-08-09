@@ -5,7 +5,7 @@ use halo2_proofs::{arithmetic::FieldExt, dev::MockProver, plonk::Error};
 use specs::{write_json, CompileTable, ExecutionTable};
 use wasmi::{ImportsBuilder, NopExternals};
 
-const K: u32 = 18;
+const K: u32 = 15;
 
 pub fn test_circuit_noexternal(textual_repr: &str) -> Result<(), Error> {
     let wasm = wabt::wat2wasm(&textual_repr).expect("failed to parse wat");
