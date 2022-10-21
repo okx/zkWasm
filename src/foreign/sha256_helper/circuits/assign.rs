@@ -1,6 +1,10 @@
 use super::{Sha256HelperTableConfig, Sha2HelperEncode, BLOCK_LINES, ENABLE_LINES, OP_ARGS_NUM};
 use crate::foreign::sha256_helper::Sha256HelperOp;
-use halo2_proofs::{arithmetic::FieldExt, circuit::Layouter, plonk::Error};
+use halo2_proofs::{
+    arithmetic::FieldExt,
+    circuit::{Layouter, Value},
+    plonk::Error,
+};
 use specs::{etable::EventTableEntry, host_function::HostPlugin, step::StepInfo};
 
 pub struct Sha256HelperTableChip<F: FieldExt> {
@@ -24,14 +28,14 @@ impl<F: FieldExt> Sha256HelperTableChip<F> {
                         || "sha256 helper sel",
                         self.config.sel,
                         i as usize,
-                        || Ok(F::one()),
+                        || Value::known(F::one()),
                     )?;
                     if i % BLOCK_LINES == 0 {
                         region.assign_fixed(
                             || "sha256 helper first block line sel",
                             self.config.block_first_line_sel,
                             i as usize,
-                            || Ok(F::one()),
+                            || Value::known(F::one()),
                         )?;
                     }
                 }
@@ -58,7 +62,7 @@ impl<F: FieldExt> Sha256HelperTableChip<F> {
                                 || "sha256 helper table",
                                 self.config.op.0,
                                 offset + i,
-                                || Ok(F::from(op as u64)),
+                                || Value::known(F::from(op as u64)),
                             )?;
                         }
 
@@ -66,21 +70,21 @@ impl<F: FieldExt> Sha256HelperTableChip<F> {
                             || "sha256 helper opcode",
                             self.config.aux.0,
                             offset,
-                            || Ok(Sha2HelperEncode::encode_opcode_f(op, &args, ret)),
+                            || Value::known(Sha2HelperEncode::encode_opcode_f::<F>(op, &args, ret)),
                         )?;
 
                         region.assign_advice(
                             || "sha256 helper enable",
                             self.config.op_bit.0,
                             offset,
-                            || Ok(F::from(1u64)),
+                            || Value::known(F::from(1u64)),
                         )?;
 
                         region.assign_advice(
                             || "sha256 helper op bit",
                             self.config.op_bit.0,
                             offset + (op as usize),
-                            || Ok(F::from(1u64)),
+                            || Value::known(F::from(1u64)),
                         )?;
 
                         let start = match op {
@@ -97,7 +101,7 @@ impl<F: FieldExt> Sha256HelperTableChip<F> {
                                     || "sha256 helper args",
                                     self.config.args[arg_i + start].0,
                                     offset + i,
-                                    || Ok(F::from((arg >> (i * 4)) as u64 & 0xfu64)),
+                                    || Value::known(F::from((arg >> (i * 4)) as u64 & 0xfu64)),
                                 )?;
                             }
                         }
@@ -107,7 +111,7 @@ impl<F: FieldExt> Sha256HelperTableChip<F> {
                                 || "sha256 helper ret",
                                 self.config.args[OP_ARGS_NUM - 1].0,
                                 offset + i,
-                                || Ok(F::from((ret >> (i * 4)) as u64 & 0xfu64)),
+                                || Value::known(F::from((ret >> (i * 4)) as u64 & 0xfu64)),
                             )?;
                         }
 
@@ -146,7 +150,7 @@ impl<F: FieldExt> Sha256HelperTableChip<F> {
                     || "sha256 helper table",
                     self.config.op_valid_set,
                     0,
-                    || Ok(F::zero()),
+                    || Value::known(F::zero()),
                 )?;
                 let mut index = 1;
 
@@ -164,7 +168,7 @@ impl<F: FieldExt> Sha256HelperTableChip<F> {
                                     self.config.op_valid_set,
                                     index,
                                     || {
-                                        Ok(Sha2HelperEncode::encode_table_f::<F>(
+                                        Value::known(Sha2HelperEncode::encode_table_f::<F>(
                                             op,
                                             [a, b, c],
                                             (a ^ b ^ c) & 0xf,
@@ -179,7 +183,7 @@ impl<F: FieldExt> Sha256HelperTableChip<F> {
                                 self.config.op_valid_set,
                                 index,
                                 || {
-                                    Ok(Sha2HelperEncode::encode_table_f::<F>(
+                                    Value::known(Sha2HelperEncode::encode_table_f::<F>(
                                         Sha256HelperOp::Ch,
                                         [a, b, c],
                                         ((a & b) ^ (!a & c)) & 0xf,
@@ -193,7 +197,7 @@ impl<F: FieldExt> Sha256HelperTableChip<F> {
                                 self.config.op_valid_set,
                                 index,
                                 || {
-                                    Ok(Sha2HelperEncode::encode_table_f::<F>(
+                                    Value::known(Sha2HelperEncode::encode_table_f::<F>(
                                         Sha256HelperOp::Maj,
                                         [a, b, c],
                                         ((a & b) ^ (a & c) ^ (b & c)) & 0xf,

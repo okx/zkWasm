@@ -4,10 +4,10 @@ mod tests {
         circuits::ZkWasmCircuitBuilder,
         foreign::wasm_input_helper::runtime::register_wasm_input_foreign,
         runtime::{host::HostEnv, WasmInterpreter, WasmRuntime},
+        Fr,
     };
-    use halo2_proofs::pairing::bn256::Fr as Fp;
     use std::{fs::File, io::Read, path::PathBuf};
-    use wasmi::{ImportsBuilder, NopExternals};
+    use wasmi::ImportsBuilder;
 
     #[test]
     fn test_binary_search_64() {
@@ -43,6 +43,6 @@ mod tests {
             execution_tables: execution_log.tables,
         };
 
-        builder.bench(public_inputs.into_iter().map(|v| Fp::from(v)).collect())
+        builder.bench(public_inputs.into_iter().map(|v| Fr::from(v)).collect())
     }
 }

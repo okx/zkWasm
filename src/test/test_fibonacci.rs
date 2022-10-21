@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod tests {
-    use halo2_proofs::{dev::MockProver, pairing::bn256::Fr as Fp};
-    use wasmi::ImportsBuilder;
-
     use crate::{
         circuits::{config::K, TestCircuit},
         foreign::wasm_input_helper::runtime::register_wasm_input_foreign,
         runtime::{host::HostEnv, WasmInterpreter, WasmRuntime},
+        Fr,
     };
+    use halo2_proofs::dev::MockProver;
+    use wasmi::ImportsBuilder;
 
     /*
        unsigned long long wasm_input(int);
@@ -94,12 +94,12 @@ mod tests {
             )
             .unwrap();
 
-        let circuit = TestCircuit::<Fp>::new(compiled_module.tables, execution_log.tables);
+        let circuit = TestCircuit::<Fr>::new(compiled_module.tables, execution_log.tables);
 
         let prover = MockProver::run(
             K,
             &circuit,
-            vec![public_inputs.into_iter().map(|v| Fp::from(v)).collect()],
+            vec![public_inputs.into_iter().map(|v| Fr::from(v)).collect()],
         )
         .unwrap();
         assert_eq!(prover.verify(), Ok(()));

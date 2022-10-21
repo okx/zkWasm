@@ -5,6 +5,7 @@ use super::utils::bn_to_field;
 use super::utils::Context;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::circuit::Cell;
+use halo2_proofs::circuit::Value;
 use halo2_proofs::plonk::Advice;
 use halo2_proofs::plonk::Column;
 use halo2_proofs::plonk::ConstraintSystem;
@@ -62,22 +63,26 @@ impl<F: FieldExt> JumpTableChip<F> {
     ) -> Result<(), Error> {
         for i in 0..JTABLE_ROWS {
             if (i as u32) % (JtableOffset::JtableOffsetMax as u32) == 0 {
-                ctx.region
-                    .assign_fixed(|| "jtable sel", self.config.sel, i, || Ok(F::one()))?;
+                ctx.region.assign_fixed(
+                    || "jtable sel",
+                    self.config.sel,
+                    i,
+                    || Value::known(F::one()),
+                )?;
             }
         }
 
         let entries: Vec<&JumpTableEntry> = entries.into_iter().filter(|e| e.eid != 0).collect();
         let mut rest = entries.len() as u64 * 2;
         for (i, entry) in entries.iter().enumerate() {
-            let rest_f = rest.into();
-            let entry_f = bn_to_field(&entry.encode());
+            let rest_f = F::from(rest);
+            let entry_f = bn_to_field::<F>(&entry.encode());
 
             ctx.region.assign_advice(
                 || "jtable enable",
                 self.config.data,
                 ctx.offset,
-                || Ok(F::one()),
+                || Value::known(F::one()),
             )?;
             ctx.next();
 
@@ -85,7 +90,7 @@ impl<F: FieldExt> JumpTableChip<F> {
                 || "jtable rest",
                 self.config.data,
                 ctx.offset,
-                || Ok(rest_f),
+                || Value::known(rest_f),
             )?;
             ctx.next();
 
@@ -98,7 +103,7 @@ impl<F: FieldExt> JumpTableChip<F> {
                 || "jtable entry",
                 self.config.data,
                 ctx.offset,
-                || Ok(entry_f),
+                || Value::known(entry_f),
             )?;
             ctx.next();
 
@@ -110,7 +115,7 @@ impl<F: FieldExt> JumpTableChip<F> {
                 || "jtable enable",
                 self.config.data,
                 ctx.offset,
-                || Ok(F::zero()),
+                || Value::known(F::zero()),
             )?;
             ctx.next();
 
@@ -118,7 +123,7 @@ impl<F: FieldExt> JumpTableChip<F> {
                 || "jtable rest",
                 self.config.data,
                 ctx.offset,
-                || Ok(F::zero()),
+                || Value::known(F::zero()),
             )?;
             ctx.next();
 
@@ -131,7 +136,7 @@ impl<F: FieldExt> JumpTableChip<F> {
                 || "jtable entry",
                 self.config.data,
                 ctx.offset,
-                || Ok(F::zero()),
+                || Value::known(F::zero()),
             )?;
             ctx.next();
         }

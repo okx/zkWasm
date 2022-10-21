@@ -2,6 +2,7 @@ use super::Context;
 use crate::{circuits::rtable::RangeTableConfig, constant, curr};
 use halo2_proofs::{
     arithmetic::FieldExt,
+    circuit::Value,
     plonk::{Advice, Column, ConstraintSystem, Error, Expression, VirtualCells},
 };
 use std::marker::PhantomData;
@@ -51,7 +52,7 @@ impl<F: FieldExt> Bytes8Config<F> {
             || "u64 value",
             self.value.clone(),
             ctx.offset,
-            || Ok(value.into()),
+            || Value::known(F::from(value)),
         )?;
 
         let mut bytes = Vec::from(value.to_le_bytes());
@@ -62,7 +63,7 @@ impl<F: FieldExt> Bytes8Config<F> {
                 || "u64 byte",
                 self.bytes_le[i],
                 ctx.offset,
-                || Ok((bytes[i] as u64).into()),
+                || Value::known(F::from(bytes[i] as u64)),
             )?;
         }
 

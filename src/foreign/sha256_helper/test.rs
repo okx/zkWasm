@@ -7,9 +7,8 @@ mod tests {
         },
         runtime::{host::HostEnv, WasmInterpreter, WasmRuntime},
         test::run_test_circuit,
+        Fr,
     };
-
-    use halo2_proofs::pairing::bn256::Fr as Fp;
     use std::{fs::File, io::Read, path::PathBuf};
     use wasmi::ImportsBuilder;
 
@@ -42,10 +41,10 @@ mod tests {
                 vec![],
             )
             .unwrap();
-        run_test_circuit::<Fp>(
+        run_test_circuit::<Fr>(
             compiled_module.tables,
             execution_log.tables,
-            public_inputs.into_iter().map(|v| Fp::from(v)).collect(),
+            public_inputs.into_iter().map(|v| Fr::from(v)).collect(),
         )
         .unwrap()
     }

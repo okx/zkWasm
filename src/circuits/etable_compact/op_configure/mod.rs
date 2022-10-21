@@ -1,7 +1,6 @@
-use crate::circuits::{config::POW_TABLE_LIMIT, rtable::offset_len_bits_encode};
-
 use super::*;
-use halo2_proofs::{arithmetic::FieldExt, plonk::ConstraintSystem};
+use crate::circuits::{config::POW_TABLE_LIMIT, rtable::offset_len_bits_encode};
+use halo2_proofs::{arithmetic::FieldExt, circuit::Value, plonk::ConstraintSystem};
 
 pub(super) mod op_bin;
 pub(super) mod op_bin_bit;
@@ -39,7 +38,7 @@ impl UnlimitedCell {
             || "cell",
             self.col,
             (ctx.offset as i32 + self.rot) as usize,
-            || Ok(value),
+            || Value::known(value),
         )?;
         Ok(())
     }
@@ -64,7 +63,7 @@ impl MTableLookupCell {
             || "mlookup cell",
             self.col,
             (ctx.offset as i32 + self.rot) as usize,
-            || Ok(bn_to_field(value)),
+            || Value::known(bn_to_field::<F>(value)),
         )?;
         Ok(())
     }
@@ -91,7 +90,7 @@ impl OffsetLenBitsTableLookupCell {
             || "offset len bits lookup cell",
             self.col,
             (ctx.offset as i32 + self.rot) as usize,
-            || Ok(F::from(offset_len_bits_encode(offset, len))),
+            || Value::known(F::from(offset_len_bits_encode(offset, len))),
         )?;
         Ok(())
     }
@@ -115,7 +114,7 @@ impl PowTableLookupCell {
             self.col,
             (ctx.offset as i32 + self.rot) as usize,
             || {
-                Ok(bn_to_field(
+                Value::known(bn_to_field::<F>(
                     &((BigUint::from(1u64) << (power + 16)) + power),
                 ))
             },
@@ -143,7 +142,7 @@ impl JTableLookupCell {
             || "jlookup cell",
             self.col,
             (ctx.offset as i32 + self.rot) as usize,
-            || Ok(bn_to_field(value)),
+            || Value::known(bn_to_field::<F>(value)),
         )?;
         Ok(())
     }
@@ -165,7 +164,7 @@ impl BitCell {
             || "bit cell",
             self.col,
             (ctx.offset as i32 + self.rot) as usize,
-            || Ok(F::from(value as u64)),
+            || Value::known(F::from(value as u64)),
         )?;
 
         Ok(())
@@ -188,7 +187,7 @@ impl CommonRangeCell {
             || "common range cell",
             self.col,
             (ctx.offset as i32 + self.rot) as usize,
-            || Ok(F::from(value as u64)),
+            || Value::known(F::from(value as u64)),
         )?;
         Ok(())
     }
@@ -210,7 +209,7 @@ impl U4BopCell {
                 || "u4 bop cell",
                 self.col,
                 ctx.offset + i,
-                || Ok(F::from(value)),
+                || Value::known(F::from(value)),
             )?;
         }
 
@@ -254,7 +253,7 @@ impl U64Cell {
             || "u64 range cell",
             self.value_col,
             (ctx.offset as i32 + self.value_rot) as usize,
-            || Ok(F::from(value)),
+            || Value::known(F::from(value)),
         )?;
 
         for i in 0..16usize {
@@ -264,7 +263,7 @@ impl U64Cell {
                 || "u4 range cell",
                 self.u4_col,
                 ctx.offset + i,
-                || Ok(F::from(v)),
+                || Value::known(F::from(v)),
             )?;
         }
 
@@ -298,7 +297,7 @@ impl U64OnU8Cell {
             || "u64 range cell",
             self.value_col,
             (ctx.offset as i32 + self.value_rot) as usize,
-            || Ok(F::from(value)),
+            || Value::known(F::from(value)),
         )?;
 
         for i in 0..8usize {
@@ -308,7 +307,7 @@ impl U64OnU8Cell {
                 || "u8 range cell",
                 self.u8_col,
                 ((ctx.offset + i) as i32 + self.u8_rot) as usize,
-                || Ok(F::from(v)),
+                || Value::known(F::from(v)),
             )?;
         }
 

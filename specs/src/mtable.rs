@@ -1,9 +1,7 @@
+use crate::imtable::InitMemoryTable;
+use serde::Serialize;
 use std::collections::HashSet;
-
-use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
-
-use crate::{imtable::InitMemoryTable, types::Value};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Hash)]
 pub enum LocationType {
@@ -79,7 +77,6 @@ impl From<crate::types::ValueType> for VarType {
         match v {
             crate::types::ValueType::I32 => Self::I32,
             crate::types::ValueType::I64 => Self::I64,
-            _ => todo!(),
         }
     }
 }

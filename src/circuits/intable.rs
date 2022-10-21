@@ -94,13 +94,13 @@ impl<F: FieldExt> InputTableChip<F> {
                         || "input table enable",
                         self.config.enable,
                         i,
-                        || Ok(F::one()),
+                        || Value::known(F::one()),
                     )?;
                     meta.assign_fixed(
                         || "input table index",
                         self.config.index,
                         i,
-                        || Ok(F::from(i as u64)),
+                        || Value::known(F::from(i as u64)),
                     )?;
                 }
 

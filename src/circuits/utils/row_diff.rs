@@ -2,6 +2,7 @@ use super::Context;
 use crate::{constant_from, curr, nextn};
 use halo2_proofs::{
     arithmetic::FieldExt,
+    circuit::Value,
     plonk::{Advice, Column, ConstraintSystem, Error, Expression, VirtualCells},
 };
 use std::marker::PhantomData;
@@ -66,13 +67,13 @@ impl<F: FieldExt> RowDiffConfig<F> {
         };
 
         ctx.region
-            .assign_advice(|| "row diff data", self.data, offset, || Ok(data))?;
+            .assign_advice(|| "row diff data", self.data, offset, || Value::known(data))?;
 
         ctx.region.assign_advice(
             || "row diff inv",
             self.inv,
             offset,
-            || Ok(diff.invert().unwrap_or(F::zero())),
+            || Value::known(diff.invert().unwrap_or(F::zero())),
         )?;
 
         if offset < self.distance as usize {
@@ -88,7 +89,7 @@ impl<F: FieldExt> RowDiffConfig<F> {
                 self.same,
                 offset,
                 || {
-                    Ok(if diff.is_zero().into() {
+                    Value::known(if diff.is_zero().into() {
                         F::one()
                     } else {
                         F::zero()

@@ -125,7 +125,7 @@ impl<F: FieldExt> ForeignTableConfig<F> for Sha256HelperTableConfig<F> {
         key: &'static str,
         expr: &dyn Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
     ) {
-        meta.lookup_any(key, |meta| {
+        meta.lookup_any(|meta| {
             vec![(
                 expr(meta),
                 fixed_curr!(meta, self.block_first_line_sel)

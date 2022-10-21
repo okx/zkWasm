@@ -1,5 +1,5 @@
-use super::{assign::Sha256HelperTableChip, BLOCK_LINES};
-use halo2_proofs::{arithmetic::FieldExt, circuit::Region, plonk::Error};
+use super::{assign::Sha256HelperTableChip};
+use halo2_proofs::{arithmetic::FieldExt, circuit::{Region, Value}, plonk::Error};
 
 pub mod ch;
 pub mod lsigma0;
@@ -37,21 +37,21 @@ impl<F: FieldExt> Sha256HelperTableChip<F> {
             || "sha256 helper rotate round",
             self.config.aux.0,
             offset + start,
-            || Ok(F::from(round as u64)),
+            || Value::known(F::from(round as u64)),
         )?;
 
         region.assign_advice(
             || "sha256 helper rotate rem",
             self.config.aux.0,
             offset + start + 1,
-            || Ok(F::from(rem as u64)),
+            || Value::known(F::from(rem as u64)),
         )?;
 
         region.assign_advice(
             || "sha256 helper rotate diff",
             self.config.aux.0,
             offset + start + 2,
-            || Ok(F::from(diff as u64)),
+            || Value::known(F::from(diff as u64)),
         )?;
 
         for i in 0..8 {
@@ -59,7 +59,7 @@ impl<F: FieldExt> Sha256HelperTableChip<F> {
                 || "sha256 rotate value",
                 self.config.args[index].0,
                 offset + i,
-                || Ok(F::from(((value as u64) >> (4 * i)) & 0xf)),
+                || Value::known(F::from(((value as u64) >> (4 * i)) & 0xf)),
             )?;
         }
 

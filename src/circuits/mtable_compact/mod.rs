@@ -8,6 +8,7 @@ use crate::circuits::mtable_compact::configure::STEP_SIZE;
 use crate::circuits::IMTABLE_COLOMNS;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::circuit::Cell;
+use halo2_proofs::circuit::Value;
 use halo2_proofs::plonk::Advice;
 use halo2_proofs::plonk::Column;
 use halo2_proofs::plonk::ConstraintSystem;
@@ -23,8 +24,8 @@ use std::marker::PhantomData;
 const MTABLE_ROWS: usize = MAX_MATBLE_ROWS / STEP_SIZE as usize * STEP_SIZE as usize;
 
 pub mod configure;
-pub(crate) mod encode;
 pub mod expression;
+pub(crate) mod encode;
 
 enum RotationOfIndexColumn {
     LTYPE = 0,
@@ -111,15 +112,19 @@ impl<F: FieldExt> MemoryTableChip<F> {
         assert_eq!(MTABLE_ROWS % (STEP_SIZE as usize), 0);
 
         for i in 0..MTABLE_ROWS {
-            ctx.region
-                .assign_fixed(|| "mtable sel", self.config.sel, i, || Ok(F::one()))?;
+            ctx.region.assign_fixed(
+                || "mtable sel",
+                self.config.sel,
+                i,
+                || Value::known(F::one()),
+            )?;
 
             if i % (STEP_SIZE as usize) == 0 {
                 ctx.region.assign_fixed(
                     || "block_first_line_sel",
                     self.config.block_first_line_sel,
                     i,
-                    || Ok(F::one()),
+                    || Value::known(F::one()),
                 )?;
             }
 
@@ -128,7 +133,7 @@ impl<F: FieldExt> MemoryTableChip<F> {
                     || "following_block_sel",
                     self.config.following_block_sel,
                     i,
-                    || Ok(F::one()),
+                    || Value::known(F::one()),
                 )?;
             }
         }
@@ -145,7 +150,7 @@ impl<F: FieldExt> MemoryTableChip<F> {
                         || $key,
                         self.config.$column,
                         index * (STEP_SIZE as usize) + ($offset as usize),
-                        || Ok($value),
+                        || Value::known($value),
                     )?
                 };
             }

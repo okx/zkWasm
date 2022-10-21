@@ -23,17 +23,17 @@ use crate::{
         },
         ForeignTableConfig,
     },
+    Fr, G1Affine,
 };
 use ark_std::{end_timer, start_timer};
 use halo2_proofs::{
     arithmetic::FieldExt,
     circuit::{Layouter, SimpleFloorPlanner},
-    pairing::bn256::{Bn256, Fr, G1Affine},
     plonk::{
         create_proof, keygen_pk, keygen_vk, verify_proof, Circuit, ConstraintSystem, Error,
         Expression, ProvingKey, SingleVerifier, VerifyingKey, VirtualCells,
     },
-    poly::commitment::{Params, ParamsVerifier},
+    poly::commitment::Params,
     transcript::{Blake2bRead, Blake2bWrite, Challenge255},
 };
 use num_bigint::BigUint;
@@ -258,7 +258,7 @@ pub(self) trait Lookup<F: FieldExt> {
         key: &'static str,
         expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>,
     ) {
-        meta.lookup_any(key, |meta| vec![(expr(meta), self.encode(meta))]);
+        meta.lookup_any(|meta| vec![(expr(meta), self.encode(meta))]);
     }
 }
 
@@ -282,12 +282,10 @@ impl ZkWasmCircuitBuilder {
             let mut buf = vec![];
 
             fd.read_to_end(&mut buf).unwrap();
-            Params::<G1Affine>::read(Cursor::new(buf)).unwrap()
+            Params::<G1Affine>::read(&mut Cursor::new(buf)).unwrap()
         } else {
             // Initialize the polynomial commitment parameters
-            let timer = start_timer!(|| format!("build params with K = {}", K));
-            let params: Params<G1Affine> = Params::<G1Affine>::unsafe_setup::<Bn256>(K);
-            end_timer!(timer);
+            let params: Params<G1Affine> = self.create_params();
 
             let mut fd = File::create(path.as_path()).unwrap();
             params.write(&mut fd).unwrap();
@@ -298,8 +296,9 @@ impl ZkWasmCircuitBuilder {
 
     fn create_params(&self) -> Params<G1Affine> {
         // Initialize the polynomial commitment parameters
+        // TODO: Can't be used in production
         let timer = start_timer!(|| format!("build params with K = {}", K));
-        let params: Params<G1Affine> = Params::<G1Affine>::unsafe_setup::<Bn256>(K);
+        let params: Params<G1Affine> = Params::<G1Affine>::new(K);
         end_timer!(timer);
 
         params
@@ -362,22 +361,11 @@ impl ZkWasmCircuitBuilder {
         proof: &Vec<u8>,
         public_inputs: &Vec<Fr>,
     ) {
-        let public_inputs_size = public_inputs.len();
-
-        let params_verifier: ParamsVerifier<Bn256> = params.verifier(public_inputs_size).unwrap();
-
-        let strategy = SingleVerifier::new(&params_verifier);
+        let strategy = SingleVerifier::new(&params);
         let mut transcript = Blake2bRead::<_, _, Challenge255<_>>::init(&proof[..]);
 
         let timer = start_timer!(|| "verify proof");
-        verify_proof(
-            &params_verifier,
-            vk,
-            strategy,
-            &[&[public_inputs]],
-            &mut transcript,
-        )
-        .unwrap();
+        verify_proof(&params, vk, strategy, &[&[public_inputs]], &mut transcript).unwrap();
         end_timer!(timer);
     }
 
@@ -394,21 +382,18 @@ impl ZkWasmCircuitBuilder {
         self.verify_check(pk.get_vk(), &params, &proof, &public_inputs);
     }
 
-    pub fn bench_with_result(&self, public_inputs: Vec<Fr>) -> (Vec<u8>, Vec<u8>, Vec<u8>) {
+    pub fn bench_with_result(&self, public_inputs: Vec<Fr>) -> (Vec<u8>, Vec<u8>) {
         let circuit: TestCircuit<Fr> = self.build_circuit::<Fr>();
 
         let mut params_buffer: Vec<u8> = vec![];
         let params = self.create_params();
         params.write::<Vec<u8>>(params_buffer.borrow_mut()).unwrap();
         let vk = self.prepare_vk(&circuit, &params);
-
-        let mut vk_buffer: Vec<u8> = vec![];
-        vk.write::<Vec<u8>>(vk_buffer.borrow_mut()).unwrap();
         let pk = self.prepare_pk(&circuit, &params, vk);
 
         let proof = self.create_proof(&[circuit], &params, &pk, &public_inputs);
         self.verify_check(pk.get_vk(), &params, &proof, &public_inputs);
 
-        (params_buffer, vk_buffer, proof)
+        (params_buffer, proof)
     }
 }

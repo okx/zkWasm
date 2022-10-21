@@ -6,6 +6,9 @@ pub mod runtime;
 pub mod test;
 pub mod traits;
 
+type Fr = halo2_proofs::pasta::Fp;
+type G1Affine = halo2_proofs::pasta::EqAffine;
+
 #[macro_use]
 extern crate lazy_static;
 extern crate downcast_rs;

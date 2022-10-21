@@ -1,7 +1,7 @@
 use super::{config::IMTABLE_COLOMNS, utils::bn_to_field, Encode};
 use halo2_proofs::{
     arithmetic::FieldExt,
-    circuit::Layouter,
+    circuit::{Layouter, Value},
     plonk::{ConstraintSystem, Error, Expression, TableColumn, VirtualCells},
 };
 use num_bigint::BigUint;
@@ -64,7 +64,7 @@ impl<F: FieldExt> InitMemoryTableConfig<F> {
         expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>,
         index: usize,
     ) {
-        meta.lookup(key, |meta| vec![(expr(meta), self.col[index])]);
+        meta.lookup(|meta| vec![(expr(meta), self.col[index])]);
     }
 }
 
@@ -86,7 +86,7 @@ impl<F: FieldExt> MInitTableChip<F> {
             || "minit",
             |mut table| {
                 for i in 0..IMTABLE_COLOMNS {
-                    table.assign_cell(|| "minit table", self.config.col[i], 0, || Ok(F::zero()))?;
+                    table.assign_cell(|| "minit table", self.config.col[i], 0, || Value::known(F::zero()))?;
                 }
 
                 let heap_entries = minit.filter(LocationType::Heap);
@@ -104,7 +104,7 @@ impl<F: FieldExt> MInitTableChip<F> {
                         || "minit table",
                         self.config.col[idx % IMTABLE_COLOMNS],
                         idx / IMTABLE_COLOMNS + 1,
-                        || Ok(bn_to_field::<F>(&v.encode())),
+                        || Value::known(bn_to_field::<F>(&v.encode())),
                     )?;
 
                     idx += 1;
@@ -119,7 +119,7 @@ impl<F: FieldExt> MInitTableChip<F> {
                             || "minit table",
                             self.config.col[blank_col],
                             idx / IMTABLE_COLOMNS + 1,
-                            || Ok(F::zero()),
+                            || Value::known(F::zero()),
                         )?;
                     }
                 }

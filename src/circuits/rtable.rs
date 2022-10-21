@@ -5,6 +5,7 @@ use crate::constant_from;
 use crate::traits::circuits::bit_range_table::BitRangeTable;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::circuit::Layouter;
+use halo2_proofs::circuit::Value;
 use halo2_proofs::plonk::ConstraintSystem;
 use halo2_proofs::plonk::Error;
 use halo2_proofs::plonk::Expression;
@@ -55,7 +56,7 @@ impl<F: FieldExt> RangeTableConfig<F> {
         key: &'static str,
         expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>,
     ) {
-        meta.lookup(key, |meta| vec![(expr(meta), self.u16_col)]);
+        meta.lookup(|meta| vec![(expr(meta), self.u16_col)]);
     }
 
     pub fn configure_in_u16_range(
@@ -64,7 +65,7 @@ impl<F: FieldExt> RangeTableConfig<F> {
         key: &'static str,
         expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>,
     ) {
-        meta.lookup(key, |meta| vec![(expr(meta), self.u16_col)]);
+        meta.lookup(|meta| vec![(expr(meta), self.u16_col)]);
     }
 
     pub fn configure_in_u8_range(
@@ -73,7 +74,7 @@ impl<F: FieldExt> RangeTableConfig<F> {
         key: &'static str,
         expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>,
     ) {
-        meta.lookup(key, |meta| vec![(expr(meta), self.u8_col)]);
+        meta.lookup(|meta| vec![(expr(meta), self.u8_col)]);
     }
 
     pub fn configure_in_u4_range(
@@ -82,7 +83,7 @@ impl<F: FieldExt> RangeTableConfig<F> {
         key: &'static str,
         expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>,
     ) {
-        meta.lookup(key, |meta| vec![(expr(meta), self.u4_col)]);
+        meta.lookup(|meta| vec![(expr(meta), self.u4_col)]);
     }
 
     pub fn configure_in_u4_bop_set(
@@ -91,7 +92,7 @@ impl<F: FieldExt> RangeTableConfig<F> {
         key: &'static str,
         expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>,
     ) {
-        meta.lookup(key, |meta| vec![(expr(meta), self.u4_bop_col)]);
+        meta.lookup(|meta| vec![(expr(meta), self.u4_bop_col)]);
     }
 
     pub fn configure_in_u4_bop_calc_set(
@@ -102,7 +103,7 @@ impl<F: FieldExt> RangeTableConfig<F> {
             &mut VirtualCells<'_, F>,
         ) -> (Expression<F>, Expression<F>, Expression<F>, Expression<F>),
     ) {
-        meta.lookup(key, |meta| {
+        meta.lookup(|meta| {
             let (l, r, res, op) = expr(meta);
             vec![(
                 (l * constant_from!(1u64 << 8) + r * constant_from!(1u64 << 4) + res) * op,
@@ -117,7 +118,7 @@ impl<F: FieldExt> RangeTableConfig<F> {
         key: &'static str,
         expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>,
     ) {
-        meta.lookup(key, |meta| vec![(expr(meta), self.pow_col)]);
+        meta.lookup(|meta| vec![(expr(meta), self.pow_col)]);
     }
 
     pub fn configure_in_offset_len_bits_set(
@@ -126,7 +127,7 @@ impl<F: FieldExt> RangeTableConfig<F> {
         key: &'static str,
         expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>,
     ) {
-        meta.lookup(key, |meta| vec![(expr(meta), self.offset_len_bits_col)]);
+        meta.lookup(|meta| vec![(expr(meta), self.offset_len_bits_col)]);
     }
 }
 
@@ -178,7 +179,7 @@ impl<F: FieldExt> RangeTableChip<F> {
                         || "range table",
                         self.config.u16_col,
                         i,
-                        || Ok(F::from(i as u64)),
+                        || Value::known(F::from(i as u64)),
                     )?;
                 }
                 Ok(())
@@ -193,7 +194,7 @@ impl<F: FieldExt> RangeTableChip<F> {
                         || "range table",
                         self.config.u8_col,
                         i,
-                        || Ok(F::from(i as u64)),
+                        || Value::known(F::from(i as u64)),
                     )?;
                 }
                 Ok(())
@@ -208,7 +209,7 @@ impl<F: FieldExt> RangeTableChip<F> {
                         || "range table",
                         self.config.u4_col,
                         i,
-                        || Ok(F::from(i as u64)),
+                        || Value::known(F::from(i as u64)),
                     )?;
                 }
                 Ok(())
@@ -222,7 +223,7 @@ impl<F: FieldExt> RangeTableChip<F> {
                     || "range table",
                     self.config.u4_bop_col,
                     0,
-                    || Ok(F::from(0 as u64)),
+                    || Value::known(F::from(0 as u64)),
                 )?;
                 let mut offset = 1;
                 for i in BitOp::iter() {
@@ -231,7 +232,7 @@ impl<F: FieldExt> RangeTableChip<F> {
                         self.config.u4_bop_col,
                         offset,
                         || {
-                            Ok(bn_to_field::<F>(
+                            Value::known(bn_to_field::<F>(
                                 &(BigUint::from(1u64) << (12 * i as usize)),
                             ))
                         },
@@ -249,7 +250,7 @@ impl<F: FieldExt> RangeTableChip<F> {
                     || "range table",
                     self.config.u4_bop_calc_col,
                     0,
-                    || Ok(F::from(0 as u64)),
+                    || Value::known(F::from(0 as u64)),
                 )?;
                 let mut offset = 1;
                 for i in BitOp::iter() {
@@ -261,10 +262,12 @@ impl<F: FieldExt> RangeTableChip<F> {
                                 self.config.u4_bop_calc_col,
                                 offset as usize,
                                 || {
-                                    Ok(F::from((l * 256 + r * 16 + res) as u64)
-                                        * bn_to_field::<F>(
-                                            &(BigUint::from(1u64) << (i as usize * 12)),
-                                        ))
+                                    Value::known(
+                                        F::from((l * 256 + r * 16 + res) as u64)
+                                            * bn_to_field::<F>(
+                                                &(BigUint::from(1u64) << (i as usize * 12)),
+                                            ),
+                                    )
                                 },
                             )?;
                             offset += 1;
@@ -282,7 +285,7 @@ impl<F: FieldExt> RangeTableChip<F> {
                     || "range table",
                     self.config.pow_col,
                     0,
-                    || Ok(F::from(0 as u64)),
+                    || Value::known(F::from(0 as u64)),
                 )?;
                 let mut offset = 1;
                 for i in 0..POW_TABLE_LIMIT {
@@ -291,8 +294,10 @@ impl<F: FieldExt> RangeTableChip<F> {
                         self.config.pow_col,
                         offset as usize,
                         || {
-                            Ok(bn_to_field::<F>(&(BigUint::from(1u64) << (i + 16)))
-                                + F::from(i as u64))
+                            Value::known(
+                                bn_to_field::<F>(&(BigUint::from(1u64) << (i + 16)))
+                                    + F::from(i as u64),
+                            )
                         },
                     )?;
                     offset += 1;
@@ -308,7 +313,7 @@ impl<F: FieldExt> RangeTableChip<F> {
                     || "range table",
                     self.config.offset_len_bits_col,
                     0,
-                    || Ok(F::from(0 as u64)),
+                    || Value::known(F::from(0 as u64)),
                 )?;
                 let mut offset = 1;
                 for i in 0..8 {
@@ -317,7 +322,7 @@ impl<F: FieldExt> RangeTableChip<F> {
                             || "range table",
                             self.config.offset_len_bits_col,
                             offset as usize,
-                            || Ok(F::from(offset_len_bits_encode(i, j))),
+                            || Value::known(F::from(offset_len_bits_encode(i, j))),
                         )?;
                         offset += 1;
                     }

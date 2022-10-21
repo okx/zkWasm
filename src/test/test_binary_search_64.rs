@@ -1,14 +1,13 @@
 #[cfg(test)]
 mod tests {
-    use halo2_proofs::pairing::bn256::Fr as Fp;
-    use std::{fs::File, io::Read, path::PathBuf};
-    use wasmi::ImportsBuilder;
-
     use crate::{
         foreign::wasm_input_helper::runtime::register_wasm_input_foreign,
         runtime::{host::HostEnv, WasmInterpreter, WasmRuntime},
         test::run_test_circuit,
+        Fr,
     };
+    use std::{fs::File, io::Read, path::PathBuf};
+    use wasmi::ImportsBuilder;
 
     #[test]
     fn test_binary_search_64() {
@@ -38,10 +37,10 @@ mod tests {
             )
             .unwrap();
 
-        run_test_circuit::<Fp>(
+        run_test_circuit::<Fr>(
             compiled_module.tables,
             execution_log.tables,
-            public_inputs.into_iter().map(|v| Fp::from(v)).collect(),
+            public_inputs.into_iter().map(|v| Fr::from(v)).collect(),
         )
         .unwrap()
     }

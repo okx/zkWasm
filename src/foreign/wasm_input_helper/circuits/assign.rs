@@ -1,6 +1,6 @@
 use super::WasmInputHelperTableConfig;
 use crate::foreign::wasm_input_helper::circuits::ENABLE_LINES;
-use halo2_proofs::{arithmetic::FieldExt, circuit::Layouter, plonk::Error};
+use halo2_proofs::{arithmetic::FieldExt, circuit::{Layouter, Value}, plonk::Error};
 use specs::{etable::EventTableEntry, host_function::HostPlugin, step::StepInfo};
 
 pub struct WasmInputHelperTableChip<F: FieldExt> {
@@ -25,14 +25,14 @@ impl<F: FieldExt> WasmInputHelperTableChip<F> {
                         || "wasm input helper enable",
                         self.config.enable,
                         i as usize,
-                        || Ok(F::one()),
+                        || Value::known(F::one()),
                     )?;
 
                     region.assign_fixed(
                         || "wasm input index",
                         self.config.index,
                         i,
-                        || Ok(F::from(i as u64)),
+                        || Value::known(F::from(i as u64)),
                     )?;
                 }
 
@@ -57,7 +57,7 @@ impl<F: FieldExt> WasmInputHelperTableChip<F> {
                                     || "wasm input u8 cells",
                                     self.config.input_u8[i],
                                     offset,
-                                    || Ok(F::from(input & 0xff)),
+                                    || Value::known(F::from(input & 0xff)),
                                 )?;
 
                                 input >>= 8;

@@ -1,11 +1,11 @@
-use std::marker::PhantomData;
-
 use super::Context;
 use crate::{circuits::rtable::RangeTableConfig, constant, curr};
 use halo2_proofs::{
     arithmetic::FieldExt,
+    circuit::Value,
     plonk::{Advice, Column, ConstraintSystem, Error, Expression, VirtualCells},
 };
+use std::marker::PhantomData;
 
 #[derive(Clone)]
 pub struct BitValueConfig<F: FieldExt> {
@@ -49,15 +49,19 @@ impl<F: FieldExt> BitValueConfig<F> {
 
     pub fn assign(&self, ctx: &mut Context<F>, value: u64) -> Result<(), Error> {
         let mut v = value;
-        ctx.region
-            .assign_advice(|| "value", self.value, ctx.offset, || Ok(F::from(value)))?;
+        ctx.region.assign_advice(
+            || "value",
+            self.value,
+            ctx.offset,
+            || Value::known(F::from(value)),
+        )?;
 
         for i in 0..16 {
             ctx.region.assign_advice(
                 || "tvalue vtype",
                 self.bits_le[i],
                 ctx.offset,
-                || Ok((v & 15).into()),
+                || Value::known(F::from(v & 15)),
             )?;
 
             v >>= 4;

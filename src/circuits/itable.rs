@@ -2,6 +2,7 @@ use super::utils::bn_to_field;
 use crate::constant;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::circuit::Layouter;
+use halo2_proofs::circuit::Value;
 use halo2_proofs::plonk::ConstraintSystem;
 use halo2_proofs::plonk::Error;
 use halo2_proofs::plonk::Expression;
@@ -81,7 +82,7 @@ impl<F: FieldExt> InstructionTableConfig<F> {
         key: &'static str,
         expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>,
     ) {
-        meta.lookup(key, |meta| vec![(expr(meta), self.col)]);
+        meta.lookup(|meta| vec![(expr(meta), self.col)]);
     }
 }
 
@@ -103,13 +104,18 @@ impl<F: FieldExt> InstructionTableChip<F> {
         layouter.assign_table(
             || "itable",
             |mut table| {
-                table.assign_cell(|| "inst_init table", self.config.col, 0, || Ok(F::zero()))?;
+                table.assign_cell(
+                    || "inst_init table",
+                    self.config.col,
+                    0,
+                    || Value::known(F::zero()),
+                )?;
                 for (i, v) in instructions.iter().enumerate() {
                     table.assign_cell(
                         || "inst_init table",
                         self.config.col,
                         i + 1,
-                        || Ok(bn_to_field::<F>(&v.encode())),
+                        || Value::known(bn_to_field::<F>(&v.encode())),
                     )?;
                 }
                 Ok(())

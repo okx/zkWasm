@@ -73,7 +73,7 @@ impl<F: FieldExt> Lookup<F> for JumpTableConfig<F> {
         key: &'static str,
         expr: impl FnOnce(&mut VirtualCells<'_, F>) -> Expression<F>,
     ) {
-        meta.lookup_any(key, |meta| {
+        meta.lookup_any(|meta| {
             vec![(
                 expr(meta),
                 self.entry(meta) * self.enable(meta) * fixed_curr!(meta, self.sel),

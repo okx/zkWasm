@@ -49,6 +49,6 @@ impl<F: FieldExt> ForeignTableConfig<F> for WasmInputHelperTableConfig<F> {
         key: &'static str,
         expr: &dyn Fn(&mut VirtualCells<'_, F>) -> Expression<F>,
     ) {
-        meta.lookup_any(key, |meta| vec![(expr(meta), self.opcode_expr(meta))]);
+        meta.lookup_any(|meta| vec![(expr(meta), self.opcode_expr(meta))]);
     }
 }

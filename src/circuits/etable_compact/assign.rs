@@ -1,4 +1,5 @@
 use super::*;
+use halo2_proofs::circuit::Value;
 
 impl<F: FieldExt> EventTableCommonConfig<F> {
     pub(super) fn assign(
@@ -11,15 +12,19 @@ impl<F: FieldExt> EventTableCommonConfig<F> {
 
         // Step 1: fill fixed columns
         for i in 0..MAX_ETABLE_ROWS {
-            ctx.region
-                .assign_fixed(|| "etable common sel", self.sel, i, || Ok(F::one()))?;
+            ctx.region.assign_fixed(
+                || "etable common sel",
+                self.sel,
+                i,
+                || Value::known(F::one()),
+            )?;
 
             if i % ETABLE_STEP_SIZE == EventTableBitColumnRotation::Enable as usize {
                 ctx.region.assign_fixed(
                     || "etable common block first line sel",
                     self.block_first_line_sel,
                     i,
-                    || Ok(F::one()),
+                    || Value::known(F::one()),
                 )?;
             }
 
@@ -28,7 +33,7 @@ impl<F: FieldExt> EventTableCommonConfig<F> {
                     || "itable lookup",
                     self.itable_lookup,
                     i,
-                    || Ok(F::one()),
+                    || Value::known(F::one()),
                 )?;
             }
 
@@ -37,7 +42,7 @@ impl<F: FieldExt> EventTableCommonConfig<F> {
                     || "jtable lookup",
                     self.jtable_lookup,
                     i,
-                    || Ok(F::one()),
+                    || Value::known(F::one()),
                 )?;
             }
 
@@ -46,7 +51,7 @@ impl<F: FieldExt> EventTableCommonConfig<F> {
                     || "pow table lookup",
                     self.pow_table_lookup,
                     i,
-                    || Ok(F::one()),
+                    || Value::known(F::one()),
                 )?;
             }
 
@@ -57,7 +62,7 @@ impl<F: FieldExt> EventTableCommonConfig<F> {
                     || "offset len bits table lookup",
                     self.offset_len_bits_table_lookup,
                     i,
-                    || Ok(F::one()),
+                    || Value::known(F::one()),
                 )?;
             }
 
@@ -68,7 +73,7 @@ impl<F: FieldExt> EventTableCommonConfig<F> {
                     || "mtable lookup",
                     self.mtable_lookup,
                     i,
-                    || Ok(F::one()),
+                    || Value::known(F::one()),
                 )?;
             }
         }
@@ -82,8 +87,12 @@ impl<F: FieldExt> EventTableCommonConfig<F> {
 
         macro_rules! assign_advice {
             ($c:expr, $o:expr, $k:expr, $v:expr) => {
-                ctx.region
-                    .assign_advice(|| $k, $c, ctx.offset + $o as usize, || Ok(F::from($v)))?
+                ctx.region.assign_advice(
+                    || $k,
+                    $c,
+                    ctx.offset + $o as usize,
+                    || Value::known(F::from($v)),
+                )?
             };
         }
 
@@ -279,7 +288,7 @@ impl<F: FieldExt> EventTableCommonConfig<F> {
                 || "itable lookup entry",
                 self.aux,
                 ctx.offset + EventTableUnlimitColumnRotation::ITableLookup as usize,
-                || Ok(bn_to_field(&entry.inst.encode())),
+                || Value::known(bn_to_field::<F>(&entry.inst.encode())),
             )?;
 
             for _ in 0..ETABLE_STEP_SIZE {

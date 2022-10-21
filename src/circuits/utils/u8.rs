@@ -2,6 +2,7 @@ use super::Context;
 use crate::{circuits::rtable::RangeTableConfig, curr};
 use halo2_proofs::{
     arithmetic::FieldExt,
+    circuit::Value,
     plonk::{Advice, Column, ConstraintSystem, Error, Expression, VirtualCells},
 };
 use std::marker::PhantomData;
@@ -33,7 +34,7 @@ impl<F: FieldExt> U8Config<F> {
             || "u8 value",
             self.value.clone(),
             ctx.offset,
-            || Ok(value.into()),
+            || Value::known(F::from(value)),
         )?;
 
         Ok(())
