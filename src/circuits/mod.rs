@@ -47,7 +47,7 @@ use std::{
     borrow::BorrowMut,
     collections::{BTreeMap, BTreeSet},
     fs::File,
-    io::{Cursor, Read},
+    io::{Cursor, Read, Write},
     marker::PhantomData,
     path::PathBuf,
 };
@@ -268,13 +268,15 @@ pub struct ZkWasmCircuitBuilder {
 }
 
 const PARAMS: &str = "param.data";
+const VK: &str = "vk.data";
+const PROOF: &str = "proof.data";
 
 impl ZkWasmCircuitBuilder {
-    fn build_circuit<F: FieldExt>(&self) -> TestCircuit<F> {
+    pub fn build_circuit<F: FieldExt>(&self) -> TestCircuit<F> {
         TestCircuit::new(self.compile_tables.clone(), self.execution_tables.clone())
     }
 
-    fn prepare_param(&self) -> Params<G1Affine> {
+    pub fn prepare_param(&self) -> Params<G1Affine> {
         let path = PathBuf::from(PARAMS);
 
         if path.exists() {
@@ -305,19 +307,34 @@ impl ZkWasmCircuitBuilder {
         params
     }
 
-    fn prepare_vk(
+    pub fn prepare_vk(
         &self,
         circuit: &TestCircuit<Fr>,
         params: &Params<G1Affine>,
     ) -> VerifyingKey<G1Affine> {
-        let timer = start_timer!(|| "build vk");
-        let vk = keygen_vk(params, circuit).expect("keygen_vk should not fail");
-        end_timer!(timer);
+        let path = PathBuf::from(VK);
 
-        vk
+        if path.exists() {
+            let mut fd = File::open(path.as_path()).unwrap();
+            let mut buf = vec![];
+
+            fd.read_to_end(&mut buf).unwrap();
+
+            VerifyingKey::<G1Affine>::read::<_, TestCircuit<_>>(&mut Cursor::new(&buf), params)
+                .unwrap()
+        } else {
+            let timer = start_timer!(|| "build vk");
+            let vk = keygen_vk(params, circuit).expect("keygen_vk should not fail");
+            end_timer!(timer);
+
+            let mut fd = File::create(path.as_path()).unwrap();
+            vk.write(&mut fd).unwrap();
+
+            vk
+        }
     }
 
-    fn prepare_pk(
+    pub fn prepare_pk(
         &self,
         circuit: &TestCircuit<Fr>,
         params: &Params<G1Affine>,
@@ -329,33 +346,47 @@ impl ZkWasmCircuitBuilder {
         pk
     }
 
-    fn create_proof(
+    pub fn create_proof(
         &self,
         circuits: &[TestCircuit<Fr>],
         params: &Params<G1Affine>,
         pk: &ProvingKey<G1Affine>,
         public_inputs: &Vec<Fr>,
     ) -> Vec<u8> {
-        let mut transcript = Blake2bWrite::<_, _, Challenge255<_>>::init(vec![]);
+        let path = PathBuf::from(PROOF);
 
-        let timer = start_timer!(|| "create proof");
-        create_proof(
-            params,
-            pk,
-            circuits,
-            &[&[public_inputs]],
-            OsRng,
-            &mut transcript,
-        )
-        .expect("proof generation should not fail");
-        end_timer!(timer);
+        if path.exists() {
+            let mut buf = vec![];
 
-        let proof = transcript.finalize();
+            let mut fd = std::fs::File::open(path).unwrap();
+            fd.read_to_end(&mut buf).unwrap();
 
-        proof
+            buf
+        } else {
+            let mut transcript = Blake2bWrite::<_, _, Challenge255<_>>::init(vec![]);
+
+            let timer = start_timer!(|| "create proof");
+            create_proof(
+                params,
+                pk,
+                circuits,
+                &[&[public_inputs]],
+                OsRng,
+                &mut transcript,
+            )
+            .expect("proof generation should not fail");
+            end_timer!(timer);
+
+            let proof = transcript.finalize();
+
+            let mut fd = std::fs::File::create(path).unwrap();
+            fd.write(&proof).unwrap();
+
+            proof
+        }
     }
 
-    fn verify_check(
+    pub fn verify_check(
         &self,
         vk: &VerifyingKey<G1Affine>,
         params: &Params<G1Affine>,
