@@ -8,11 +8,11 @@ use specs::{
     types::{CompileError, ExecutionError},
     CompileTable, ExecutionTable,
 };
-use wasmi::{Externals, ImportResolver};
+use wasmi::{Externals, ImportResolver,RuntimeValue};
 
 use self::wasmi_interpreter::WasmiRuntime;
 
-pub(crate) mod host;
+pub mod host;
 pub mod wasmi_interpreter;
 
 pub struct CompileOutcome<M, I, T> {
@@ -24,6 +24,7 @@ pub struct CompileOutcome<M, I, T> {
 
 pub struct ExecutionOutcome {
     pub tables: ExecutionTable,
+    pub result:RuntimeValue
 }
 
 pub trait WasmRuntime {

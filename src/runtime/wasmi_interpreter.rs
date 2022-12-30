@@ -3,29 +3,55 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use specs::{
     etable::EventTable,
     host_function::HostFunctionDesc,
-    imtable::InitMemoryTable,
-    itable::InstructionTable,
+    imtable::{InitMemoryTable, },
+    itable::{InstructionTable,},
     mtable::MTable,
     types::{CompileError, ExecutionError},
     CompileTable, ExecutionTable,
 };
 use wasmi::{Externals, ImportResolver, ModuleInstance};
+use wasmi::ImportsBuilder;
 
 use crate::runtime::{memory_event_of_step, ExecutionOutcome};
 
 use super::{CompileOutcome, WasmRuntime};
+use super::host::{HostEnv};
 
-pub struct WasmiRuntime {}
+pub struct WasmiRuntime {
+    pub module: wasmi::Module,
+    pub tables: CompileTable,
+    pub instance: wasmi::ModuleRef,
+    pub tracer: Rc<RefCell<wasmi::tracer::Tracer>>,
+}
+
+
+
 
 impl WasmRuntime for WasmiRuntime {
     type Module = wasmi::Module;
     type Tracer = wasmi::tracer::Tracer;
     type Instance = wasmi::ModuleRef;
-
     fn new() -> Self {
-        WasmiRuntime {}
-    }
+        let module = wasmi::Module::from_buffer(vec![]).expect("failed to load wasm");
+        let tracer = wasmi::tracer::Tracer::new(HashMap::<usize, HostFunctionDesc>::new());
+        let tracer = Rc::new(RefCell::new(tracer));
+        let tables = CompileTable { itable: InstructionTable::new(Vec::new()), 
+            imtable: InitMemoryTable::new(Vec::new())};
 
+        let env = HostEnv::new();
+        let imports = ImportsBuilder::new().with_resolver("env", &env); 
+
+
+        let instance = ModuleInstance::new(&module, &imports, Some(tracer.clone()))
+        .expect("failed to instantiate wasm module")
+        .assert_no_start();
+        WasmiRuntime {
+            module,
+            tables,
+            tracer,
+            instance,
+        }
+    }
     fn compile_from_wast<I: ImportResolver>(
         &self,
         mut module: wast::core::Module,
@@ -49,7 +75,7 @@ impl WasmRuntime for WasmiRuntime {
         let instance = ModuleInstance::new(&module, imports, Some(tracer.clone()))
             .expect("failed to instantiate wasm module")
             .assert_no_start();
-
+        
         let itable = InstructionTable::new(
             tracer
                 .borrow()
@@ -85,7 +111,7 @@ impl WasmRuntime for WasmiRuntime {
         _public_inputs: Vec<u64>, // TODO: register built-in plugin in current trait
         _private_inputs: Vec<u64>,
     ) -> Result<ExecutionOutcome, ExecutionError> {
-        compile_outcome
+        let result = compile_outcome
             .instance
             .invoke_export_trace(
                 function_name,
@@ -93,7 +119,7 @@ impl WasmRuntime for WasmiRuntime {
                 externals,
                 compile_outcome.tracer.clone(),
             )
-            .expect("failed to execute export");
+            .expect("failed to execute export").unwrap();
 
         let tracer = compile_outcome.tracer.borrow();
         let etable = tracer
@@ -129,6 +155,7 @@ impl WasmRuntime for WasmiRuntime {
                 mtable,
                 jtable,
             },
+            result
         })
     }
 }
