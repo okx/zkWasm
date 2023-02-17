@@ -284,6 +284,10 @@ pub struct ZkWasmCircuitBuilder {
     pub execution_tables: ExecutionTable,
 }
 
+pub struct ProofData{
+    pub public_inputs: Vec<u8>,
+    pub circuit_builder: ZkWasmCircuitBuilder,
+}
 const PARAMS: &str = "param.data";
 
 impl ZkWasmCircuitBuilder {
@@ -291,7 +295,7 @@ impl ZkWasmCircuitBuilder {
         TestCircuit::new(self.compile_tables.clone(), self.execution_tables.clone())
     }
 
-    fn prepare_param(&self) -> Params<G1Affine> {
+    pub fn prepare_param(&self) -> Params<G1Affine> {
         let path = PathBuf::from(PARAMS);
 
         if path.exists() {
@@ -313,7 +317,7 @@ impl ZkWasmCircuitBuilder {
         }
     }
 
-    fn create_params(&self) -> Params<G1Affine> {
+   pub fn create_params(&self) -> Params<G1Affine> {
         // Initialize the polynomial commitment parameters
         let timer = start_timer!(|| format!("build params with K = {}", zkwasm_k()));
         let params: Params<G1Affine> = Params::<G1Affine>::unsafe_setup::<Bn256>(zkwasm_k());
@@ -322,7 +326,7 @@ impl ZkWasmCircuitBuilder {
         params
     }
 
-    fn prepare_vk(
+    pub fn prepare_vk(
         &self,
         circuit: &TestCircuit<Fr>,
         params: &Params<G1Affine>,
@@ -334,7 +338,7 @@ impl ZkWasmCircuitBuilder {
         vk
     }
 
-    fn prepare_pk(
+   pub  fn prepare_pk(
         &self,
         circuit: &TestCircuit<Fr>,
         params: &Params<G1Affine>,
@@ -346,7 +350,7 @@ impl ZkWasmCircuitBuilder {
         pk
     }
 
-    fn create_proof(
+    pub fn create_proof(
         &self,
         circuits: &[TestCircuit<Fr>],
         params: &Params<G1Affine>,
