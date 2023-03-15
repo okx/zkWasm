@@ -1,6 +1,7 @@
 use self::{
     brtable::{BrTableChip, BrTableConfig},
-    config::{IMTABLE_COLOMNS, VAR_COLUMNS},
+    checksum::{CheckSumChip, CheckSumConfig},
+    config::VAR_COLUMNS,
     etable_compact::{EventTableChip, EventTableConfig},
     external_host_call_table::{ExternalHostCallChip, ExternalHostCallTableConfig},
     jtable::{JumpTableChip, JumpTableConfig},
@@ -50,6 +51,7 @@ use std::{
 };
 
 pub mod brtable;
+pub mod checksum;
 pub mod config;
 pub mod etable_compact;
 mod external_host_call_table;
@@ -81,6 +83,7 @@ pub struct TestCircuitConfig<F: FieldExt> {
     jtable: JumpTableConfig<F>,
     etable: EventTableConfig<F>,
     brtable: BrTableConfig<F>,
+    checksum_config: CheckSumConfig<F>,
     external_host_call_table: ExternalHostCallTableConfig<F>,
     wasm_input_helper_table: WasmInputHelperTableConfig<F>,
     sha256_helper_table: Sha256HelperTableConfig<F>,
@@ -143,14 +146,13 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
         let mut cols = [(); VAR_COLUMNS].map(|_| meta.advice_column()).into_iter();
 
         let rtable = RangeTableConfig::configure([0; 7].map(|_| meta.lookup_table_column()));
-        let itable = InstructionTableConfig::configure(meta.lookup_table_column());
-        let imtable = InitMemoryTableConfig::configure(
-            [0; IMTABLE_COLOMNS].map(|_| meta.lookup_table_column()),
-        );
+        let itable = InstructionTableConfig::configure(meta);
+        let imtable = InitMemoryTableConfig::configure(meta);
+
         let mtable =
             MemoryTableConfig::configure(meta, &mut cols, &rtable, &imtable, &circuit_configure);
         let jtable = JumpTableConfig::configure(meta, &mut cols);
-        let brtable = BrTableConfig::configure(meta.lookup_table_column());
+        let brtable = BrTableConfig::configure(meta);
         let external_host_call_table = ExternalHostCallTableConfig::configure(meta);
 
         let wasm_input_helper_table = WasmInputHelperTableConfig::configure(meta, &rtable);
@@ -180,6 +182,8 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
             &circuit_configure.opcode_selector,
         );
 
+        let checksum_config = CheckSumConfig::configure(meta);
+
         Self::Config {
             rtable,
             itable,
@@ -191,6 +195,7 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
             external_host_call_table,
             wasm_input_helper_table,
             sha256_helper_table,
+            checksum_config,
         }
     }
 
@@ -209,6 +214,7 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
         let external_host_call_chip = ExternalHostCallChip::new(config.external_host_call_table);
         let wasm_input_chip = WasmInputHelperTableChip::new(config.wasm_input_helper_table);
         let sha256chip = Sha256HelperTableChip::new(config.sha256_helper_table);
+        let checksum_chip = CheckSumChip::new(config.checksum_config);
 
         rchip.init(&mut layouter)?;
         wasm_input_chip.init(&mut layouter)?;
@@ -231,15 +237,23 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
                 .filter_foreign_entries(HostPlugin::HostInput),
         )?;
 
-        ichip.assign(&mut layouter, &self.tables.compilation_tables.itable)?;
-        brchip.assign(
+        let itable_entries = ichip.assign(&mut layouter, &self.tables.compilation_tables.itable)?;
+        let brtable_entries = brchip.assign(
             &mut layouter,
             &self.tables.compilation_tables.itable.create_brtable(),
             &self.tables.compilation_tables.elem_table,
         )?;
-        if self.tables.compilation_tables.imtable.entries().len() > 0 {
+        let imtable_entries =
             imchip.assign(&mut layouter, &self.tables.compilation_tables.imtable)?;
-        }
+
+        let circuit_configure = unsafe { CIRCUIT_CONFIGURE.clone().unwrap() };
+        checksum_chip.assign(
+            &mut layouter,
+            itable_entries,
+            imtable_entries,
+            brtable_entries,
+            &circuit_configure,
+        )?;
 
         external_host_call_chip.assign(
             &mut layouter,

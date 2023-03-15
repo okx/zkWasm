@@ -162,13 +162,4 @@ impl<F: FieldExt> MemoryTableConfig<F> {
     pub(super) fn is_lazy_init(&self, meta: &mut VirtualCells<F>) -> Expression<F> {
         nextn!(meta, self.bit, RotationOfBitColumn::IsLazyInit as i32)
     }
-
-    pub(super) fn imtable_selector(&self, meta: &mut VirtualCells<F>, i: u32) -> Expression<F> {
-        assert!((i as u32 + RotationOfBitColumn::IMTableSelectorStart as u32) < STEP_SIZE as u32);
-        nextn!(
-            meta,
-            self.bit,
-            RotationOfBitColumn::IMTableSelectorStart as i32 + i as i32
-        )
-    }
 }

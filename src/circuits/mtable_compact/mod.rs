@@ -6,7 +6,7 @@ use super::{
     utils::{row_diff::RowDiffConfig, Context},
     CircuitConfigure,
 };
-use crate::circuits::{mtable_compact::configure::STEP_SIZE, IMTABLE_COLOMNS};
+use crate::circuits::mtable_compact::configure::STEP_SIZE;
 use halo2_proofs::{
     arithmetic::FieldExt,
     circuit::Cell,
@@ -46,9 +46,6 @@ pub enum RotationOfBitColumn {
     IsStack,
     IsMutable,
     IsLazyInit,
-    // To support multiple imtable columns,
-    // the seletors is a bit filter for an imtable lookup.
-    IMTableSelectorStart,
 }
 
 #[derive(Clone)]
@@ -202,18 +199,6 @@ impl<F: FieldExt> MemoryTableChip<F> {
                     bit,
                     F::from(entry.is_mutable)
                 );
-
-                if (entry.ltype == LocationType::Heap || entry.ltype == LocationType::Global)
-                    && entry.atype.is_positive_init()
-                {
-                    assign_advice!(
-                        "vtype imtable selector",
-                        RotationOfBitColumn::IMTableSelectorStart as i32
-                            + entry.offset as i32 % (IMTABLE_COLOMNS as i32),
-                        bit,
-                        F::one()
-                    );
-                }
             }
 
             // index column

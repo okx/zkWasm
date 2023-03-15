@@ -1,6 +1,6 @@
 use super::*;
 use crate::{
-    circuits::{config::IMTABLE_COLOMNS, CircuitConfigure, Lookup},
+    circuits::{CircuitConfigure, Lookup},
     constant_from, curr, fixed_curr, nextn,
 };
 use halo2_proofs::{
@@ -332,39 +332,17 @@ impl<F: FieldExt> MemoryTableConstriants<F> for MemoryTableConfig<F> {
         _rtable: &RangeTableConfig<F>,
         imtable: &InitMemoryTableConfig<F>,
     ) {
-        meta.create_gate("mtable imtable selector sum", |meta| {
-            let mut acc = constant_from!(1);
-            for i in 0..IMTABLE_COLOMNS {
-                acc = acc - self.imtable_selector(meta, i as u32);
-            }
-            vec![
-                (constant_from!(1) - self.same_offset(meta))
-                    * (constant_from!(1) - self.is_stack(meta))
-                    * (constant_from!(1) - self.is_lazy_init(meta))
-                    * acc
-                    * self.is_enabled_block(meta),
-            ]
+        imtable.configure_in_table(meta, "mtable configure_heap_init_in_imtable", |meta| {
+            (constant_from!(1) - self.same_offset(meta))
+                * (constant_from!(1) - self.is_stack(meta))
+                * imtable.encode(
+                    self.is_mutable(meta),
+                    self.ltype(meta),
+                    self.offset(meta),
+                    self.value(meta),
+                )
+                * self.is_enabled_block(meta)
         });
-
-        for i in 0..IMTABLE_COLOMNS {
-            imtable.configure_in_table(
-                meta,
-                "mtable configure_heap_init_in_imtable",
-                |meta| {
-                    (constant_from!(1) - self.same_offset(meta))
-                        * (constant_from!(1) - self.is_stack(meta))
-                        * imtable.encode(
-                            self.is_mutable(meta),
-                            self.ltype(meta),
-                            self.offset(meta),
-                            self.value(meta),
-                        )
-                        * self.is_enabled_block(meta)
-                        * self.imtable_selector(meta, i as u32)
-                },
-                i,
-            );
-        }
     }
 
     fn configure_heap_init_lazy(

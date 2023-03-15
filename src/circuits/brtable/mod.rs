@@ -1,4 +1,7 @@
-use halo2_proofs::{arithmetic::FieldExt, plonk::TableColumn};
+use halo2_proofs::{
+    arithmetic::FieldExt,
+    plonk::{Advice, Column},
+};
 use std::marker::PhantomData;
 
 mod assign;
@@ -6,7 +9,7 @@ mod configure;
 
 #[derive(Clone)]
 pub struct BrTableConfig<F: FieldExt> {
-    pub(self) col: TableColumn,
+    pub(self) col: Column<Advice>,
     _mark: PhantomData<F>,
 }
 
