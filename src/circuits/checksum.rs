@@ -11,7 +11,9 @@ use super::CircuitConfigure;
 // The target is to implement uniform wasm image verifier,
 // The key is to make image-related fixed value into advice,
 // Then hash(itable, imtable, brtable, static_frame_table, start, first_consecutive_zero_memory_offset) into a checksum
-// And expose the checksum as an instance
+// And expose the checksum as an instance.
+
+// This feature is available in v2.
 
 #[derive(Clone)]
 pub struct CheckSumConfig<F> {
