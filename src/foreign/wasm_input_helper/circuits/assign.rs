@@ -1,7 +1,7 @@
 use super::WasmInputHelperTableConfig;
 use crate::foreign::wasm_input_helper::circuits::ENABLE_LINES;
 use halo2_proofs::arithmetic::FieldExt;
-use halo2_proofs::circuit::AssignedCell;
+use halo2_proofs::circuit::Cell;
 use halo2_proofs::circuit::Layouter;
 use halo2_proofs::plonk::Error;
 
@@ -17,10 +17,10 @@ impl<F: FieldExt> WasmInputHelperTableChip<F> {
     pub fn assign(
         &self,
         layouter: &mut impl Layouter<F>,
-        instances: Vec<AssignedCell<F, F>>,
+        instances: Vec<Cell>,
     ) -> Result<(), Error> {
         for (i, instance) in instances.iter().enumerate() {
-            layouter.constrain_instance(instance.cell(), self.config.input, i)?;
+            layouter.constrain_instance(*instance, self.config.input, i)?;
         }
 
         layouter.assign_region(

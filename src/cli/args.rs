@@ -90,6 +90,19 @@ pub trait ArgBuilder {
     fn single_private_arg<'a>() -> Arg<'a>;
     fn parse_single_private_arg(matches: &ArgMatches) -> Vec<u64>;
 
+    fn single_return_arg<'a>() -> Arg<'a> {
+        arg!(
+            -r --return <RETURN_VALUE> "Expected return value"
+        )
+        .value_parser(value_parser!(u64))
+    }
+    fn parse_single_return_arg(matches: &ArgMatches) -> u64 {
+        matches
+            .get_one::<u64>("return")
+            .expect("return value is required.")
+            .clone()
+    }
+
     fn aggregate_private_args<'a>() -> Arg<'a>;
     fn parse_aggregate_private_args(matches: &ArgMatches) -> Vec<Vec<u64>>;
 

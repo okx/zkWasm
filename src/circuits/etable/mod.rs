@@ -54,6 +54,7 @@ use halo2_proofs::plonk::ConstraintSystem;
 use halo2_proofs::plonk::Error;
 use halo2_proofs::plonk::Expression;
 use halo2_proofs::plonk::Fixed;
+use halo2_proofs::plonk::Instance;
 use halo2_proofs::plonk::VirtualCells;
 use specs::encode::instruction_table::encode_instruction_table_entry;
 use specs::etable::EventTableEntry;
@@ -89,6 +90,7 @@ pub struct EventTableCommonConfig<F: FieldExt> {
     pub(crate) eid_cell: AllocatedCommonRangeCell<F>,
     fid_cell: AllocatedCommonRangeCell<F>,
     iid_cell: AllocatedCommonRangeCell<F>,
+    pub(crate) return_value_cell: AllocatedUnlimitedCell<F>,
 
     itable_lookup_cell: AllocatedUnlimitedCell<F>,
     brtable_lookup_cell: AllocatedUnlimitedCell<F>,
@@ -184,6 +186,7 @@ pub trait EventTableOpcodeConfig<F: FieldExt> {
 pub struct EventTableConfig<F: FieldExt> {
     pub step_sel: Column<Fixed>,
     pub common_config: EventTableCommonConfig<F>,
+    pub instance: Column<Instance>,
     op_configs: BTreeMap<OpcodeClassPlain, Rc<Box<dyn EventTableOpcodeConfig<F>>>>,
 }
 
@@ -191,6 +194,7 @@ impl<F: FieldExt> EventTableConfig<F> {
     pub(crate) fn configure(
         meta: &mut ConstraintSystem<F>,
         cols: &mut (impl Iterator<Item = Column<Advice>> + Clone),
+        instance: Column<Instance>,
         circuit_configure: &CircuitConfigure,
         rtable: &RangeTableConfig<F>,
         image_table: &ImageTableConfig<F>,
@@ -220,6 +224,8 @@ impl<F: FieldExt> EventTableConfig<F> {
         let eid_cell = allocator.alloc_common_range_cell();
         let fid_cell = allocator.alloc_common_range_cell();
         let iid_cell = allocator.alloc_common_range_cell();
+        let return_value_cell = allocator.alloc_unlimited_cell();
+        meta.enable_equality(return_value_cell.0.col);
 
         let itable_lookup_cell = allocator.alloc_unlimited_cell();
         let brtable_lookup_cell = allocator.alloc_unlimited_cell();
@@ -245,6 +251,7 @@ impl<F: FieldExt> EventTableConfig<F> {
             eid_cell,
             fid_cell,
             iid_cell,
+            return_value_cell,
             itable_lookup_cell,
             brtable_lookup_cell,
             jtable_lookup_cell,
@@ -542,6 +549,14 @@ impl<F: FieldExt> EventTableConfig<F> {
             pow_table_lookup_cell.curr_expr(meta) * fixed_curr!(meta, step_sel)
         });
 
+        meta.create_gate("c9. return value terminate", |meta| {
+            vec![
+                (return_value_cell.expr(meta) - return_value_cell.next_expr(meta))
+                    * (constant_from!(1) - enabled_cell.next_expr(meta))
+                    * fixed_curr!(meta, step_sel),
+            ]
+        });
+
         external_host_call_table.configure_in_table(
             meta,
             "c8g. external_foreign_call_lookup in foreign table",
@@ -550,6 +565,7 @@ impl<F: FieldExt> EventTableConfig<F> {
 
         Self {
             step_sel,
+            instance,
             common_config,
             op_configs,
         }

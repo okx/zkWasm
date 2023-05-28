@@ -1,6 +1,8 @@
 use halo2_proofs::arithmetic::FieldExt;
+use halo2_proofs::plonk::Column;
 use halo2_proofs::plonk::ConstraintSystem;
 use halo2_proofs::plonk::Expression;
+use halo2_proofs::plonk::Instance;
 use halo2_proofs::plonk::VirtualCells;
 
 use crate::fixed_curr;
@@ -10,11 +12,9 @@ use crate::instance_curr;
 use super::WasmInputHelperTableConfig;
 
 impl<F: FieldExt> WasmInputHelperTableConfig<F> {
-    pub fn configure(meta: &mut ConstraintSystem<F>) -> Self {
+    pub fn configure(meta: &mut ConstraintSystem<F>, input: Column<Instance>) -> Self {
         let enable = meta.fixed_column();
         let index = meta.fixed_column();
-        let input = meta.instance_column();
-        meta.enable_equality(input);
 
         WasmInputHelperTableConfig {
             enable,

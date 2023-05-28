@@ -92,6 +92,8 @@ pub fn run_test_circuit<F: FieldExt>(
     #[cfg(feature = "checksum")]
     instances.push(execution_result.tables.compilation_tables.hash());
 
+    // TODO
+
     instances.append(&mut public_inputs);
 
     execution_result.tables.write_json(None);

@@ -24,6 +24,7 @@ pub(in crate::circuits) struct EventTablePermutationCells<F: FieldExt> {
     pub(in crate::circuits) rest_mops: Option<Cell>,
     pub(in crate::circuits) rest_jops: Option<Cell>,
     pub(in crate::circuits) fid_of_entry: AssignedCell<F, F>,
+    pub(in crate::circuits) return_value: Cell,
 }
 
 impl<F: FieldExt> EventTableChip<F> {
@@ -58,7 +59,7 @@ impl<F: FieldExt> EventTableChip<F> {
         rest_ops
     }
 
-    fn init(&self, ctx: &mut Context<'_, F>) -> Result<(), Error> {
+    fn init(&self, ctx: &mut Context<'_, F>) -> Result<Cell, Error> {
         let capability = self.max_available_rows / EVENT_TABLE_ENTRY_ROWS as usize;
 
         for _ in 0..capability {
@@ -71,6 +72,14 @@ impl<F: FieldExt> EventTableChip<F> {
 
             ctx.step(EVENT_TABLE_ENTRY_ROWS as usize);
         }
+
+        let return_value_cell = ctx.region.assign_advice_from_instance(
+            || "etable: return value",
+            self.config.instance,
+            1,
+            self.config.common_config.return_value_cell.0.col,
+            ctx.offset,
+        )?;
 
         ctx.region.assign_advice_from_constant(
             || "etable: rest mops terminates",
@@ -86,7 +95,7 @@ impl<F: FieldExt> EventTableChip<F> {
             F::zero(),
         )?;
 
-        Ok(())
+        Ok(return_value_cell.cell())
     }
 
     fn assign_rest_ops_first_step(
@@ -276,6 +285,25 @@ impl<F: FieldExt> EventTableChip<F> {
             F::from(external_host_call_call_index as u64)
         );
 
+        // Assign return from last entry(return) to end.
+        {
+            let last_entry = event_table.0.iter().last().unwrap();
+            match &last_entry.eentry.step_info {
+                specs::step::StepInfo::Return { keep_values, .. } => {
+                    assert_eq!(keep_values.len(), 1);
+
+                    let return_value = keep_values.first().unwrap();
+                    let capability = self.max_available_rows / EVENT_TABLE_ENTRY_ROWS as usize;
+
+                    for _ in 0..(capability - event_table.0.len() + 1) {
+                        assign_advice!(return_value_cell, F::from(*return_value));
+                        ctx.step(EVENT_TABLE_ENTRY_ROWS as usize);
+                    }
+                }
+                _ => unreachable!(),
+            }
+        }
+
         Ok(fid_of_entry_cell)
     }
 
@@ -291,7 +319,7 @@ impl<F: FieldExt> EventTableChip<F> {
 
         let rest_ops = self.compute_rest_mops_and_jops(&self.config.op_configs, event_table);
 
-        self.init(ctx)?;
+        let return_value = self.init(ctx)?;
         ctx.reset();
 
         let (rest_mops_cell, rest_jops_cell) = self.assign_rest_ops_first_step(
@@ -315,6 +343,7 @@ impl<F: FieldExt> EventTableChip<F> {
             rest_mops: Some(rest_mops_cell),
             rest_jops: Some(rest_jops_cell),
             fid_of_entry,
+            return_value,
         })
     }
 }

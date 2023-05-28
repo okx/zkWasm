@@ -217,6 +217,7 @@ pub fn exec_create_proof(
     output_dir: &PathBuf,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
+    return_value: u64,
 ) -> Result<()> {
     let circuit =
         build_circuit_with_witness(wasm_binary, function_name, public_inputs, private_inputs)?;
@@ -226,16 +227,21 @@ pub fn exec_create_proof(
         .collect::<Vec<_>>()
         .clone();
 
-    let mut instances = vec![];
+    let instances = {
+        let mut instances = vec![];
 
-    #[cfg(feature = "checksum")]
-    instances.push(circuit.tables.compilation_tables.hash());
+        #[cfg(feature = "checksum")]
+        instances.push(circuit.tables.compilation_tables.hash());
 
-    instances.append(&mut public_inputs);
+        instances.push(Fr::from(return_value));
+        instances.append(&mut public_inputs);
+
+        instances
+    };
 
     circuit.tables.write_json(Some(output_dir.clone()));
 
-    if false {
+    if true {
         info!("Mock test...");
 
         let prover = MockProver::run(zkwasm_k, &circuit, vec![instances.clone()])?;
@@ -279,8 +285,9 @@ pub fn exec_verify_proof(
     output_dir: &PathBuf,
     proof_path: &PathBuf,
     public_inputs: &Vec<u64>,
+    return_value: u64,
 ) {
-    let public_inputs_size = public_inputs.len() + 1;
+    let public_inputs_size = public_inputs.len() + 2;
 
     let mut public_inputs = public_inputs
         .iter()
@@ -294,6 +301,7 @@ pub fn exec_verify_proof(
         #[cfg(feature = "checksum")]
         instances.push(hash_image(wasm_binary, function_name));
 
+        instances.push(Fr::from(return_value));
         instances.append(&mut public_inputs);
 
         instances

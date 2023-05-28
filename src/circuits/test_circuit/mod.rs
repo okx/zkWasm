@@ -83,6 +83,8 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
         }
 
         let mut cols = [(); VAR_COLUMNS].map(|_| meta.advice_column()).into_iter();
+        let input = meta.instance_column();
+        meta.enable_equality(input);
 
         let rtable = RangeTableConfig::configure([0; 8].map(|_| meta.lookup_table_column()));
         let image_table = ImageTableConfig::configure(meta);
@@ -91,7 +93,7 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
         let external_host_call_table = ExternalHostCallTableConfig::configure(meta);
         let bit_table = BitTableConfig::configure(meta, &rtable);
 
-        let wasm_input_helper_table = WasmInputHelperTableConfig::configure(meta);
+        let wasm_input_helper_table = WasmInputHelperTableConfig::configure(meta, input);
         let mut foreign_table_configs: BTreeMap<_, Box<(dyn ForeignTableConfig<F>)>> =
             BTreeMap::new();
         foreign_table_configs.insert(
@@ -102,6 +104,7 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
         let etable = EventTableConfig::configure(
             meta,
             &mut cols,
+            input,
             &circuit_configure,
             &rtable,
             &image_table,
@@ -175,7 +178,7 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
         );
 
         #[allow(unused_variables)]
-        let img_info = layouter.assign_region(
+        let (img_info, return_value) = layouter.assign_region(
             || "jtable mtable etable",
             |region| {
                 let mut ctx = Context::new(region);
@@ -232,7 +235,10 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
                     exec_with_profile!(|| "Assign bit table", bit_chip.assign(&mut ctx, &etable)?);
                 }
 
-                Ok(vec![vec![etable_permutation_cells.fid_of_entry], jtable_info].concat())
+                Ok((
+                    vec![vec![etable_permutation_cells.fid_of_entry], jtable_info].concat(),
+                    etable_permutation_cells.return_value,
+                ))
             },
         )?;
 
@@ -246,7 +252,9 @@ impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
         #[allow(unused_mut)]
         let mut instances = vec![];
         #[cfg(feature = "checksum")]
-        instances.push(checksum);
+        instances.push(checksum.cell());
+
+        instances.push(return_value);
 
         exec_with_profile!(
             || "Assign wasm input chip",

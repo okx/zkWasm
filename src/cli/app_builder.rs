@@ -106,6 +106,7 @@ pub trait AppBuilder: CommandBuilder {
             Some(("single-prove", sub_matches)) => {
                 let public_inputs: Vec<u64> = Self::parse_single_public_arg(&sub_matches);
                 let private_inputs: Vec<u64> = Self::parse_single_private_arg(&sub_matches);
+                let return_value: u64 = Self::parse_single_return_arg(&sub_matches);
 
                 assert!(public_inputs.len() <= Self::MAX_PUBLIC_INPUT_SIZE);
 
@@ -117,12 +118,14 @@ pub trait AppBuilder: CommandBuilder {
                     &output_dir,
                     &public_inputs,
                     &private_inputs,
+                    return_value,
                 )
                 .unwrap();
             }
             Some(("single-verify", sub_matches)) => {
                 let proof_path: PathBuf = Self::parse_proof_path_arg(&sub_matches);
                 let public_inputs: Vec<u64> = Self::parse_single_public_arg(&sub_matches);
+                let return_value: u64 = Self::parse_single_return_arg(&sub_matches);
 
                 assert!(public_inputs.len() <= Self::MAX_PUBLIC_INPUT_SIZE);
 
@@ -134,6 +137,7 @@ pub trait AppBuilder: CommandBuilder {
                     &output_dir,
                     &proof_path,
                     &public_inputs,
+                    return_value,
                 );
             }
             Some(("aggregate-prove", sub_matches)) => {

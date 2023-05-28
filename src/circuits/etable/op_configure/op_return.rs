@@ -32,7 +32,7 @@ pub struct ReturnConfig<F: FieldExt> {
     keep: AllocatedBitCell<F>,
     drop: AllocatedCommonRangeCell<F>,
     is_i32: AllocatedBitCell<F>,
-    value: AllocatedU64Cell<F>,
+    value: AllocatedUnlimitedCell<F>,
     frame_table_lookup: AllocatedJumpTableLookupCell<F>,
     memory_table_lookup_stack_read: AllocatedMemoryTableLookupReadCell<F>,
     memory_table_lookup_stack_write: AllocatedMemoryTableLookupWriteCell<F>,
@@ -49,7 +49,7 @@ impl<F: FieldExt> EventTableOpcodeConfigBuilder<F> for ReturnConfigBuilder {
         let keep = allocator.alloc_bit_cell();
         let drop = allocator.alloc_common_range_cell();
         let is_i32 = allocator.alloc_bit_cell();
-        let value = allocator.alloc_u64_cell();
+        let value = common_config.return_value_cell;
 
         let frame_table_lookup = common_config.jtable_lookup_cell;
 
@@ -66,7 +66,7 @@ impl<F: FieldExt> EventTableOpcodeConfigBuilder<F> for ReturnConfigBuilder {
             move |____| constant_from!(LocationType::Stack as u64),
             move |meta| sp.expr(meta) + constant_from!(1),
             move |meta| is_i32.expr(meta),
-            move |meta| value.u64_cell.expr(meta),
+            move |meta| value.expr(meta),
             move |meta| keep.expr(meta),
         );
         let memory_table_lookup_stack_write = allocator.alloc_memory_table_lookup_write_cell(
@@ -76,7 +76,7 @@ impl<F: FieldExt> EventTableOpcodeConfigBuilder<F> for ReturnConfigBuilder {
             move |____| constant_from!(LocationType::Stack as u64),
             move |meta| sp.expr(meta) + drop.expr(meta) + constant_from!(1),
             move |meta| is_i32.expr(meta),
-            move |meta| value.u64_cell.expr(meta),
+            move |meta| value.expr(meta),
             move |meta| keep.expr(meta),
         );
 
@@ -143,7 +143,7 @@ impl<F: FieldExt> EventTableOpcodeConfig<F> for ReturnConfig<F> {
                     self.keep.assign(ctx, 1.into())?;
                     self.is_i32
                         .assign(ctx, (VarType::from(keep[0]) as u64).into())?;
-                    self.value.assign(ctx, keep_values[0])?;
+                    self.value.assign(ctx, F::from(keep_values[0]))?;
 
                     self.memory_table_lookup_stack_read.assign(
                         ctx,

@@ -21,14 +21,16 @@ pub trait CommandBuilder: ArgBuilder {
     fn append_create_single_proof_subcommand(app: App) -> App {
         let command = Command::new("single-prove")
             .arg(Self::single_public_arg())
-            .arg(Self::single_private_arg());
+            .arg(Self::single_private_arg())
+            .arg(Self::single_return_arg());
         app.subcommand(command)
     }
 
     fn append_verify_single_proof_subcommand(app: App) -> App {
         let command = Command::new("single-verify")
             .arg(Self::single_public_arg())
-            .arg(Self::proof_path_arg());
+            .arg(Self::proof_path_arg())
+            .arg(Self::single_return_arg());
 
         app.subcommand(command)
     }
