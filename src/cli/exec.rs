@@ -275,6 +275,7 @@ pub fn exec_dry_run(
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
 ) -> Result<()> {
+    info!("Execution started");
     let _ = build_circuit_with_witness(wasm_binary, function_name, public_inputs, private_inputs)?;
 
     info!("Execution passed.");
