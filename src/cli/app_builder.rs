@@ -18,6 +18,7 @@ use super::exec::exec_setup;
 use super::exec::exec_solidity_aggregate_proof;
 use super::exec::exec_verify_aggregate_proof;
 use super::exec::exec_verify_proof;
+use std::time::Instant;
 
 fn load_or_generate_output_path(wasm_md5: &String, path: Option<&PathBuf>) -> PathBuf {
     if let Some(path) = path {
@@ -100,6 +101,7 @@ pub trait AppBuilder: CommandBuilder {
                 exec_image_checksum(&wasm_binary, &function_name, &output_dir);
             }
             Some(("dry-run", sub_matches)) => {
+                let start = Instant::now();
                 let public_inputs: Vec<u64> = Self::parse_single_public_arg(&sub_matches);
                 let private_inputs: Vec<u64> = Self::parse_single_private_arg(&sub_matches);
 
@@ -112,6 +114,7 @@ pub trait AppBuilder: CommandBuilder {
                     &private_inputs,
                 )
                 .unwrap();
+                println!("time elapse: {:?}", Instant::now().duration_since(start));
             }
             Some(("single-prove", sub_matches)) => {
                 let public_inputs: Vec<u64> = Self::parse_single_public_arg(&sub_matches);
