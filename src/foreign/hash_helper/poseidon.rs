@@ -5,8 +5,9 @@ use ff::PrimeField;
 use poseidon::Poseidon;
 use zkwasm_host_circuits::host::poseidon::{
     gen_hasher,
-    T, RATE
+    T, RATE,
 };
+use std::time::Instant;
 
 use zkwasm_host_circuits::host::{
     Reduce, ReduceRule
@@ -83,6 +84,10 @@ impl PoseidonContext {
     }
 }
 
+lazy_static::lazy_static! {
+    static ref POSEIDON_HASHER: poseidon::Poseidon<Fr, 9, 8> = gen_hasher();
+}
+
 
 impl ForeignContext for PoseidonContext {}
 
@@ -99,13 +104,15 @@ pub fn register_poseidon_foreign(env: &mut HostEnv) {
         foreign_poseidon_plugin.clone(),
         Rc::new(
             |context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
+                let start = Instant::now();
                 let context = context.downcast_mut::<PoseidonContext>().unwrap();
                 println!("buf len is {}", context.buf.len());
                 context.buf = vec![];
                 let new = args.nth::<u64>(0) as usize;
                 if new != 0 {
-                    context.hasher = Some(gen_hasher());
+                    context.hasher = Some(POSEIDON_HASHER.clone());
                 }
+                println!("poseidon_new cost:{:?}", Instant::now().duration_since(start));
                 None
             },
         ),
@@ -118,11 +125,13 @@ pub fn register_poseidon_foreign(env: &mut HostEnv) {
         foreign_poseidon_plugin.clone(),
         Rc::new(
             |context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
+                let start = Instant::now();
                 let context = context.downcast_mut::<PoseidonContext>().unwrap();
                 context.fieldreducer.reduce(args.nth::<u64>(0) as u64);
                 if context.fieldreducer.cursor == 0 {
                     context.buf.push(context.fieldreducer.rules[0].field_value().unwrap())
                 }
+                println!("poseidon_push cost:{:?}", Instant::now().duration_since(start));
                 None
             },
         ),
@@ -136,6 +145,7 @@ pub fn register_poseidon_foreign(env: &mut HostEnv) {
         foreign_poseidon_plugin.clone(),
         Rc::new(
             |context: &mut dyn ForeignContext, _args: wasmi::RuntimeArgs| {
+                let start = Instant::now();
                 let context = context.downcast_mut::<PoseidonContext>().unwrap();
                 assert!(context.buf.len() == 8);
                 if context.generator.cursor == 0 {
@@ -148,6 +158,7 @@ pub fn register_poseidon_foreign(env: &mut HostEnv) {
                         }).collect::<Vec<u64>>();
                     });
                 }
+                println!("poseidon_finalize cost:{:?}", Instant::now().duration_since(start));
                 Some(wasmi::RuntimeValue::I64(context.generator.gen() as i64))
             },
         ),

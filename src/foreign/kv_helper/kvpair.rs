@@ -14,6 +14,7 @@ use zkwasm_host_circuits::host::ForeignInst::{
 };
 
 use halo2_proofs::pairing::bn256::Fr;
+use std::time::Instant;
 
 struct KVPairContext {
     pub set_root: Reduce<Fr>,
@@ -77,6 +78,7 @@ pub fn register_kvpair_foreign(env: &mut HostEnv) {
         foreign_kvpair_plugin.clone(),
         Rc::new(
             |context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
+                let start = Instant::now();
                 let context = context.downcast_mut::<KVPairContext>().unwrap();
                 context.set_root.reduce(args.nth(0));
                 if context.set_root.cursor == 0 {
@@ -91,6 +93,7 @@ pub fn register_kvpair_foreign(env: &mut HostEnv) {
                         )
                     );
                 }
+                println!("kvpair_setroot time cost:{:?}", Instant::now().duration_since(start));
                 None
             },
         ),
@@ -103,6 +106,7 @@ pub fn register_kvpair_foreign(env: &mut HostEnv) {
         foreign_kvpair_plugin.clone(),
         Rc::new(
             |context: &mut dyn ForeignContext, _args: wasmi::RuntimeArgs| {
+                let start = Instant::now();
                 let context = context.downcast_mut::<KVPairContext>().unwrap();
                 let mt = context.mongo_merkle.as_ref().expect("merkle db not initialized");
                 let hash = mt.get_root_hash();
@@ -111,6 +115,7 @@ pub fn register_kvpair_foreign(env: &mut HostEnv) {
                 }).collect::<Vec<u64>>();
                 let cursor = context.get_root.cursor;
                 context.get_root.reduce(values[context.get_root.cursor]);
+                println!("kvpair_getroot time cost:{:?}", Instant::now().duration_since(start));
                 Some(wasmi::RuntimeValue::I64(values[cursor] as i64))
             },
         ),
@@ -123,8 +128,10 @@ pub fn register_kvpair_foreign(env: &mut HostEnv) {
         foreign_kvpair_plugin.clone(),
         Rc::new(
             |context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
+                let start = Instant::now();
                 let context = context.downcast_mut::<KVPairContext>().unwrap();
                 context.address.reduce(args.nth(0));
+                println!("kvpair_address time cost:{:?}", Instant::now().duration_since(start));
                 None
             },
         ),
@@ -138,6 +145,7 @@ pub fn register_kvpair_foreign(env: &mut HostEnv) {
         foreign_kvpair_plugin.clone(),
         Rc::new(
             |context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
+                let start = Instant::now();
                 let context = context.downcast_mut::<KVPairContext>().unwrap();
                 context.set.reduce(args.nth(0));
                 if context.set.cursor == 0 {
@@ -149,6 +157,7 @@ pub fn register_kvpair_foreign(env: &mut HostEnv) {
                         &context.set.rules[0].bytes_value().unwrap()
                     ).expect("Unexpected failure: update leaf with proof fail");
                 }
+                println!("kvpair_set time cost:{:?}", Instant::now().duration_since(start));
                 None
             },
         ),
@@ -162,6 +171,7 @@ pub fn register_kvpair_foreign(env: &mut HostEnv) {
         foreign_kvpair_plugin.clone(),
         Rc::new(
             |context: &mut dyn ForeignContext, _args: wasmi::RuntimeArgs| {
+                let start = Instant::now();
                 let context = context.downcast_mut::<KVPairContext>().unwrap();
                 let address = context.address.rules[0].u64_value().unwrap() as u32;
                 let index = (address as u32) + (1u32<<MERKLE_TREE_HEIGHT) - 1;
@@ -172,6 +182,7 @@ pub fn register_kvpair_foreign(env: &mut HostEnv) {
                 let values = leaf.data_as_u64();
                 context.get.reduce(values[context.get.cursor]);
                 let ret = Some(wasmi::RuntimeValue::I64(values[cursor] as i64));
+                println!("kvpair_get time cost:{:?}", Instant::now().duration_since(start));
                 ret
             },
         ),
