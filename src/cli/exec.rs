@@ -8,7 +8,7 @@ use anyhow::Result;
 use halo2_proofs::arithmetic::Engine;
 use halo2_proofs::arithmetic::BaseExt;
 use halo2_proofs::dev::MockProver;
-use halo2_proofs::pairing::bn256::Bn256;
+pub use halo2_proofs::pairing::bn256::Bn256;
 use halo2_proofs::pairing::bn256::Fr;
 use halo2_proofs::pairing::bn256::G1Affine;
 use halo2_proofs::plonk::verify_proof;
