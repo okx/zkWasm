@@ -4,9 +4,9 @@ use halo2_proofs::pairing::bn256::Fr;
 use ff::PrimeField;
 use poseidon::Poseidon;
 use zkwasm_host_circuits::host::poseidon::{
-    gen_hasher,
     T, RATE
 };
+pub use zkwasm_host_circuits::host::poseidon::gen_hasher;
 
 use zkwasm_host_circuits::host::{
     Reduce, ReduceRule
