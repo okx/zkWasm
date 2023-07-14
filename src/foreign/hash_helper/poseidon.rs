@@ -40,13 +40,13 @@ use zkwasm_host_circuits::host::ForeignInst::{
 ///     wasm_dbg(r[3]);
 /// }
 
-struct Generator {
+pub struct Generator {
     pub cursor: usize,
     pub values: Vec<u64>,
 }
 
 impl Generator {
-    fn gen(&mut self) -> u64 {
+    pub fn gen(&mut self) -> u64 {
         let r = self.values[self.cursor];
         self.cursor += 1;
         if self.cursor == 4 {
@@ -56,14 +56,14 @@ impl Generator {
     }
 }
 
-fn new_reduce(rules: Vec<ReduceRule<Fr>>) -> Reduce<Fr> {
+pub fn new_reduce(rules: Vec<ReduceRule<Fr>>) -> Reduce<Fr> {
     Reduce {
         cursor: 0,
         rules
     }
 }
 
-struct PoseidonContext {
+pub struct PoseidonContext {
     pub hasher: Option<Poseidon<Fr, T, RATE>>,
     pub generator: Generator,
     pub buf: Vec<Fr>,
@@ -71,7 +71,7 @@ struct PoseidonContext {
 }
 
 impl PoseidonContext {
-    fn default() -> Self {
+    pub fn default() -> Self {
         PoseidonContext {
             hasher: None,
             fieldreducer:new_reduce(vec![ReduceRule::Field(Fr::zero(), 64)]),
