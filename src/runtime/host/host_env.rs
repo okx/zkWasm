@@ -19,6 +19,8 @@ pub struct HostEnv {
     pub internal_env: InternalCircuitEnv,
     pub external_env: ExternalCircuitEnv,
 
+    pub log_outputs: Rc<RefCell<Vec<u64>>>,
+
     finalized: Rc<RefCell<bool>>,
     cached_lookup: Option<HashMap<usize, HostFunction>>,
 }
@@ -39,6 +41,7 @@ impl HostEnv {
         Self {
             internal_env: InternalCircuitEnv::new(finalized.clone()),
             external_env: ExternalCircuitEnv::new(finalized.clone()),
+            log_outputs: Rc::new(RefCell::new(Vec::new())),
             cached_lookup: None,
             finalized,
         }

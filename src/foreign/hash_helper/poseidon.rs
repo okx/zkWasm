@@ -4,9 +4,10 @@ use halo2_proofs::pairing::bn256::Fr;
 use ff::PrimeField;
 use poseidon::Poseidon;
 use zkwasm_host_circuits::host::poseidon::{
-    gen_hasher,
+    //gen_hasher,
     T, RATE,
 };
+use zkwasm_host_circuits::host::kvpair::POSEIDON_HASHER;
 use std::time::Instant;
 
 use zkwasm_host_circuits::host::{
@@ -40,13 +41,13 @@ use zkwasm_host_circuits::host::ForeignInst::{
 ///     wasm_dbg(r[3]);
 /// }
 
-struct Generator {
+pub struct Generator {
     pub cursor: usize,
     pub values: Vec<u64>,
 }
 
 impl Generator {
-    fn gen(&mut self) -> u64 {
+    pub fn gen(&mut self) -> u64 {
         let r = self.values[self.cursor];
         self.cursor += 1;
         if self.cursor == 4 {
@@ -56,14 +57,14 @@ impl Generator {
     }
 }
 
-fn new_reduce(rules: Vec<ReduceRule<Fr>>) -> Reduce<Fr> {
+pub fn new_reduce(rules: Vec<ReduceRule<Fr>>) -> Reduce<Fr> {
     Reduce {
         cursor: 0,
         rules
     }
 }
 
-struct PoseidonContext {
+pub struct PoseidonContext {
     pub hasher: Option<Poseidon<Fr, T, RATE>>,
     pub generator: Generator,
     pub buf: Vec<Fr>,
@@ -71,7 +72,7 @@ struct PoseidonContext {
 }
 
 impl PoseidonContext {
-    fn default() -> Self {
+    pub fn default() -> Self {
         PoseidonContext {
             hasher: None,
             fieldreducer:new_reduce(vec![ReduceRule::Field(Fr::zero(), 64)]),
@@ -84,9 +85,9 @@ impl PoseidonContext {
     }
 }
 
-lazy_static::lazy_static! {
-    static ref POSEIDON_HASHER: poseidon::Poseidon<Fr, 9, 8> = gen_hasher();
-}
+// lazy_static::lazy_static! {
+//     static ref POSEIDON_HASHER: poseidon::Poseidon<Fr, 9, 8> = gen_hasher();
+// }
 
 
 impl ForeignContext for PoseidonContext {}

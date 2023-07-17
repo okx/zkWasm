@@ -5,21 +5,24 @@ use crate::profile::Profiler;
 use crate::runtime::wasmi_interpreter::WasmRuntimeIO;
 use crate::runtime::CompiledImage;
 use anyhow::Result;
+use halo2_proofs::arithmetic::Engine;
 use halo2_proofs::arithmetic::BaseExt;
 use halo2_proofs::dev::MockProver;
-use halo2_proofs::pairing::bn256::Bn256;
+pub use halo2_proofs::pairing::bn256::Bn256;
 use halo2_proofs::pairing::bn256::Fr;
 use halo2_proofs::pairing::bn256::G1Affine;
 use halo2_proofs::plonk::verify_proof;
 use halo2_proofs::plonk::SingleVerifier;
+use halo2_proofs::plonk::VerifyingKey;
 use halo2_proofs::poly::commitment::ParamsVerifier;
+use halo2_proofs::poly::commitment::Params;
 use halo2aggregator_s::circuit_verifier::circuit::AggregatorCircuit;
 use halo2aggregator_s::circuits::utils::load_instance;
-use halo2aggregator_s::circuits::utils::load_or_build_unsafe_params;
+pub use halo2aggregator_s::circuits::utils::load_or_build_unsafe_params;
 use halo2aggregator_s::circuits::utils::load_or_build_vkey;
 use halo2aggregator_s::circuits::utils::load_or_create_proof;
 use halo2aggregator_s::circuits::utils::load_proof;
-use halo2aggregator_s::circuits::utils::load_vkey;
+pub use halo2aggregator_s::circuits::utils::load_vkey;
 use halo2aggregator_s::circuits::utils::run_circuit_unsafe_full_pass;
 use halo2aggregator_s::circuits::utils::store_instance;
 use halo2aggregator_s::circuits::utils::TranscriptHash;
@@ -41,7 +44,7 @@ use wasmi::NotStartedModuleRef;
 
 use crate::circuits::TestCircuit;
 use crate::circuits::ZkWasmCircuitBuilder;
-use crate::foreign::log_helper::register_log_foreign;
+use crate::foreign::log_helper::{register_log_foreign, register_log_output_foreign};
 use crate::foreign::require_helper::register_require_foreign;
 use crate::foreign::kv_helper::kvpair::register_kvpair_foreign;
 use crate::foreign::wasm_input_helper::runtime::register_wasm_input_foreign;
@@ -80,6 +83,7 @@ pub fn compile_image<'a>(
     register_sha256_foreign(&mut env);
     register_poseidon_foreign(&mut env);
     register_babyjubjubsum_foreign(&mut env);
+    register_log_output_foreign(&mut env);
     env.finalize();
     let imports = ImportsBuilder::new().with_resolver("env", &env);
 
@@ -128,7 +132,7 @@ fn build_circuit_builder(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
-) -> Result<(ZkWasmCircuitBuilder, Vec<u64>)> {
+) -> Result<(ZkWasmCircuitBuilder, Vec<u64>, HostEnv)> {
     let module = wasmi::Module::from_buffer(wasm_binary).expect("failed to load wasm");
 
     let mut env = HostEnv::new();
@@ -144,6 +148,7 @@ fn build_circuit_builder(
     register_sha256_foreign(&mut env);
     register_poseidon_foreign(&mut env);
     register_babyjubjubsum_foreign(&mut env);
+    register_log_output_foreign(&mut env);
     env.finalize();
     let imports = ImportsBuilder::new().with_resolver("env", &env);
 
@@ -164,7 +169,7 @@ fn build_circuit_builder(
         public_inputs_and_outputs: execution_result.public_inputs_and_outputs,
     };
 
-    Ok((builder, execution_result.outputs))
+    Ok((builder, execution_result.outputs, env))
 }
 
 fn build_circuit_with_witness(
@@ -173,7 +178,7 @@ fn build_circuit_with_witness(
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
 ) -> Result<(TestCircuit<Fr>, Vec<Fr>)> {
-    let (builder, outputs) = build_circuit_builder(wasm_binary, function_name, public_inputs, private_inputs)?;
+    let (builder, outputs, _) = build_circuit_builder(wasm_binary, function_name, public_inputs, private_inputs)?;
 
     let instance: Vec<Fr> = builder
         .public_inputs_and_outputs
@@ -195,10 +200,10 @@ fn build_tables_and_outputs(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
-) -> Result<(Tables, Vec<u64>, Vec<u64>)>{
-    let (builder, outputs) = build_circuit_builder(wasm_binary, function_name, public_inputs, private_inputs)?;
+) -> Result<(Tables, Vec<u64>, Vec<u64>, HostEnv)>{
+    let (builder, outputs, env) = build_circuit_builder(wasm_binary, function_name, public_inputs, private_inputs)?;
 
-    Ok((builder.build_circuit_without_configure::<Fr>().tables, builder.public_inputs_and_outputs, outputs))
+    Ok((builder.build_circuit_without_configure::<Fr>().tables, builder.public_inputs_and_outputs, outputs, env))
 }
 
 pub fn exec_setup(
@@ -288,28 +293,42 @@ pub fn exec_gen_witness(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
-) -> Result<(Tables, Vec<u64>, Vec<u64>)> {
+) -> Result<(Tables, Vec<u64>, Vec<u64>, HostEnv)> {
     build_tables_and_outputs(wasm_binary, function_name, public_inputs, private_inputs)
 }
 
 pub fn exec_create_proof_from_witness(
-    prefix: &str,
-    zkwasm_k: u32,
     compilation_tables: CompilationTable,
     execution_tables: ExecutionTable,
     instance: Vec<u64>,
-    output_dir: &PathBuf,
-) -> Result<()> {
+    params: Params<<Bn256 as Engine>::G1Affine>,
+    vkey: VerifyingKey<<Bn256 as Engine>::G1Affine>,
+) -> Result<Vec<u8>> {
     let circuit = TestCircuit::new_without_configure(Tables{
         compilation_tables,
         execution_tables,
     });
-    let instance: Vec<Fr> = instance
+    let mut instance: Vec<Fr> = instance
         .iter()
         .map(|v| (*v).into())
         .collect();
 
-    exec_create_proof_from_circuit(prefix, zkwasm_k, output_dir, circuit, instance)
+    let mut instances = vec![];
+
+    #[cfg(feature = "checksum")]
+    instances.push(circuit.tables.compilation_tables.hash());
+
+    instances.append(&mut instance);
+
+    Ok(load_or_create_proof::<Bn256, _>(
+        &params,
+        vkey,
+        circuit.clone(),
+        &[&instances],
+        None,
+        TranscriptHash::Poseidon,
+        false,
+    ))
 }
 
 fn exec_create_proof_from_circuit(
