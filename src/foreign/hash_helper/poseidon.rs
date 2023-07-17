@@ -4,9 +4,10 @@ use halo2_proofs::pairing::bn256::Fr;
 use ff::PrimeField;
 use poseidon::Poseidon;
 use zkwasm_host_circuits::host::poseidon::{
-    gen_hasher,
+    //gen_hasher,
     T, RATE,
 };
+use zkwasm_host_circuits::host::kvpair::POSEIDON_HASHER;
 use std::time::Instant;
 
 use zkwasm_host_circuits::host::{
@@ -84,9 +85,9 @@ impl PoseidonContext {
     }
 }
 
-lazy_static::lazy_static! {
-    static ref POSEIDON_HASHER: poseidon::Poseidon<Fr, 9, 8> = gen_hasher();
-}
+// lazy_static::lazy_static! {
+//     static ref POSEIDON_HASHER: poseidon::Poseidon<Fr, 9, 8> = gen_hasher();
+// }
 
 
 impl ForeignContext for PoseidonContext {}
