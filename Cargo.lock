@@ -520,7 +520,7 @@ dependencies = [
  "env_logger",
  "ff",
  "halo2_proofs",
- "halo2aggregator-s",
+ "halo2aggregator-s 0.1.0 (git+https://github.com/DelphinusLab/halo2aggregator-s.git?tag=bisect-lookup-0.3.0)",
  "hex",
  "lazy_static",
  "log",
@@ -935,7 +935,7 @@ dependencies = [
 [[package]]
 name = "halo2aggregator-s"
 version = "0.1.0"
-source = "git+https://github.com/DelphinusLab/halo2aggregator-s.git?tag=bisect-lookup-0.3.0#fa6e8033d960c1e13ac334ab5699f64c80fe47ab"
+source = "git+https://github.com/DelphinusLab/halo2aggregator-s.git?tag=bisect-lookup-0.2.1#2db58881aecff8f5a9c95ce9a8e1c023c92a9ce7"
 dependencies = [
  "ark-std",
  "blake2b_simd",
@@ -947,6 +947,34 @@ dependencies = [
  "poseidon",
  "sha2",
  "tera",
+]
+
+[[package]]
+name = "halo2aggregator-s"
+version = "0.1.0"
+source = "git+https://github.com/DelphinusLab/halo2aggregator-s.git?tag=bisect-lookup-0.3.0#fa6e8033d960c1e13ac334ab5699f64c80fe47ab"
+dependencies = [
+ "ark-std",
+ "blake2b_simd",
+ "halo2_proofs",
+ "halo2ecc-s 0.2.0 (git+https://github.com/lanbones/halo2ecc-s.git?tag=bisect-lookup-0.3.0)",
+ "lazy_static",
+ "num-bigint",
+ "num-integer",
+ "poseidon",
+ "sha2",
+ "tera",
+]
+
+[[package]]
+name = "halo2ecc-s"
+version = "0.2.0"
+source = "git+https://github.com/lanbones/halo2ecc-s.git?tag=bisect-lookup-0.2.1#11059fc86b1d9773a6ffca1a44b119c9f0841ded"
+dependencies = [
+ "halo2_proofs",
+ "num-bigint",
+ "num-integer",
+ "rayon",
 ]
 
 [[package]]
@@ -2902,7 +2930,7 @@ dependencies = [
  "clap",
  "ff",
  "halo2_proofs",
- "halo2aggregator-s",
+ "halo2aggregator-s 0.1.0 (git+https://github.com/DelphinusLab/halo2aggregator-s.git?tag=bisect-lookup-0.2.1)",
  "halo2ecc-s 0.2.0 (git+https://github.com/lanbones/halo2ecc-s.git?branch=bisect-lookup)",
  "hex",
  "lazy_static",
