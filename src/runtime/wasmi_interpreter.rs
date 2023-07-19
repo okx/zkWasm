@@ -3,13 +3,13 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::circuits::config::zkwasm_k;
-use crate::runtime::memory_event_of_step;
+//use crate::runtime::memory_event_of_step;
 use anyhow::Result;
 use specs::host_function::HostFunctionDesc;
 use specs::jtable::StaticFrameEntry;
-use specs::mtable::MTable;
+//use specs::mtable::MTable;
 use specs::CompilationTable;
-use specs::ExecutionTable;
+//use specs::ExecutionTable;
 use specs::Tables;
 use wasmi::Externals;
 use wasmi::ImportResolver;
