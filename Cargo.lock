@@ -1526,8 +1526,9 @@ dependencies = [
 [[package]]
 name = "pairing_bn256"
 version = "0.1.1"
-source = "git+https://github.com/lanbones/pairing#5ab08062f53cd29c946f96572aefdb688952d725"
+source = "git+https://github.com/lanbones/pairing#c1e721985bfbd0504006b31f87eaeb09e91851a4"
 dependencies = [
+ "ark-std",
  "bls12_381",
  "ec-gpu",
  "ff",

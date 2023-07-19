@@ -1,7 +1,15 @@
-RUST_BACKTRACE=1 RUST_LOG=info cargo run --release -- -k 21 --function zkmain --output ./output --wasm wasm/zkdex_mock_no_trade.wasm dry-run | grep "time elapse:"
+# cargo run --release -- -k 21 --function zkmain --wasm wasm/zkdex_wasm_mock_bg_opt.wasm dry-run
 
-RUST_BACKTRACE=1 RUST_LOG=info cargo run --release -- -k 21 --function zkmain --output ./output --wasm wasm/zkdex_mock_origin.wasm dry-run | grep "time elapse:"
+# funding 100, 2.83s
+cargo run --release -- -k 21 --function zkmain --output ./output --wasm wasm/mock_funding_100.wasm dry-run
 
-RUST_BACKTRACE=1 RUST_LOG=info cargo run --release -- -k 21 --function zkmain --output ./output --wasm wasm/zkdex_mock_50_deposit.wasm dry-run | grep "time elapse:"
+# oracle 100, 972ms
+cargo run --release -- -k 21 --function zkmain --output ./output --wasm wasm/mock_oracle_100.wasm dry-run
 
-RUST_BACKTRACE=1 RUST_LOG=info cargo run --release -- -k 21 --function zkmain --output ./output --wasm wasm/zkdex_mock_100_deposit.wasm dry-run | grep "time elapse:"
+# deposit 100, 3.64s
+cargo run --release -- -k 21 --function zkmain --output ./output --wasm wasm/mock_deposit_100.wasm dry-run
+
+# trade 1, 381ms
+cargo run --release -- -k 21 --function zkmain --output ./output --wasm wasm/mock_trade_1.wasm dry-run
+
+#bf1851a
