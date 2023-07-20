@@ -19,7 +19,7 @@ use super::exec::exec_solidity_aggregate_proof;
 use super::exec::exec_verify_aggregate_proof;
 use super::exec::exec_verify_proof;
 use std::time::Instant;
-use zkwasm_host_circuits::host::kvpair::POSEIDON_HASHER;
+pub use zkwasm_host_circuits::host::poseidon::POSEIDON_HASHER;
 
 fn load_or_generate_output_path(wasm_md5: &String, path: Option<&PathBuf>) -> PathBuf {
     if let Some(path) = path {

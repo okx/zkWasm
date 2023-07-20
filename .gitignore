@@ -1,4 +1,4 @@
 /target
-fibonacci/target
 *.json
+/output
 .idea

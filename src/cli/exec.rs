@@ -1,6 +1,5 @@
 #[cfg(feature = "checksum")]
 use crate::image_hasher::ImageHasher;
-
 use crate::profile::Profiler;
 use crate::runtime::wasmi_interpreter::WasmRuntimeIO;
 use crate::runtime::CompiledImage;
@@ -41,7 +40,6 @@ use wasmi::tracer::Tracer;
 use wasmi::ImportsBuilder;
 use wasmi::Module;
 use wasmi::NotStartedModuleRef;
-
 use crate::circuits::TestCircuit;
 use crate::circuits::ZkWasmCircuitBuilder;
 use crate::foreign::log_helper::{register_log_foreign, register_log_output_foreign};
@@ -162,14 +160,16 @@ fn build_circuit_builder(
         )
         .expect("file cannot be complied");
 
-    let execution_result = compiled_module.run(&mut env, wasm_runtime_io)?;
+    let r = compiled_module.run(&mut env, wasm_runtime_io)?;
+
+    env.display_time_profile();
 
     let builder = ZkWasmCircuitBuilder {
-        tables: execution_result.tables,
-        public_inputs_and_outputs: execution_result.public_inputs_and_outputs,
+        tables: r.tables,
+        public_inputs_and_outputs: r.public_inputs_and_outputs,
     };
 
-    Ok((builder, execution_result.outputs, env))
+    Ok((builder, r.outputs, env))
 }
 
 fn build_circuit_with_witness(
@@ -280,10 +280,9 @@ pub fn exec_dry_run(
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
 ) -> Result<()> {
-    info!("Execution started");
-    let _ = build_circuit_with_witness(wasm_binary, function_name, public_inputs, private_inputs)?;
+    let _ = build_circuit_builder(wasm_binary, function_name, public_inputs, private_inputs)?;
 
-    info!("Execution passed.");
+    println!("Execution passed.");
 
     Ok(())
 }
