@@ -1,4 +1,5 @@
 /target
 *.json
 /output
-.idea
+
+.idea/

@@ -78,6 +78,35 @@ impl PoseidonContext {
             },
         }
     }
+
+    pub fn poseidon_new(&mut self, new: usize) {
+        self.buf = vec![];
+        if new != 0 {
+            self.hasher = Some(POSEIDON_HASHER.clone());
+        }
+    }
+
+    pub fn poseidon_push(&mut self, v: u64) {
+        self.fieldreducer.reduce(v);
+        if self.fieldreducer.cursor == 0 {
+            self.buf.push(self.fieldreducer.rules[0].field_value().unwrap())
+        }
+    }
+
+    pub fn poseidon_finalize(&mut self) -> u64 {
+        assert!(self.buf.len() == 8);
+        if self.generator.cursor == 0 {
+            self.hasher.as_ref().map(|s| {
+                println!("perform hash with {:?}", self.buf);
+                let r = s.clone().update_exact(&self.buf.clone().try_into().unwrap());
+                let dwords:Vec<u8> = r.to_repr().to_vec();
+                self.generator.values = dwords.chunks(8).map(|x| {
+                    u64::from_le_bytes(x.to_vec().try_into().unwrap())
+                }).collect::<Vec<u64>>();
+            });
+        }
+        self.generator.gen()
+    }
 }
 
 
@@ -98,11 +127,7 @@ pub fn register_poseidon_foreign(env: &mut HostEnv) {
             |context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
                 let context = context.downcast_mut::<PoseidonContext>().unwrap();
                 println!("buf len is {}", context.buf.len());
-                context.buf = vec![];
-                let new = args.nth::<u64>(0) as usize;
-                if new != 0 {
-                    context.hasher = Some(POSEIDON_HASHER.clone());
-                }
+                context.poseidon_new(args.nth::<u64>(0) as usize);
                 None
             },
         ),
@@ -116,10 +141,7 @@ pub fn register_poseidon_foreign(env: &mut HostEnv) {
         Rc::new(
             |context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
                 let context = context.downcast_mut::<PoseidonContext>().unwrap();
-                context.fieldreducer.reduce(args.nth::<u64>(0) as u64);
-                if context.fieldreducer.cursor == 0 {
-                    context.buf.push(context.fieldreducer.rules[0].field_value().unwrap())
-                }
+                context.poseidon_push(args.nth::<u64>(0) as u64);
                 None
             },
         ),
@@ -134,18 +156,7 @@ pub fn register_poseidon_foreign(env: &mut HostEnv) {
         Rc::new(
             |context: &mut dyn ForeignContext, _args: wasmi::RuntimeArgs| {
                 let context = context.downcast_mut::<PoseidonContext>().unwrap();
-                assert!(context.buf.len() == 8);
-                if context.generator.cursor == 0 {
-                    context.hasher.as_ref().map(|s| {
-                        println!("perform hash with {:?}", context.buf);
-                        let r = s.clone().update_exact(&context.buf.clone().try_into().unwrap());
-                        let dwords:Vec<u8> = r.to_repr().to_vec();
-                        context.generator.values = dwords.chunks(8).map(|x| {
-                            u64::from_le_bytes(x.to_vec().try_into().unwrap())
-                        }).collect::<Vec<u64>>();
-                    });
-                }
-                Some(wasmi::RuntimeValue::I64(context.generator.gen() as i64))
+                Some(wasmi::RuntimeValue::I64(context.poseidon_finalize() as i64))
             },
         ),
     );
