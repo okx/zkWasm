@@ -47,7 +47,7 @@ impl Execution<RuntimeValue>
     fn run<E: Externals>(
         self,
         externals: &mut E,
-        wasm_io: WasmRuntimeIO,
+        _wasm_io: WasmRuntimeIO,
     ) -> Result<ExecutionResult<RuntimeValue>> {
         let instance = self
             .instance
@@ -57,36 +57,42 @@ impl Execution<RuntimeValue>
         let result =
             instance.invoke_export_trace(&self.entry, &[], externals, self.tracer.clone())?;
 
-        let execution_tables = {
-            let tracer = self.tracer.borrow();
+        // let execution_tables = {
+        //     let tracer = self.tracer.borrow();
+        //
+        //     let mtable = {
+        //         let mentries = tracer
+        //             .etable
+        //             .entries()
+        //             .iter()
+        //             .map(|eentry| memory_event_of_step(eentry, &mut 1))
+        //             .collect::<Vec<Vec<_>>>()
+        //             .concat();
+        //
+        //         MTable::new(mentries, &self.tables.imtable)
+        //     };
+        //
+        //     ExecutionTable {
+        //         etable: tracer.etable.clone(),
+        //         mtable,
+        //         jtable: tracer.jtable.clone(),
+        //     }
+        // };
 
-            let mtable = {
-                let mentries = tracer
-                    .etable
-                    .entries()
-                    .iter()
-                    .map(|eentry| memory_event_of_step(eentry, &mut 1))
-                    .collect::<Vec<Vec<_>>>()
-                    .concat();
-
-                MTable::new(mentries, &self.tables.imtable)
-            };
-
-            ExecutionTable {
-                etable: tracer.etable.clone(),
-                mtable,
-                jtable: tracer.jtable.clone(),
-            }
-        };
-
+        // Ok(ExecutionResult {
+        //     tables: Tables {
+        //         compilation_tables: self.tables.clone(),
+        //         execution_tables,
+        //     },
+        //     result,
+        //     public_inputs_and_outputs: wasm_io.public_inputs_and_outputs.borrow().clone(),
+        //     outputs: wasm_io.public_inputs_and_outputs.borrow().clone(),
+        // })
         Ok(ExecutionResult {
-            tables: Tables {
-                compilation_tables: self.tables.clone(),
-                execution_tables,
-            },
+            tables: Tables::default(),
             result,
-            public_inputs_and_outputs: wasm_io.public_inputs_and_outputs.borrow().clone(),
-            outputs: wasm_io.public_inputs_and_outputs.borrow().clone(),
+            public_inputs_and_outputs: vec![],
+            outputs: vec![],
         })
     }
 }
