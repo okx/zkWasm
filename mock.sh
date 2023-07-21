@@ -1,4 +1,4 @@
-# cargo run --release -- -k 21 --function zkmain --wasm wasm/zkdex_wasm_mock_bg_opt.wasm dry-run
+# cargo run --release -- -k 21 --function zkmain --output ./output --wasm wasm/zkdex_wasm_mock_bg_opt.wasm dry-run
 
 ## funding 100, 33ms
 # cargo run --release -- -k 21 --function zkmain --output ./output --wasm wasm/mock_funding_100.wasm dry-run
