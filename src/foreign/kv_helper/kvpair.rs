@@ -78,6 +78,7 @@ impl KVPairContext {
     pub fn kvpair_getroot(&mut self) -> u64 {
         let mt = self.mongo_merkle.as_ref().expect("merkle db not initialized");
         let hash = mt.get_root_hash();
+        println!("get root:{:?}", hash);
         let values = hash.chunks(8).into_iter().map(|x| {
             u64::from_le_bytes(x.to_vec().try_into().unwrap())
         }).collect::<Vec<u64>>();
