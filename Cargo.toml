@@ -42,7 +42,8 @@ quote = "1.0.25"
 
 # TODO put the host circuits into features
 
-zkwasm-host-circuits = { git = "https://github.com/DelphinusLab/zkWasm-host-circuits.git", branch="main" }
+#zkwasm-host-circuits = { git = "https://github.com/DelphinusLab/zkWasm-host-circuits.git", branch="main" }
+zkwasm-host-circuits = { path = "../../ilovers/zkWasm-host-circuits" }
 
 [dev-dependencies]
 rusty-fork = "0.3.0"
