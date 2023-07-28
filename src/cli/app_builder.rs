@@ -111,7 +111,7 @@ pub trait AppBuilder: CommandBuilder {
                         warn!("All private/public inputs are ignored when dry-run is running in service mode.");
                     }
 
-                    exec_dry_run_service(wasm_binary, function_name, &listen).unwrap()
+                    exec_dry_run_service(wasm_binary, function_name, &listen,&None).unwrap()
                 } else {
                     assert!(public_inputs.len() <= Self::MAX_PUBLIC_INPUT_SIZE);
 
@@ -120,6 +120,7 @@ pub trait AppBuilder: CommandBuilder {
                         &function_name,
                         &public_inputs,
                         &private_inputs,
+                        &None,
                     )
                     .unwrap();
                 }
@@ -138,6 +139,7 @@ pub trait AppBuilder: CommandBuilder {
                     &output_dir,
                     &public_inputs,
                     &private_inputs,
+                    &None,
                 )
                 .unwrap();
             }
@@ -177,6 +179,7 @@ pub trait AppBuilder: CommandBuilder {
                     &output_dir,
                     &public_inputs,
                     &private_inputs,
+                    &None,
                 );
             }
 

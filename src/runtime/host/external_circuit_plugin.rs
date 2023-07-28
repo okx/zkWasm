@@ -31,6 +31,10 @@ impl ExternalCircuitEnv {
         }
     }
 
+    pub fn get_current_function_len(&self)->usize{
+        self.functions.len()
+    }
+
     /// Register a plugin without circuit
     pub fn register_plugin(
         &mut self,

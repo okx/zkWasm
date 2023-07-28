@@ -52,24 +52,11 @@ use wasmi::Module;
 use wasmi::NotStartedModuleRef;
 use crate::circuits::TestCircuit;
 use crate::circuits::ZkWasmCircuitBuilder;
-use crate::foreign::debug_helper::register_debug_foreign;
-use crate::foreign::log_helper::{register_log_foreign, register_log_output_foreign};
-use crate::foreign::require_helper::register_require_foreign;
-use crate::foreign::kv_helper::kvpair::register_kvpair_foreign;
 use crate::foreign::wasm_input_helper::runtime::register_wasm_input_foreign;
-use crate::foreign::hash_helper::sha256::register_sha256_foreign;
-use crate::foreign::hash_helper::poseidon::register_poseidon_foreign;
-use crate::runtime::host::host_env::HostEnv;
+use crate::runtime::host::host_env::{EnvHook, HostEnv};
 use crate::runtime::wasmi_interpreter::Execution;
 use crate::runtime::WasmInterpreter;
 
-use crate::foreign::ecc_helper::{
-    bls381::pair::register_blspair_foreign,
-    bls381::sum::register_blssum_foreign,
-    bn254::pair::register_bn254pair_foreign,
-    bn254::sum::register_bn254sum_foreign,
-    jubjub::sum::register_babyjubjubsum_foreign,
-};
 
 const AGGREGATE_PREFIX: &'static str = "aggregate-circuit";
 
@@ -80,20 +67,8 @@ pub fn compile_image<'a>(
     WasmRuntimeIO,
     CompiledImage<NotStartedModuleRef<'a>, Tracer>,
 ) {
-    let mut env = HostEnv::new();
+    let mut env = HostEnv::default();
     let wasm_runtime_io = register_wasm_input_foreign(&mut env, vec![], vec![]);
-    register_require_foreign(&mut env);
-    register_log_foreign(&mut env);
-    register_kvpair_foreign(&mut env);
-    register_blspair_foreign(&mut env);
-    register_blssum_foreign(&mut env);
-    register_bn254pair_foreign(&mut env);
-    register_bn254sum_foreign(&mut env);
-    register_sha256_foreign(&mut env);
-    register_poseidon_foreign(&mut env);
-    register_babyjubjubsum_foreign(&mut env);
-    register_log_output_foreign(&mut env);
-    register_debug_foreign(&mut env);
     env.finalize();
     let imports = ImportsBuilder::new().with_resolver("env", &env);
 
@@ -142,9 +117,10 @@ pub fn exec_image(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
+    hook:&Option<EnvHook>
 ) -> Result<(Vec<u64>, HostEnv)> {
     let (mut env, wasm_runtime_io) =
-        HostEnv::new_with_full_foreign_plugins(public_inputs.clone(), private_inputs.clone());
+        HostEnv::new_with_full_foreign_plugins(public_inputs.clone(), private_inputs.clone(),hook);
 
     let module = wasmi::Module::from_buffer(wasm_binary).expect("failed to load wasm");
 
@@ -172,9 +148,10 @@ pub fn exec_image_trace(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
+    hook:&Option<EnvHook>
 ) -> Result<(ZkWasmCircuitBuilder, Vec<u64>, HostEnv)> {
     let (mut env, wasm_runtime_io) =
-        HostEnv::new_with_full_foreign_plugins(public_inputs.clone(), private_inputs.clone());
+        HostEnv::new_with_full_foreign_plugins(public_inputs.clone(), private_inputs.clone(),hook);
 
     let module = wasmi::Module::from_buffer(wasm_binary).expect("failed to load wasm");
 
@@ -207,9 +184,10 @@ pub fn build_circuit_with_witness(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
+    hook:&Option<EnvHook>
 ) -> Result<(TestCircuit<Fr>, Vec<Fr>)> {
     let (builder, outputs, _) =
-        exec_image_trace(wasm_binary, function_name, public_inputs, private_inputs)?;
+        exec_image_trace(wasm_binary, function_name, public_inputs, private_inputs,hook)?;
 
     let instance: Vec<Fr> = builder
         .public_inputs_and_outputs
@@ -231,8 +209,9 @@ fn build_tables_and_outputs(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
+    hook:&Option<EnvHook>
 ) -> Result<(Tables, Vec<u64>, Vec<u64>, HostEnv)>{
-    let (builder, outputs, env) = exec_image_trace(wasm_binary, function_name, public_inputs, private_inputs)?;
+    let (builder, outputs, env) = exec_image_trace(wasm_binary, function_name, public_inputs, private_inputs,hook)?;
 
     Ok((builder.build_circuit_without_configure::<Fr>().tables, builder.public_inputs_and_outputs, outputs, env))
 }
@@ -309,6 +288,7 @@ pub fn exec_dry_run_service(
     wasm_binary: Vec<u8>,
     function_name: String,
     listen: &PathBuf,
+    hook:&'static Option<EnvHook>
 ) -> Result<()> {
     use notify::event::AccessKind;
     use notify::event::EventKind;
@@ -361,6 +341,7 @@ pub fn exec_dry_run_service(
                             let (mut env, wasm_runtime_io) = HostEnv::new_with_full_foreign_plugins(
                                 public_inputs,
                                 private_inputs,
+                                &hook,
                             );
 
                             let imports = ImportsBuilder::new().with_resolver("env", &env);
@@ -410,8 +391,9 @@ pub fn exec_dry_run(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
+    hook:&Option<EnvHook>
 ) -> Result<()> {
-    let _ = exec_image(wasm_binary, function_name, public_inputs, private_inputs)?;
+    let _ = exec_image(wasm_binary, function_name, public_inputs, private_inputs,hook)?;
 
     println!("Execution passed.");
 
@@ -423,8 +405,9 @@ pub fn exec_gen_witness(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
+    hook:&Option<EnvHook>
 ) -> Result<(Tables, Vec<u64>, Vec<u64>, HostEnv)> {
-    build_tables_and_outputs(wasm_binary, function_name, public_inputs, private_inputs)
+    build_tables_and_outputs(wasm_binary, function_name, public_inputs, private_inputs,hook)
 }
 
 pub fn exec_create_proof_from_witness(
@@ -520,9 +503,10 @@ pub fn exec_create_proof(
     output_dir: &PathBuf,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
+    hook:&Option<EnvHook>
 ) -> Result<()> {
     let (circuit, instance) =
-        build_circuit_with_witness(wasm_binary, function_name, public_inputs, private_inputs)?;
+        build_circuit_with_witness(wasm_binary, function_name, public_inputs, private_inputs,hook)?;
 
     {
         store_instance(
@@ -603,6 +587,7 @@ pub fn exec_aggregate_create_proof(
     output_dir: &PathBuf,
     public_inputs: &Vec<Vec<u64>>,
     private_inputs: &Vec<Vec<u64>>,
+    hook:&Option<EnvHook>
 ) {
     assert_eq!(public_inputs.len(), private_inputs.len());
 
@@ -610,7 +595,7 @@ pub fn exec_aggregate_create_proof(
         (vec![], vec![]),
         |(mut circuits, mut instances), (public, private)| {
             let (circuit, public_input_and_wasm_output) =
-                build_circuit_with_witness(&wasm_binary, &function_name, &public, &private)
+                build_circuit_with_witness(&wasm_binary, &function_name, &public, &private,&hook)
                     .unwrap();
             let mut instance = vec![];
 

@@ -48,50 +48,34 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;com.jetbrains.cidr.cpp.cmake.workspace.CMakeCacheInvalidator.marker&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;host-ops&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/lvcong/rust/zkWasm&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "com.jetbrains.cidr.cpp.cmake.workspace.CMakeCacheInvalidator.marker": "true",
+    "git-widget-placeholder": "host-ops",
+    "last_opened_file_path": "/Users/lvcong/rust/zkWasm/wasm",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/wasm" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/demo" />
       <recent name="$PROJECT_DIR$/demo/pkg" />
     </key>
   </component>
-  <component name="RunManager" selected="Cargo.Test foreign::debug_helper::test_debug">
-    <configuration name="Run cli" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="run --package delphinus-zkwasm --bin cli -- --function zkmain --wasm  $PROJECT_DIR$/demo/zkwasm_demo_bg.wasm single-prove  " />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <option name="emulateTerminal" value="false" />
-      <option name="channel" value="DEFAULT" />
-      <option name="requiredFeatures" value="true" />
-      <option name="allFeatures" value="false" />
-      <option name="withSudo" value="false" />
-      <option name="buildTarget" value="REMOTE" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
+  <component name="RunManager" selected="Cargo.Test test::test_method_dispatch::tests::test_wasm_hook">
     <configuration name="Run zkdex" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="run --package delphinus-zkwasm --bin cli -- --function zkmain  --wasm $PROJECT_DIR$/demo/pkg/zkdex_wasm_bg_opt.wasm  dry-run  --private 0xc40200000000000060040000000000000000000000000000070000000000000000000000000000000000000000000000000000000000000040420f0000000000df84035a8f7be2bc8d8a7f2d4a0be6c1e774f0a4c16aa0b112e64eb62c09698a672b000000000000030000000000000000000000000000000000000000e40b5402000000cdcccc0c00000000000000000100000000000000000000000100000000000000000000000000000000e1f505000000003433331300000000000000000100000000000000000000000200000000000000000000000000000080969800000000009a999919000000000000000001000000000000000000000040000000400000008033e10100000000803a0900000000004953575a560cf5cc1a73aed2479527a7bb0361ca649541653b0bef5d967e210b0a00000000000000000000000000000000000000000000000000000000000000000000000a00000002000000000000000000000000000000000000000100000000000000000000000000000001000000000000000000000000000000640000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000fa0000000000000000000000010000000000000000000000000000000038c2aa7f9603000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000005f76372776b8b59e64a012e36424da1a950ee093fd4317daa7818125a9890d09020000000000000000e40b540200000000005f76372776b8b59e64a012e36424da1a950ee093fd4317daa7818125a9890d09020000000000000000e40b54020000000000000000000000:bytes-packed  " />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -126,8 +110,59 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Test foreign::function_dispatcher::tests::test_dynamic" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package delphinus-zkwasm --lib foreign::function_dispatcher::tests::test_dynamic -- --exact" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="emulateTerminal" value="false" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Test foreign::zkdex_helper::record::test_iasd" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="test --package delphinus-zkwasm --lib foreign::zkdex_helper::record::test_iasd -- --exact" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="emulateTerminal" value="false" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Test test::test_binary_search::tests::test_binary_search_mock" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package delphinus-zkwasm --lib test::test_binary_search::tests::test_binary_search_mock -- --exact" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="emulateTerminal" value="false" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Test test::test_method_dispatch::tests::test_wasm_hook" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package delphinus-zkwasm --lib test::test_method_dispatch::tests::test_wasm_hook -- --exact" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <option name="emulateTerminal" value="false" />
       <option name="channel" value="DEFAULT" />
@@ -146,14 +181,18 @@
     <list>
       <item itemvalue="Cargo.Run zkdex" />
       <item itemvalue="Cargo.Test foreign::debug_helper::test_debug" />
+      <item itemvalue="Cargo.Test foreign::function_dispatcher::tests::test_dynamic" />
+      <item itemvalue="Cargo.Test test::test_binary_search::tests::test_binary_search_mock" />
+      <item itemvalue="Cargo.Test test::test_method_dispatch::tests::test_wasm_hook" />
       <item itemvalue="Cargo.Test foreign::zkdex_helper::record::test_iasd" />
-      <item itemvalue="Cargo.Run cli" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Cargo.Test test::test_method_dispatch::tests::test_wasm_hook" />
+        <item itemvalue="Cargo.Test foreign::function_dispatcher::tests::test_dynamic" />
+        <item itemvalue="Cargo.Test test::test_binary_search::tests::test_binary_search_mock" />
         <item itemvalue="Cargo.Test foreign::debug_helper::test_debug" />
         <item itemvalue="Cargo.Test foreign::zkdex_helper::record::test_iasd" />
-        <item itemvalue="Cargo.Run cli" />
       </list>
     </recent_temporary>
   </component>
@@ -189,7 +228,7 @@
       <workItem from="1689055754316" duration="14542000" />
       <workItem from="1689251685397" duration="6753000" />
       <workItem from="1689589555289" duration="10355000" />
-      <workItem from="1690196125328" duration="9179000" />
+      <workItem from="1690196125328" duration="20521000" />
     </task>
     <servers />
   </component>
@@ -218,22 +257,22 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/cli/app_builder.rs</url>
-          <line>127</line>
+          <line>128</line>
           <option name="timeStamp" value="4" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/cli/exec.rs</url>
-          <line>426</line>
+          <line>409</line>
           <option name="timeStamp" value="7" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/cli/exec.rs</url>
-          <line>489</line>
+          <line>472</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/cli/exec.rs</url>
-          <line>494</line>
+          <line>477</line>
           <option name="timeStamp" value="9" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
@@ -295,6 +334,21 @@
           <url>file://$PROJECT_DIR$/src/foreign/debug_helper/mod.rs</url>
           <line>95</line>
           <option name="timeStamp" value="34" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/foreign/function_dispatcher/mod.rs</url>
+          <line>56</line>
+          <option name="timeStamp" value="36" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/test/test_method_dispatch.rs</url>
+          <line>16</line>
+          <option name="timeStamp" value="38" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/runtime/host/host_env.rs</url>
+          <line>57</line>
+          <option name="timeStamp" value="39" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

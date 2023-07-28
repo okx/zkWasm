@@ -3,13 +3,12 @@ use crate::circuits::etable::allocator::EventTableCellAllocator;
 use crate::circuits::etable::constraint_builder::ConstraintBuilder;
 use crate::circuits::etable::EventTableCommonConfig;
 use crate::circuits::etable::EventTableOpcodeConfig;
-use crate::runtime::host::host_env::HostEnv;
+use crate::runtime::host::host_env::{EnvHook, HostEnv};
 use crate::runtime::wasmi_interpreter::WasmRuntimeIO;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::ConstraintSystem;
 use halo2_proofs::plonk::Expression;
 use halo2_proofs::plonk::VirtualCells;
-use crate::foreign::debug_helper::register_debug_foreign;
 use crate::foreign::log_helper::register_log_output_foreign;
 
 use self::log_helper::register_log_foreign;
@@ -34,6 +33,7 @@ pub mod ecc_helper;
 pub mod hash_helper;
 pub mod wasm_input_helper;
 pub mod debug_helper;
+pub mod function_dispatcher;
 
 pub trait ForeignTableConfig<F: FieldExt> {
     fn configure_in_table(
@@ -57,14 +57,9 @@ pub(crate) trait EventTableForeignCallConfigBuilder<F: FieldExt> {
 pub(crate) trait InternalHostPluginBuilder {
     fn new(index: usize) -> Self;
 }
-
-impl HostEnv {
-    pub fn new_with_full_foreign_plugins(
-        public_inputs: Vec<u64>,
-        private_inputs: Vec<u64>,
-    ) -> (Self, WasmRuntimeIO) {
-        let mut env = HostEnv::new();
-        let wasm_runtime_io = register_wasm_input_foreign(&mut env, public_inputs, private_inputs);
+impl Default for HostEnv{
+    fn default() -> Self {
+        let mut env=HostEnv::new();
         register_require_foreign(&mut env);
         register_log_foreign(&mut env);
         register_kvpair_foreign(&mut env);
@@ -76,8 +71,24 @@ impl HostEnv {
         register_poseidon_foreign(&mut env);
         register_babyjubjubsum_foreign(&mut env);
         register_log_output_foreign(&mut env);
-        register_debug_foreign(&mut env);
-
+        env
+    }
+}
+impl HostEnv {
+    pub fn new_with_hook(hook:&Option<EnvHook>)->HostEnv{
+        let mut env=HostEnv::default();
+        if let Some(hook)=hook{
+            hook.hook(&mut env);
+        }
+        env
+    }
+    pub fn new_with_full_foreign_plugins(
+        public_inputs: Vec<u64>,
+        private_inputs: Vec<u64>,
+        hook:&Option<EnvHook>
+    ) -> (Self, WasmRuntimeIO) {
+        let mut env = HostEnv::new_with_hook(hook);
+        let wasm_runtime_io = register_wasm_input_foreign(&mut env, public_inputs, private_inputs);
         env.finalize();
 
         (env, wasm_runtime_io)
