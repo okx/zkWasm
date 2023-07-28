@@ -20,3 +20,4 @@ pub mod test;
 #[macro_use]
 extern crate lazy_static;
 extern crate downcast_rs;
+extern crate core;

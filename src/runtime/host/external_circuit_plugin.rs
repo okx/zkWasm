@@ -31,6 +31,7 @@ impl ExternalCircuitEnv {
         }
     }
 
+
     /// Register a plugin without circuit
     pub fn register_plugin(
         &mut self,

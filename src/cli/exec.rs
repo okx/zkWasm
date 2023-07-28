@@ -58,7 +58,7 @@ use crate::foreign::kv_helper::kvpair::register_kvpair_foreign;
 use crate::foreign::wasm_input_helper::runtime::register_wasm_input_foreign;
 use crate::foreign::hash_helper::sha256::register_sha256_foreign;
 use crate::foreign::hash_helper::poseidon::register_poseidon_foreign;
-use crate::runtime::host::host_env::HostEnv;
+use crate::runtime::host::host_env::{EnvHook, HostEnv};
 use crate::runtime::wasmi_interpreter::Execution;
 use crate::runtime::WasmInterpreter;
 
@@ -119,6 +119,7 @@ fn hash_image(wasm_binary: &Vec<u8>, function_name: &str) -> Fr {
 pub fn build_circuit_without_witness(
     wasm_binary: &Vec<u8>,
     function_name: &str,
+
 ) -> TestCircuit<Fr> {
     let module = wasmi::Module::from_buffer(wasm_binary).expect("failed to load wasm");
 
@@ -139,9 +140,10 @@ fn exec_image(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
+    hook:&Option<EnvHook>,
 ) -> Result<Option<RuntimeValue>> {
     let (mut env, _) =
-        HostEnv::new_with_full_foreign_plugins(public_inputs.clone(), private_inputs.clone());
+        HostEnv::new_with_full_foreign_plugins(public_inputs.clone(), private_inputs.clone(),hook);
 
     let module = wasmi::Module::from_buffer(wasm_binary).expect("failed to load wasm");
 
@@ -169,9 +171,10 @@ fn exec_image_trace(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
+    hook:&Option<EnvHook>,
 ) -> Result<ExecutionResult<RuntimeValue>> {
     let (mut env, wasm_runtime_io) =
-        HostEnv::new_with_full_foreign_plugins(public_inputs.clone(), private_inputs.clone());
+        HostEnv::new_with_full_foreign_plugins(public_inputs.clone(), private_inputs.clone(),hook);
 
     let module = wasmi::Module::from_buffer(wasm_binary).expect("failed to load wasm");
 
@@ -199,9 +202,10 @@ fn build_circuit_with_witness(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
+    hook:&Option<EnvHook>,
 ) -> Result<(TestCircuit<Fr>, Vec<Fr>)> {
     let execution_result =
-        exec_image_trace(wasm_binary, function_name, public_inputs, private_inputs)?;
+        exec_image_trace(wasm_binary, function_name, public_inputs, private_inputs,hook)?;
 
     execution_result.tables.profile_tables();
 
@@ -295,6 +299,7 @@ pub fn exec_dry_run_service(
     wasm_binary: Vec<u8>,
     function_name: String,
     listen: &PathBuf,
+    hook:&'static Option<EnvHook>,
 ) -> Result<()> {
     use notify::event::AccessKind;
     use notify::event::EventKind;
@@ -347,6 +352,7 @@ pub fn exec_dry_run_service(
                             let (mut env, _) = HostEnv::new_with_full_foreign_plugins(
                                 public_inputs,
                                 private_inputs,
+                                hook
                             );
 
                             let imports = ImportsBuilder::new().with_resolver("env", &env);
@@ -375,7 +381,7 @@ pub fn exec_dry_run_service(
                                     "".to_owned()
                                 },
                             )
-                            .unwrap();
+                                .unwrap();
                         } else {
                             error!("Failed to parse file {:?}, the request is ignored.", path);
                         }
@@ -396,8 +402,9 @@ pub fn exec_dry_run(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
+    hook:&Option<EnvHook>,
 ) -> Result<()> {
-    let _ = exec_image(wasm_binary, function_name, public_inputs, private_inputs)?;
+    let _ = exec_image(wasm_binary, function_name, public_inputs, private_inputs,hook)?;
 
     println!("Execution passed.");
 
@@ -412,9 +419,10 @@ pub fn exec_create_proof(
     output_dir: &PathBuf,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
+    hook:&Option<EnvHook>,
 ) -> Result<()> {
     let (circuit, mut instance) =
-        build_circuit_with_witness(wasm_binary, function_name, public_inputs, private_inputs)?;
+        build_circuit_with_witness(wasm_binary, function_name, public_inputs, private_inputs,hook)?;
 
     {
         store_instance(
@@ -522,7 +530,7 @@ pub fn exec_verify_proof(
         &[&[&instances]],
         &mut PoseidonRead::init(&proof[..]),
     )
-    .unwrap();
+        .unwrap();
 
     info!("Verifing proof passed");
 }
@@ -536,6 +544,7 @@ pub fn exec_aggregate_create_proof(
     output_dir: &PathBuf,
     public_inputs: &Vec<Vec<u64>>,
     private_inputs: &Vec<Vec<u64>>,
+    hook:&Option<EnvHook>,
 ) {
     assert_eq!(public_inputs.len(), private_inputs.len());
 
@@ -543,7 +552,7 @@ pub fn exec_aggregate_create_proof(
         (vec![], vec![]),
         |(mut circuits, mut instances), (public, private)| {
             let (circuit, public_input_and_wasm_output) =
-                build_circuit_with_witness(&wasm_binary, &function_name, &public, &private)
+                build_circuit_with_witness(&wasm_binary, &function_name, &public, &private,hook)
                     .unwrap();
             let mut instance = vec![];
 
@@ -574,7 +583,7 @@ pub fn exec_aggregate_create_proof(
         vec![],
         false,
     )
-    .unwrap();
+        .unwrap();
 
     run_circuit_unsafe_full_pass::<Bn256, _>(
         &output_dir.as_path(),
@@ -621,7 +630,7 @@ pub fn exec_verify_aggregate_proof(
         &[&instances.iter().map(|x| &x[..]).collect::<Vec<_>>()[..]],
         &mut ShaRead::<_, _, _, sha2::Sha256>::init(&proof[..]),
     )
-    .unwrap();
+        .unwrap();
 
     info!("Verifing Aggregate Proof Passed.")
 }

@@ -28,7 +28,20 @@ pub struct HostEnv {
     /// Profile foreign function time
     time_profile: BTreeMap<String, u128>,
 }
-
+// pub type EnvHook =&'a dyn Fn(&mut HostEnv);
+pub struct EnvHook<'a>(pub &'a dyn Fn(&mut HostEnv));
+impl<'a> Clone for EnvHook<'a>{
+    fn clone(&self) -> Self {
+        EnvHook(self.0)
+    }
+}
+impl<'a> EnvHook<'a>{
+    pub fn hook(&self,env:&'a mut HostEnv){
+        self.0(env)
+    }
+}
+unsafe impl<'a> Send for EnvHook<'a> {}
+unsafe impl<'a> Sync for EnvHook<'a> {}
 impl HostEnv {
     /// Constructs a host environment
     ///
@@ -59,10 +72,10 @@ impl HostEnv {
         let mut internal_op_allocator_offset = self.external_env.functions.len();
 
         for (name, op) in &self.external_env.functions {
-            assert!(
-                op.op_index < internal_op_allocator_offset,
-                "Specify op index too large."
-            );
+            // assert!(
+            //     op.op_index < internal_op_allocator_offset,
+            //     "Specify op index too large."
+            // );
 
             lookup
                 .insert(

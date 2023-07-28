@@ -30,6 +30,7 @@ mod test_start;
 
 #[cfg(feature = "checksum")]
 mod test_uniform_verifier;
+mod test_method_dispatch;
 
 /// Create circuit with trace and run mock test.
 fn test_circuit_mock<F: FieldExt>(
