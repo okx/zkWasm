@@ -25,7 +25,7 @@ num-bigint = { version = "0.4", features = ["rand"] }
 num-traits = "0.2.15"
 notify = "6.0.1"
 wabt = "0.10.0"
-wasmi = { path = "./wasmi", features = ["tracer"] }
+wasmi = { path = "./wasmi" }
 lazy_static = "1.4.0"
 rand = "0.8.4"
 sha2 = "0.10.6"
@@ -49,10 +49,10 @@ zkwasm-host-circuits = { git = "https://github.com/DelphinusLab/zkWasm-host-circ
 rusty-fork = "0.3.0"
 
 [features]
-default = []
+default = ["wasmi/tracer"]
 checksum = []
 cuda = ["halo2_proofs/cuda", "specs/cuda"]
-tracer = ["wasmi/tracer"]
+notracer = []
 
 [profile.dev]
 opt-level = 3
