@@ -2,4 +2,4 @@
 *.json
 /output
 
-.idea/
+.idea/*

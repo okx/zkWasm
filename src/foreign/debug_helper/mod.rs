@@ -54,9 +54,8 @@ impl DebugContext {
     }
 }
 
-pub fn string_to_u64(v: impl Into<String>) -> (Vec<u64>, u64) {
-    let data = v.into();
-    let mut data = data.as_bytes().to_vec();
+pub fn array_to_u64(v: impl Into<Vec<u8>>) -> (Vec<u64>, u64) {
+    let mut  data = v.into();
     let len = data.len();
     let delta = len % 8;
     if delta != 0 {
@@ -106,7 +105,7 @@ pub fn register_debug_foreign(env: &mut HostEnv) {
 pub fn test_debug() {
     let msg = "hello world";
     let mut context = DebugContext::default();
-    let (data, l) = string_to_u64(msg);
+    let (data, l) = array_to_u64(msg);
     context.init(DebugType::String as u64,l);
     for d in data {
         context.push(d)
