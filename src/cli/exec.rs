@@ -52,6 +52,7 @@ use wasmi::Module;
 use wasmi::NotStartedModuleRef;
 use crate::circuits::TestCircuit;
 use crate::circuits::ZkWasmCircuitBuilder;
+use crate::foreign::debug_helper::register_debug_foreign;
 use crate::foreign::log_helper::{register_log_foreign, register_log_output_foreign};
 use crate::foreign::require_helper::register_require_foreign;
 use crate::foreign::kv_helper::kvpair::register_kvpair_foreign;
@@ -92,6 +93,7 @@ pub fn compile_image<'a>(
     register_poseidon_foreign(&mut env);
     register_babyjubjubsum_foreign(&mut env);
     register_log_output_foreign(&mut env);
+    register_debug_foreign(&mut env);
     env.finalize();
     let imports = ImportsBuilder::new().with_resolver("env", &env);
 

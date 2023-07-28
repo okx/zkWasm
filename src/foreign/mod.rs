@@ -9,6 +9,7 @@ use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::ConstraintSystem;
 use halo2_proofs::plonk::Expression;
 use halo2_proofs::plonk::VirtualCells;
+use crate::foreign::debug_helper::register_debug_foreign;
 use crate::foreign::log_helper::register_log_output_foreign;
 
 use self::log_helper::register_log_foreign;
@@ -32,6 +33,7 @@ pub mod kv_helper;
 pub mod ecc_helper;
 pub mod hash_helper;
 pub mod wasm_input_helper;
+pub mod debug_helper;
 
 pub trait ForeignTableConfig<F: FieldExt> {
     fn configure_in_table(
@@ -74,6 +76,7 @@ impl HostEnv {
         register_poseidon_foreign(&mut env);
         register_babyjubjubsum_foreign(&mut env);
         register_log_output_foreign(&mut env);
+        register_debug_foreign(&mut env);
 
         env.finalize();
 

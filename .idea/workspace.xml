@@ -74,7 +74,7 @@
       <recent name="$PROJECT_DIR$/demo/pkg" />
     </key>
   </component>
-  <component name="RunManager" selected="Cargo.Run zkdex">
+  <component name="RunManager" selected="Cargo.Test foreign::debug_helper::test_debug">
     <configuration name="Run cli" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="run --package delphinus-zkwasm --bin cli -- --function zkmain --wasm  $PROJECT_DIR$/demo/zkwasm_demo_bg.wasm single-prove  " />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -109,6 +109,23 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Test foreign::debug_helper::test_debug" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package delphinus-zkwasm --lib foreign::debug_helper::test_debug -- --exact" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="emulateTerminal" value="false" />
+      <option name="channel" value="DEFAULT" />
+      <option name="requiredFeatures" value="true" />
+      <option name="allFeatures" value="false" />
+      <option name="withSudo" value="false" />
+      <option name="buildTarget" value="REMOTE" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Test foreign::zkdex_helper::record::test_iasd" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="command" value="test --package delphinus-zkwasm --lib foreign::zkdex_helper::record::test_iasd -- --exact" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -128,11 +145,13 @@
     </configuration>
     <list>
       <item itemvalue="Cargo.Run zkdex" />
+      <item itemvalue="Cargo.Test foreign::debug_helper::test_debug" />
       <item itemvalue="Cargo.Test foreign::zkdex_helper::record::test_iasd" />
       <item itemvalue="Cargo.Run cli" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Cargo.Test foreign::debug_helper::test_debug" />
         <item itemvalue="Cargo.Test foreign::zkdex_helper::record::test_iasd" />
         <item itemvalue="Cargo.Run cli" />
       </list>
@@ -170,7 +189,7 @@
       <workItem from="1689055754316" duration="14542000" />
       <workItem from="1689251685397" duration="6753000" />
       <workItem from="1689589555289" duration="10355000" />
-      <workItem from="1690196125328" duration="6572000" />
+      <workItem from="1690196125328" duration="8882000" />
     </task>
     <servers />
   </component>
@@ -199,32 +218,22 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/cli/app_builder.rs</url>
-          <line>82</line>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/cli/app_builder.rs</url>
           <line>127</line>
           <option name="timeStamp" value="4" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/cli/app_builder.rs</url>
-          <line>90</line>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/cli/exec.rs</url>
-          <line>424</line>
+          <line>426</line>
           <option name="timeStamp" value="7" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/cli/exec.rs</url>
-          <line>487</line>
+          <line>489</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/cli/exec.rs</url>
-          <line>492</line>
+          <line>494</line>
           <option name="timeStamp" value="9" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
@@ -268,26 +277,6 @@
           <option name="timeStamp" value="19" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/wasmi/src/module.rs</url>
-          <line>636</line>
-          <option name="timeStamp" value="21" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/wasmi/src/module.rs</url>
-          <line>601</line>
-          <option name="timeStamp" value="22" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/wasmi/src/module.rs</url>
-          <line>638</line>
-          <option name="timeStamp" value="23" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/runtime/wasmi_interpreter.rs</url>
-          <line>123</line>
-          <option name="timeStamp" value="24" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/foreign/kv_helper/kvpair.rs</url>
           <line>180</line>
           <option name="timeStamp" value="26" />
@@ -298,9 +287,14 @@
           <option name="timeStamp" value="28" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/runtime/host/host_env.rs</url>
-          <line>163</line>
-          <option name="timeStamp" value="32" />
+          <url>file://$PROJECT_DIR$/src/foreign/debug_helper/mod.rs</url>
+          <line>82</line>
+          <option name="timeStamp" value="33" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/foreign/debug_helper/mod.rs</url>
+          <line>96</line>
+          <option name="timeStamp" value="34" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
