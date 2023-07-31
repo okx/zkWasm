@@ -42,7 +42,8 @@ quote = "1.0.25"
 
 # TODO put the host circuits into features
 
-zkwasm-host-circuits = { git = "https://github.com/okx/zkWasm-host-circuits.git", branch="map-merkle" }
+#zkwasm-host-circuits = { git = "https://github.com/okx/zkWasm-host-circuits.git", branch="map-merkle" }
+zkwasm-host-circuits = { git = "https://github.com/ilovers/zkWasm-host-circuits.git", branch="db-batch" }
 
 [dev-dependencies]
 rusty-fork = "0.3.0"
