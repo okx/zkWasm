@@ -9,7 +9,7 @@ use halo2_proofs::arithmetic::Engine;
 use halo2_proofs::arithmetic::BaseExt;
 use halo2_proofs::dev::MockProver;
 pub use halo2_proofs::pairing::bn256::Bn256;
-use halo2_proofs::pairing::bn256::Fr;
+pub use halo2_proofs::pairing::bn256::Fr;
 use halo2_proofs::pairing::bn256::G1Affine;
 use halo2_proofs::plonk::verify_proof;
 use halo2_proofs::plonk::SingleVerifier;
@@ -25,7 +25,7 @@ use halo2aggregator_s::circuits::utils::load_or_create_proof;
 use halo2aggregator_s::circuits::utils::load_proof;
 pub use halo2aggregator_s::circuits::utils::load_vkey;
 use halo2aggregator_s::circuits::utils::run_circuit_unsafe_full_pass;
-use halo2aggregator_s::circuits::utils::store_instance;
+pub use halo2aggregator_s::circuits::utils::store_instance;
 use halo2aggregator_s::circuits::utils::TranscriptHash;
 use halo2aggregator_s::solidity_verifier::codegen::solidity_aux_gen;
 use halo2aggregator_s::solidity_verifier::solidity_render;
@@ -690,14 +690,14 @@ pub fn exec_aggregate_create_proof(
 }
 
 pub fn exec_create_aggregated_proof_from_witness(
-    params: Params<<Bn256 as Engine>::G1Affine>,
+    params: &Params<<Bn256 as Engine>::G1Affine>,
     vkeys: Vec<VerifyingKey<<Bn256 as Engine>::G1Affine>>,
-    aggregate_params: Params<<Bn256 as Engine>::G1Affine>,
+    aggregate_params: &Params<<Bn256 as Engine>::G1Affine>,
     aggregate_vkey_path: &PathBuf,
     // aggregate_vkey: VerifyingKey<<Bn256 as Engine>::G1Affine>,
     proofs: Vec<Vec<u8>>,
-    instance: Vec<Vec<u64>>,
-    )->Result<Vec<u8>>{
+    instance: &Vec<Vec<u64>>,
+    )->Result<(Vec<u8>, Vec<Fr>)>{
     let mut instances = vec![];
     for item in instance.iter(){
         let mut new_instance: Vec<Vec<Fr>> = vec![];
@@ -727,8 +727,7 @@ pub fn exec_create_aggregated_proof_from_witness(
         );
 
     let aggregate_vkey = load_or_build_vkey::<Bn256, _>(&aggregate_params, &circuit, Some(aggregate_vkey_path));
-
-    Ok(load_or_create_proof::<Bn256, _>(
+    let proof = load_or_create_proof::<Bn256, _>(
         &aggregate_params,
         aggregate_vkey,
         circuit.clone(),
@@ -736,76 +735,34 @@ pub fn exec_create_aggregated_proof_from_witness(
         None,
         TranscriptHash::Sha,
         false,
-    ))
+    );
+
+    Ok((proof, instances))
 }
 
-pub fn exec_aggregate_create_proof_v2(
-    zkwasm_k: u32,
-    aggregate_k: u32,
-    prefix: & str,
-    output_dir: &PathBuf,
-    compilation_tables: &Vec<CompilationTable>,
-    execution_tables: &Vec<ExecutionTable>,
-    instances: &Vec<Vec<u64>>,
-) ->Result<Vec<u8>>{
-    let (circuits, instances) =
-        compilation_tables.iter().zip(execution_tables.iter()).zip(instances.iter()).fold(
-            (vec![], vec![]),
-            |(mut circuits, mut instances), ((compilation_tables, execution_tables), public_input_and_wasm_output)|{
-                    let circuit = TestCircuit::new(Tables{
-                        compilation_tables: compilation_tables.clone(),
-                        execution_tables: execution_tables.clone(),
-                    });
-                let mut instance = vec![];
-                instance.append(
-                    &mut public_input_and_wasm_output
-                        .iter()
-                        .map(|v| Fr::from(*v))
-                        .collect(),
-                );
+pub fn verify_aggregate_proof(
+    params: &Params<<Bn256 as Engine>::G1Affine>,
+    vkey: VerifyingKey<<Bn256 as Engine>::G1Affine>,
+    proof: &Vec<u8>,
+    instances: &Vec<Vec<Fr>>,
+    n_proofs: usize,
+) {
+    let public_inputs_size: u32 = 6 + 3 * n_proofs as u32;
 
-                circuits.push(circuit);
-                instances.push(vec![instance]);
+    let params_verifier: ParamsVerifier<Bn256> =
+        params.verifier(public_inputs_size as usize).unwrap();
+    let strategy = SingleVerifier::new(&params_verifier);
 
-                (circuits, instances)
-                }
-            );
-
-    let (aggregate_circuit, aggregate_instances) = run_circuit_unsafe_full_pass::<Bn256, _>(
-        &output_dir.as_path(),
-        prefix,
-        zkwasm_k,
-        circuits,
-        instances,
-        TranscriptHash::Poseidon,
-        vec![],
-        false,
+    verify_proof(
+        &params_verifier,
+        &vkey,
+        strategy,
+        &[&instances.iter().map(|x| &x[..]).collect::<Vec<_>>()[..]],
+        &mut ShaRead::<_, _, _, sha2::Sha256>::init(&proof[..]),
     )
     .unwrap();
 
-    // 1. setup params
-    let params =
-        load_or_build_unsafe_params::<Bn256>(aggregate_k, Some(&output_dir.join(format!("K{}.params", aggregate_k))));
-
-    // 2. setup vkey
-    let vkey = load_or_build_vkey::<Bn256, _>(
-        &params,
-        &aggregate_circuit,
-        Some(&output_dir.join(format!("{}.{}.vkey.data", AGGREGATE_PREFIX, 0))),
-    );
-
-    let instances = vec![vec![aggregate_instances]];
-    // 3. create proof
-    let proof = load_or_create_proof::<Bn256, _>(
-        &params,
-        vkey,
-        aggregate_circuit,
-        &instances[0].iter().map(|x| &x[..]).collect::<Vec<_>>(),
-        Some(&output_dir.join(format!("{}.{}.transcript.data", AGGREGATE_PREFIX, 0))),
-        TranscriptHash::Sha,
-        false,
-    );
-    Ok(proof)
+    info!("Verifing Aggregate Proof Passed.")
 }
 
 pub fn exec_verify_aggregate_proof(
