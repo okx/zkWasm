@@ -205,14 +205,14 @@ fn build_tables_and_outputs(
 ) -> Result<(Tables, Vec<u64>, Vec<u64>, HostEnv)> {
     let (builder, outputs, env) =
         build_circuit_builder(wasm_binary, function_name, public_inputs, private_inputs)?;
-    let start = Instant::now();
+    // let start = Instant::now();
     let mut store = db::STORE.lock().unwrap();
-    let res = store.commit();
-    println!(
-        "dry-run finished:{:?} commit time elapse: {:?}",
-        res,
-        Instant::now().duration_since(start)
-    );
+    store.commit().unwrap();
+    // println!(
+    //     "dry-run finished:{:?} commit time elapse: {:?}",
+    //     res,
+    //     Instant::now().duration_since(start)
+    // );
     Ok((
         builder.build_circuit_without_configure::<Fr>().tables,
         builder.public_inputs_and_outputs,
