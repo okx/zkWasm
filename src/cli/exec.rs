@@ -10,7 +10,7 @@ use halo2_proofs::arithmetic::BaseExt;
 use halo2_proofs::dev::MockProver;
 pub use halo2_proofs::pairing::bn256::Bn256;
 pub use halo2_proofs::pairing::bn256::Fr;
-use halo2_proofs::pairing::bn256::G1Affine;
+pub use halo2_proofs::pairing::bn256::G1Affine;
 use halo2_proofs::plonk::verify_proof;
 use halo2_proofs::plonk::SingleVerifier;
 use halo2_proofs::plonk::VerifyingKey;
