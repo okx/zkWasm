@@ -14,7 +14,9 @@ anyhow = "1.0.68"
 ark-std = { version = "0.3.0", features = ["print-trace"] }
 downcast-rs = "1.2.0"
 env_logger = "0.9.3"
-halo2aggregator-s = { git = "https://github.com/DelphinusLab/halo2aggregator-s.git", tag = "bisect-lookup-0.3.0", features = ["unsafe"] }
+halo2aggregator-s = { git = "https://github.com/DelphinusLab/halo2aggregator-s.git", tag = "bisect-lookup-0.3.2", features = [
+    "unsafe",
+] }
 ff = "0.12"
 halo2_proofs = { git = "https://github.com/junyu0312/halo2", branch = "gpu", default-features = true }
 poseidon = { git = "https://github.com/lanbones/poseidon" }
@@ -23,6 +25,7 @@ md5 = "0.7.0"
 num-integer = "0.1"
 num-bigint = { version = "0.4", features = ["rand"] }
 num-traits = "0.2.15"
+notify = "6.0.1"
 wabt = "0.10.0"
 wasmi = { path = "./wasmi" }
 lazy_static = "1.4.0"
@@ -32,7 +35,7 @@ specs = { path = "./specs" }
 strum = "0.24.1"
 strum_macros = "0.24.1"
 wast = "47.0.0"
-clap = { version = "3.2.22", features = ["derive","cargo"] }
+clap = { version = "3.2.22", features = ["derive", "cargo"] }
 hex = "0.4.3"
 uuid = { version = "1.2.2", features = ["serde", "v4"] }
 serde = { version = "1.0", features = ["derive"] }
@@ -42,7 +45,7 @@ quote = "1.0.25"
 
 # TODO put the host circuits into features
 
-zkwasm-host-circuits = { git = "https://github.com/okx/zkWasm-host-circuits.git", branch="map-merkle" }
+zkwasm-host-circuits = { git = "https://github.com/okx/zkWasm-host-circuits.git", branch = "map-merkle" }
 
 [dev-dependencies]
 rusty-fork = "0.3.0"
@@ -51,7 +54,7 @@ rusty-fork = "0.3.0"
 default = []
 checksum = []
 cuda = ["halo2_proofs/cuda", "specs/cuda"]
-tracer=[]
+tracer = []
 
 [profile.dev]
 opt-level = 3

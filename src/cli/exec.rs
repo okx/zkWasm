@@ -1,11 +1,24 @@
+use crate::circuits::TestCircuit;
+use crate::circuits::ZkWasmCircuitBuilder;
+use crate::cli::args::parse_args;
+use crate::foreign::hash_helper::poseidon::register_poseidon_foreign;
+use crate::foreign::hash_helper::sha256::register_sha256_foreign;
+use crate::foreign::kv_helper::kvpair::register_kvpair_foreign;
+use crate::foreign::log_helper::register_log_foreign;
+use crate::foreign::log_helper::register_log_output_foreign;
+use crate::foreign::require_helper::register_require_foreign;
+use crate::foreign::wasm_input_helper::runtime::register_wasm_input_foreign;
 #[cfg(feature = "checksum")]
 use crate::image_hasher::ImageHasher;
 use crate::profile::Profiler;
+use crate::runtime::host::host_env::HostEnv;
+use crate::runtime::wasmi_interpreter::Execution;
 use crate::runtime::wasmi_interpreter::WasmRuntimeIO;
 use crate::runtime::CompiledImage;
+use crate::runtime::WasmInterpreter;
 use anyhow::Result;
-use halo2_proofs::arithmetic::Engine;
 use halo2_proofs::arithmetic::BaseExt;
+use halo2_proofs::arithmetic::Engine;
 use halo2_proofs::dev::MockProver;
 pub use halo2_proofs::pairing::bn256::Bn256;
 use halo2_proofs::pairing::bn256::Fr;
@@ -13,8 +26,8 @@ use halo2_proofs::pairing::bn256::G1Affine;
 use halo2_proofs::plonk::verify_proof;
 use halo2_proofs::plonk::SingleVerifier;
 use halo2_proofs::plonk::VerifyingKey;
-use halo2_proofs::poly::commitment::ParamsVerifier;
 use halo2_proofs::poly::commitment::Params;
+use halo2_proofs::poly::commitment::ParamsVerifier;
 use halo2aggregator_s::circuit_verifier::circuit::AggregatorCircuit;
 use halo2aggregator_s::circuits::utils::load_instance;
 pub use halo2aggregator_s::circuits::utils::load_or_build_unsafe_params;
@@ -29,36 +42,33 @@ use halo2aggregator_s::solidity_verifier::codegen::solidity_aux_gen;
 use halo2aggregator_s::solidity_verifier::solidity_render;
 use halo2aggregator_s::transcript::poseidon::PoseidonRead;
 use halo2aggregator_s::transcript::sha256::ShaRead;
+use log::debug;
+use log::error;
 use log::info;
-pub use specs::ExecutionTable;
+use notify::event::AccessMode;
+use notify::RecursiveMode;
+use notify::Watcher;
+use serde::Deserialize;
+use serde::Serialize;
 pub use specs::CompilationTable;
-pub use specs::Tables;
+pub use specs::ExecutionTable;
+use specs::Tables;
+use std::fs;
 #[cfg(feature = "checksum")]
 use std::io::Write;
+use std::path::Path;
 use std::path::PathBuf;
 use wasmi::tracer::Tracer;
 use wasmi::ImportsBuilder;
 use wasmi::Module;
 use wasmi::NotStartedModuleRef;
-use crate::circuits::TestCircuit;
-use crate::circuits::ZkWasmCircuitBuilder;
-use crate::foreign::log_helper::{register_log_foreign, register_log_output_foreign};
-use crate::foreign::require_helper::register_require_foreign;
-use crate::foreign::kv_helper::kvpair::register_kvpair_foreign;
-use crate::foreign::wasm_input_helper::runtime::register_wasm_input_foreign;
-use crate::foreign::hash_helper::sha256::register_sha256_foreign;
-use crate::foreign::hash_helper::poseidon::register_poseidon_foreign;
-use crate::runtime::host::host_env::HostEnv;
-use crate::runtime::wasmi_interpreter::Execution;
-use crate::runtime::WasmInterpreter;
+use wasmi::RuntimeValue;
 
-use crate::foreign::ecc_helper::{
-    bls381::pair::register_blspair_foreign,
-    bls381::sum::register_blssum_foreign,
-    bn254::pair::register_bn254pair_foreign,
-    bn254::sum::register_bn254sum_foreign,
-    jubjub::sum::register_babyjubjubsum_foreign,
-};
+use crate::foreign::ecc_helper::bls381::pair::register_blspair_foreign;
+use crate::foreign::ecc_helper::bls381::sum::register_blssum_foreign;
+use crate::foreign::ecc_helper::bn254::pair::register_bn254pair_foreign;
+use crate::foreign::ecc_helper::bn254::sum::register_bn254sum_foreign;
+use crate::foreign::ecc_helper::jubjub::sum::register_babyjubjubsum_foreign;
 
 const AGGREGATE_PREFIX: &'static str = "aggregate-circuit";
 
@@ -125,29 +135,47 @@ pub fn build_circuit_without_witness(
     builder.build_circuit::<Fr>()
 }
 
-fn build_circuit_builder(
+pub fn exec_image(
+    wasm_binary: &Vec<u8>,
+    function_name: &str,
+    public_inputs: &Vec<u64>,
+    private_inputs: &Vec<u64>,
+) -> Result<(Vec<u64>, HostEnv)> {
+    let (mut env, wasm_runtime_io) =
+        HostEnv::new_with_full_foreign_plugins(public_inputs.clone(), private_inputs.clone());
+
+    let module = wasmi::Module::from_buffer(wasm_binary).expect("failed to load wasm");
+
+    let imports = ImportsBuilder::new().with_resolver("env", &env);
+
+    let compiler = WasmInterpreter::new();
+    let compiled_module = compiler
+        .compile(
+            &module,
+            &imports,
+            &env.function_description_table(),
+            function_name,
+        )
+        .expect("file cannot be complied");
+
+    let (_, outputs) = compiled_module.dry_run(&mut env, wasm_runtime_io)?;
+
+    env.display_time_profile();
+
+    Ok((outputs, env))
+}
+
+pub fn exec_image_trace(
     wasm_binary: &Vec<u8>,
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
 ) -> Result<(ZkWasmCircuitBuilder, Vec<u64>, HostEnv)> {
+    let (mut env, wasm_runtime_io) =
+        HostEnv::new_with_full_foreign_plugins(public_inputs.clone(), private_inputs.clone());
+
     let module = wasmi::Module::from_buffer(wasm_binary).expect("failed to load wasm");
 
-    let mut env = HostEnv::new();
-    let wasm_runtime_io =
-        register_wasm_input_foreign(&mut env, public_inputs.clone(), private_inputs.clone());
-    register_require_foreign(&mut env);
-    register_log_foreign(&mut env);
-    register_kvpair_foreign(&mut env);
-    register_blspair_foreign(&mut env);
-    register_blssum_foreign(&mut env);
-    register_bn254pair_foreign(&mut env);
-    register_bn254sum_foreign(&mut env);
-    register_sha256_foreign(&mut env);
-    register_poseidon_foreign(&mut env);
-    register_babyjubjubsum_foreign(&mut env);
-    register_log_output_foreign(&mut env);
-    env.finalize();
     let imports = ImportsBuilder::new().with_resolver("env", &env);
 
     let compiler = WasmInterpreter::new();
@@ -172,13 +200,14 @@ fn build_circuit_builder(
     Ok((builder, r.outputs, env))
 }
 
-fn build_circuit_with_witness(
+pub fn build_circuit_with_witness(
     wasm_binary: &Vec<u8>,
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
 ) -> Result<(TestCircuit<Fr>, Vec<Fr>)> {
-    let (builder, outputs, _) = build_circuit_builder(wasm_binary, function_name, public_inputs, private_inputs)?;
+    let (builder, outputs, _) =
+        exec_image_trace(wasm_binary, function_name, public_inputs, private_inputs)?;
 
     let instance: Vec<Fr> = builder
         .public_inputs_and_outputs
@@ -200,10 +229,16 @@ fn build_tables_and_outputs(
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
-) -> Result<(Tables, Vec<u64>, Vec<u64>, HostEnv)>{
-    let (builder, outputs, env) = build_circuit_builder(wasm_binary, function_name, public_inputs, private_inputs)?;
+) -> Result<(Tables, Vec<u64>, Vec<u64>, HostEnv)> {
+    let (builder, outputs, env) =
+        exec_image_trace(wasm_binary, function_name, public_inputs, private_inputs)?;
 
-    Ok((builder.build_circuit_without_configure::<Fr>().tables, builder.public_inputs_and_outputs, outputs, env))
+    Ok((
+        builder.build_circuit_without_configure::<Fr>().tables,
+        builder.public_inputs_and_outputs,
+        outputs,
+        env,
+    ))
 }
 
 pub fn exec_setup(
@@ -274,13 +309,113 @@ pub fn exec_image_checksum(wasm_binary: &Vec<u8>, entry: &str, output_dir: &Path
     println!("{}", hash);
 }
 
+pub fn exec_dry_run_service(
+    wasm_binary: Vec<u8>,
+    function_name: String,
+    listen: &PathBuf,
+) -> Result<()> {
+    use notify::event::AccessKind;
+    use notify::event::EventKind;
+    use notify::event::ModifyKind;
+    use notify::event::RenameMode;
+    use notify::Event;
+
+    #[derive(Serialize, Deserialize, Debug)]
+    struct Sequence {
+        private_inputs: Vec<String>,
+        public_inputs: Vec<String>,
+    }
+
+    info!("Dry-run service is running.");
+    info!("{:?} is watched", listen);
+
+    let module = wasmi::Module::from_buffer(wasm_binary.clone()).expect("failed to load wasm");
+    let compiler = WasmInterpreter::new();
+
+    let mut watcher =
+        notify::recommended_watcher(move |handler: Result<Event, _>| match handler {
+            Ok(event) => {
+                debug!("Event {:?}", event);
+
+                match event.kind {
+                    EventKind::Access(AccessKind::Close(AccessMode::Write))
+                    | EventKind::Modify(ModifyKind::Name(RenameMode::To)) => {
+                        assert_eq!(event.paths.len(), 1);
+                        let path = event.paths.first().unwrap();
+
+                        if let Some(ext) = path.extension() {
+                            if ext.eq("done") {
+                                return;
+                            };
+                        }
+
+                        info!("Receive a request from file {:?}", path);
+
+                        let json = fs::read_to_string(path).unwrap();
+                        if let Ok(sequence) = serde_json::from_str::<Sequence>(&json) {
+                            debug!("{:?}", sequence);
+
+                            let private_inputs = parse_args(
+                                sequence.private_inputs.iter().map(|s| s.as_str()).collect(),
+                            );
+                            let public_inputs = parse_args(
+                                sequence.public_inputs.iter().map(|s| s.as_str()).collect(),
+                            );
+
+                            let (mut env, wasm_runtime_io) = HostEnv::new_with_full_foreign_plugins(
+                                public_inputs,
+                                private_inputs,
+                            );
+
+                            let imports = ImportsBuilder::new().with_resolver("env", &env);
+
+                            let compiled_module = compiler
+                                .compile(
+                                    &module,
+                                    &imports,
+                                    &env.function_description_table(),
+                                    &function_name,
+                                )
+                                .expect("file cannot be complied");
+
+                            let r = compiled_module.dry_run(&mut env, wasm_runtime_io).unwrap();
+                            println!("return value: {:?}", r);
+
+                            fs::write(
+                                Path::new(&format!("{}.done", path.to_str().unwrap())),
+                                if let Some(r) = r.0 {
+                                    match r {
+                                        RuntimeValue::I32(v) => v.to_string(),
+                                        RuntimeValue::I64(v) => v.to_string(),
+                                        _ => unreachable!(),
+                                    }
+                                } else {
+                                    "".to_owned()
+                                },
+                            )
+                            .unwrap();
+                        } else {
+                            error!("Failed to parse file {:?}, the request is ignored.", path);
+                        }
+                    }
+                    _ => (),
+                }
+            }
+            Err(e) => println!("watch error: {:?}", e),
+        })?;
+
+    loop {
+        watcher.watch(listen.as_path(), RecursiveMode::NonRecursive)?;
+    }
+}
+
 pub fn exec_dry_run(
     wasm_binary: &Vec<u8>,
     function_name: &str,
     public_inputs: &Vec<u64>,
     private_inputs: &Vec<u64>,
 ) -> Result<()> {
-    let _ = build_circuit_builder(wasm_binary, function_name, public_inputs, private_inputs)?;
+    let _ = exec_image(wasm_binary, function_name, public_inputs, private_inputs)?;
 
     println!("Execution passed.");
 
@@ -303,14 +438,11 @@ pub fn exec_create_proof_from_witness(
     params: Params<<Bn256 as Engine>::G1Affine>,
     vkey: VerifyingKey<<Bn256 as Engine>::G1Affine>,
 ) -> Result<Vec<u8>> {
-    let circuit = TestCircuit::new_without_configure(Tables{
+    let circuit = TestCircuit::new_without_configure(Tables {
         compilation_tables,
         execution_tables,
     });
-    let mut instance: Vec<Fr> = instance
-        .iter()
-        .map(|v| (*v).into())
-        .collect();
+    let mut instance: Vec<Fr> = instance.iter().map(|v| (*v).into()).collect();
 
     let mut instances = vec![];
 
