@@ -18,7 +18,7 @@ use halo2_proofs::poly::commitment::ParamsVerifier;
 use halo2_proofs::poly::commitment::Params;
 use halo2aggregator_s::circuit_verifier::circuit::AggregatorCircuit;
 use halo2aggregator_s::circuit_verifier::build_aggregate_verify_circuit;
-use halo2aggregator_s::circuits::utils::load_instance;
+pub use halo2aggregator_s::circuits::utils::load_instance;
 pub use halo2aggregator_s::circuits::utils::load_or_build_unsafe_params;
 use halo2aggregator_s::circuits::utils::load_or_build_vkey;
 use halo2aggregator_s::circuits::utils::load_or_create_proof;
