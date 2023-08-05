@@ -73,7 +73,7 @@ impl MerkleContext {
     pub fn merkle_setroot(&mut self, v: u64) {
         self.set_root.reduce(v);
         if self.set_root.cursor == 0 {
-            println!("set root: {:?}", &self.set_root.rules[0].bytes_value());
+            // println!("set root: {:?}", &self.set_root.rules[0].bytes_value());
             self.mongo_merkle = Some(
                 merklehelper::MongoMerkle::construct(
                     [0;32],
@@ -110,7 +110,7 @@ impl MerkleContext {
             let index = (address as u64) + (1u64<<MERKLE_TREE_HEIGHT) - 1;
             let mt = self.mongo_merkle.as_mut().expect("merkle db not initialized");
             let hash = self.set.rules[0].bytes_value().unwrap();
-            println!("update leaf data with proof {:?}", hash);
+            // println!("update leaf data with proof {:?}", hash);
             mt.update_leaf_data_with_proof(
                 index,
                 &hash
