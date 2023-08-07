@@ -51,7 +51,7 @@ pub fn register_log_foreign(env: &mut HostEnv) {
 }
 
 pub fn register_log_output_foreign(env: &mut HostEnv) {
-    let outputs =  env.log_outputs.clone();
+    let outputs = env.log_outputs.clone();
     let foreign_output_plugin = env
         .external_env
         .register_plugin("foreign_log_output", Box::new(OutputContext::new(outputs)));
