@@ -243,7 +243,7 @@ pub fn exec_setup(
     wasm_binary: &Vec<u8>,
     entry: &str,
     output_dir: &PathBuf,
-) {
+) -> TestCircuit<Fr> {
     let circuit = build_circuit_without_witness(wasm_binary, entry);
 
     info!("Setup Params and VerifyingKey");
@@ -289,6 +289,8 @@ pub fn exec_setup(
 
         load_or_build_unsafe_params::<Bn256>(aggregate_k, Some(params_path))
     };
+
+    circuit
 }
 
 #[cfg(feature = "checksum")]
