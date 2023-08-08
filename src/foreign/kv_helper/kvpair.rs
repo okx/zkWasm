@@ -84,8 +84,8 @@ impl KVPairContext {
     pub fn kvpair_set(&mut self, v: u64) {
         self.set.reduce(v);
         if self.set.cursor == 0 {
-            let address = self.address.rules[0].u64_value().unwrap() as u32;
-            let index = (address as u32) + (1u32 << MERKLE_TREE_HEIGHT) - 1;
+            let address = self.address.rules[0].u64_value().unwrap() as u64;
+            let index = (address as u64) + (1u64 << MERKLE_TREE_HEIGHT) - 1;
             let mt = self
                 .mongo_merkle
                 .as_mut()
@@ -96,8 +96,8 @@ impl KVPairContext {
     }
 
     pub fn kvpair_get(&mut self) -> u64 {
-        let address = self.address.rules[0].u64_value().unwrap() as u32;
-        let index = (address as u32) + (1u32 << MERKLE_TREE_HEIGHT) - 1;
+        let address = self.address.rules[0].u64_value().unwrap() as u64;
+        let index = (address as u64) + (1u64 << MERKLE_TREE_HEIGHT) - 1;
         let mt = self
             .mongo_merkle
             .as_ref()
