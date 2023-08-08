@@ -13,7 +13,7 @@ use zkwasm_host_circuits::host::ReduceRule;
 
 use halo2_proofs::pairing::bn256::Fr;
 
-const MERKLE_TREE_HEIGHT: usize = 20;
+const MERKLE_TREE_HEIGHT: usize = 31;
 
 pub struct KVPairContext {
     pub set_root: Reduce<Fr>,
