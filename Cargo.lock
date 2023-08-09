@@ -3196,7 +3196,7 @@ dependencies = [
 [[package]]
 name = "zkwasm-host-circuits"
 version = "0.1.0"
-source = "git+https://github.com/okx/zkWasm-host-circuits.git?branch=main-performance-nodb#b94fb2820dcf7bf5bbbed39bd0d10ddf11cceced"
+source = "git+https://github.com/okx/zkWasm-host-circuits.git?branch=main-performance#49f44220ac19d9a975abe35c9e45dfa23bcf329f"
 dependencies = [
  "ark-std",
  "clap",
