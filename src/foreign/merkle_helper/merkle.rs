@@ -104,7 +104,7 @@ impl MerkleContext {
                 .as_mut()
                 .expect("merkle db not initialized");
             let hash = self.set.rules[0].bytes_value().unwrap();
-            println!("update leaf data with proof {:?}", hash);
+            // println!("update leaf data with proof {:?}", hash);
             mt.update_leaf_data_with_proof(index, &hash)
                 .expect("Unexpected failure: update leaf with proof fail");
             // put data and hash into mongo_datahash if the data is binded to the merkle tree leaf
