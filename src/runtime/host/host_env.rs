@@ -160,7 +160,7 @@ impl Externals for HostEnv {
     ) -> Result<Option<RuntimeValue>, Trap> {
         match self.cached_lookup.as_ref().unwrap().get(&index).clone() {
             Some(HostFunction {
-                desc: _,
+                desc,
                 execution_env: HostFunctionExecutionEnv { ctx, cb },
             }) => {
                 //let ctx = ctx.clone();
@@ -169,12 +169,12 @@ impl Externals for HostEnv {
 
                 let start = Instant::now();
                 let r = cb(ctx, args);
-                let _duration = start.elapsed();
+                let duration = start.elapsed();
 
-                // self.time_profile
-                //     .entry(desc.name().to_string())
-                //     .and_modify(|d| *d += duration.as_millis())
-                //     .or_insert(duration.as_millis());
+                self.time_profile
+                    .entry(desc.name().to_string())
+                    .and_modify(|d| *d += duration.as_millis())
+                    .or_insert(duration.as_millis());
 
                 Ok(r)
             }
