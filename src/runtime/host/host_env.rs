@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::rc::Rc;
-// use std::time::Instant;
+use std::time::Instant;
 
 use log::debug;
 use specs::host_function::HostFunctionDesc;
@@ -167,9 +167,9 @@ impl Externals for HostEnv {
                 let mut ctx = (*ctx).borrow_mut();
                 let ctx = ctx.as_mut();
 
-                // let start = Instant::now();
+                let start = Instant::now();
                 let r = cb(ctx, args);
-                // let duration = start.elapsed();
+                let _duration = start.elapsed();
 
                 // self.time_profile
                 //     .entry(desc.name().to_string())
