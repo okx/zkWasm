@@ -64,7 +64,6 @@ use wasmi::ImportsBuilder;
 use wasmi::Module;
 use wasmi::NotStartedModuleRef;
 use wasmi::RuntimeValue;
-use zkwasm_host_circuits::host::db;
 
 use crate::foreign::ecc_helper::bls381::pair::register_blspair_foreign;
 use crate::foreign::ecc_helper::bls381::sum::register_blssum_foreign;
@@ -161,8 +160,6 @@ pub fn exec_image(
         .expect("file cannot be complied");
 
     let (_, outputs) = compiled_module.dry_run(&mut env, wasm_runtime_io)?;
-    let mut store = db::STORE.lock().unwrap();
-    store.commit()?;
     env.display_time_profile();
 
     Ok((outputs, env))
@@ -192,8 +189,6 @@ pub fn exec_image_trace(
         .expect("file cannot be complied");
 
     let r = compiled_module.run(&mut env, wasm_runtime_io)?;
-    let mut store = db::STORE.lock().unwrap();
-    store.commit()?;
     env.display_time_profile();
 
     let builder = ZkWasmCircuitBuilder {
