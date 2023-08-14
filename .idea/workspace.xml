@@ -13,9 +13,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="38d73b6b-5a68-45b5-861c-a50a0ce8f0e3" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/foreign/function_dispatcher/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/foreign/function_dispatcher/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/test_method_dispatch.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/test_method_dispatch.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/wasm/method.wasm" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -349,27 +348,27 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/foreign/function_dispatcher/mod.rs</url>
-          <line>226</line>
+          <line>258</line>
           <option name="timeStamp" value="41" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/foreign/function_dispatcher/mod.rs</url>
-          <line>117</line>
+          <line>149</line>
           <option name="timeStamp" value="42" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/foreign/function_dispatcher/mod.rs</url>
-          <line>118</line>
+          <line>150</line>
           <option name="timeStamp" value="43" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/foreign/function_dispatcher/mod.rs</url>
-          <line>116</line>
+          <line>148</line>
           <option name="timeStamp" value="46" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/foreign/function_dispatcher/mod.rs</url>
-          <line>112</line>
+          <line>144</line>
           <option name="timeStamp" value="47" />
         </line-breakpoint>
       </breakpoints>

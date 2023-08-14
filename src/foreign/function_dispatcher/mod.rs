@@ -77,6 +77,38 @@ impl<T: LiteFunction<u64>> HostFunction for U64Function<T> {
     }
 }
 
+/*
+
+pub fn dispatch(method: u64, v: impl Into<Vec<u8>>) {
+    let (data, l) = array_to_u64(v);
+    unsafe {
+        dispatch_set_method(method);
+        dispatch_set_length(l);
+        data.into_iter()
+            .for_each(|x| dispatch_receive(x));
+    }
+}
+
+pub fn array_to_u64(v: impl Into<Vec<u8>>) -> (Vec<u64>, u64) {
+    let mut data = v.into();
+    let len = data.len();
+    let delta = len % 8;
+    if delta != 0 {
+        data.append(&mut vec![0; 8 - delta]);
+    }
+    let data: Vec<u64> = data
+        .chunks_exact(8)
+        .map(|x| u64::from_le_bytes(x.try_into().unwrap()))
+        .collect();
+    (data, len as u64)
+}
+
+extern "C" {
+    fn dispatch_set_method(method: u64);
+    fn dispatch_set_length(l: u64);
+    fn dispatch_receive(v: u64);
+}
+ */
 #[derive(Default)]
 pub struct FunctionContext {
     methods: HashMap<u64, FunctionWrapper>,
