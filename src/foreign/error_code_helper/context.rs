@@ -25,13 +25,13 @@ pub fn register_error_code_foreign(env: &mut HostEnv) {
     let record = Rc::new(
         |context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
             let value: u64 = args.nth(0);
-            let (code, index) = get_error_and_index(value);
+            let (code, index) = split_error_and_index(value);
             set_code_index(code, index);
 
             None
         },
     );
-    let op_index = JubjubSumResult as usize + 1;
+    let op_index = 100;
     env.external_env.register_function(
         "record_error_code",
         op_index,
@@ -41,13 +41,13 @@ pub fn register_error_code_foreign(env: &mut HostEnv) {
     );
 }
 
-pub fn get_error_and_index(value: u64) -> (u32, u32) {
+pub fn split_error_and_index(value: u64) -> (u32, u32) {
     let code = (value >> 32) as u32;
     let index = (value & 0xffffffff) as u32;
     (code, index)
 }
 
-pub fn get_all_with_error_and_index(error_code: u32, index: u32) -> u64 {
+pub fn merge_error_and_index(error_code: u32, index: u32) -> u64 {
     let code = (error_code as u64) << 32;
     let index = index as u64;
     code | index
@@ -57,8 +57,8 @@ pub fn get_all_with_error_and_index(error_code: u32, index: u32) -> u64 {
 pub fn test_merge() {
     let error_code = 1;
     let index = 2;
-    let value = get_all_with_error_and_index(error_code, index);
-    let (code, index) = get_error_and_index(value);
+    let value = merge_error_and_index(error_code, index);
+    let (code, index) = split_error_and_index(value);
     assert_eq!(code, error_code);
     assert_eq!(index, index);
 }
