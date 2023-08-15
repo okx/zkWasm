@@ -70,6 +70,7 @@ use crate::foreign::ecc_helper::{
     bn254::sum::register_bn254sum_foreign,
     jubjub::sum::register_babyjubjubsum_foreign,
 };
+use crate::foreign::error_code_helper::context::register_error_code_foreign;
 
 const AGGREGATE_PREFIX: &'static str = "aggregate-circuit";
 
@@ -93,6 +94,7 @@ pub fn compile_image<'a>(
     register_poseidon_foreign(&mut env);
     register_babyjubjubsum_foreign(&mut env);
     register_log_output_foreign(&mut env);
+    register_error_code_foreign(&mut env);
     env.finalize();
     let imports = ImportsBuilder::new().with_resolver("env", &env);
 
