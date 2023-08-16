@@ -24,7 +24,7 @@ impl OutputContext {
         OutputContext { output, current_key: 0 }
     }
 
-    pub fn default() -> OutputContext {
+    pub const fn default() -> OutputContext {
         OutputContext {
             output: Rc::new(RefCell::new(HashMap::new())),
             current_key: 0,
