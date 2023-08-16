@@ -3,20 +3,34 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use specs::external_host_call_table::ExternalHostCallSignature;
-
+use std::sync::Mutex;
 use crate::runtime::host::host_env::HostEnv;
 use crate::runtime::host::ForeignContext;
 use zkwasm_host_circuits::host::ForeignInst::Log;
 
 struct Context;
+
 impl ForeignContext for Context {}
 
-pub static mut  OUTPUT_CONTEXT:OutputContext=OutputContext::default();
+
+lazy_static!(
+    pub static ref OUTPUT_CONTEXT: Mutex<ThreadSafeContext> = Mutex::new(ThreadSafeContext::default());
+);
+
+#[derive(Default)]
+pub struct ThreadSafeContext {
+    pub output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
+}
+
+unsafe impl Sync for ThreadSafeContext {}
+
+unsafe impl Send for ThreadSafeContext {}
 
 pub struct OutputContext {
     pub output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
     pub current_key: u64,
 }
+
 impl ForeignContext for OutputContext {}
 
 impl OutputContext {
@@ -24,7 +38,7 @@ impl OutputContext {
         OutputContext { output, current_key: 0 }
     }
 
-    pub const fn default() -> OutputContext {
+    pub fn default() -> OutputContext {
         OutputContext {
             output: Rc::new(RefCell::new(HashMap::new())),
             current_key: 0,
@@ -79,13 +93,11 @@ pub fn register_log_foreign(env: &mut HostEnv) {
 }
 
 pub fn register_log_output_foreign(env: &mut HostEnv) {
-    let outputs =  env.log_outputs.clone();
+    let outputs = env.log_outputs.clone();
     let foreign_output_plugin = env
         .external_env
-        .register_plugin("foreign_log_output", Box::new(OutputContext::new(outputs)));
-    unsafe {
-        OUTPUT_CONTEXT.output= outputs.clone();
-    }
+        .register_plugin("foreign_log_output", Box::new(OutputContext::new(outputs.clone())));
+    OUTPUT_CONTEXT.lock().unwrap().output = outputs;
     let push_output = Rc::new(
         |context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
             let context = context.downcast_mut::<OutputContext>().unwrap();
@@ -148,12 +160,13 @@ pub fn register_log_output_foreign(env: &mut HostEnv) {
     );
 }
 
-pub fn get_data(k:u64)->Option<u64>{
-    unsafe {
-        let ret=OUTPUT_CONTEXT.output.borrow_mut().get(&k);
-        if let Some(mut ret)=ret{
-            ret.pop()
-        }
+pub fn get_data(k: u64) -> Option<u64> {
+    let context = OUTPUT_CONTEXT.lock().unwrap();
+    let mut output = context.output.borrow_mut();
+    let ret = output.get_mut(&k);
+    if let Some(ret) = ret {
+        ret.pop()
+    } else {
         None
     }
 }
