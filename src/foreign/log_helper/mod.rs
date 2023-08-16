@@ -11,7 +11,7 @@ use zkwasm_host_circuits::host::ForeignInst::Log;
 struct Context;
 impl ForeignContext for Context {}
 
-pub static OUTPUT_CONTEXT:OutputContext=OutputContext::default();
+pub static mut  OUTPUT_CONTEXT:OutputContext=OutputContext::default();
 
 pub struct OutputContext {
     pub output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
@@ -146,4 +146,11 @@ pub fn register_log_output_foreign(env: &mut HostEnv) {
         foreign_output_plugin.clone(),
         switch_output,
     );
+}
+
+pub fn get_data(k:u64)->Option<Vec<u64>>{
+    unsafe {
+        let ret=OUTPUT_CONTEXT.output.borrow().get(&k);
+        ret.cloned()
+    }
 }
