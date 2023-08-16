@@ -22,6 +22,13 @@ impl OutputContext {
         OutputContext { output, current_key: 0 }
     }
 
+    pub fn default() -> OutputContext {
+        OutputContext {
+            output: Rc::new(RefCell::new(HashMap::new())),
+            current_key: 0,
+        }
+    }
+
     pub fn switch_key(&mut self, k: u64) {
         self.current_key = k;
     }
