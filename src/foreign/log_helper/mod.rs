@@ -145,7 +145,7 @@ pub fn register_log_output_foreign(env: &mut HostEnv) {
 
     env.external_env.register_function(
         "wasm_log_output_pop",
-        std::mem::variant_count::<zkwasm_host_circuits::host::ForeignInst>()+1,
+        std::mem::variant_count::<zkwasm_host_circuits::host::ForeignInst>()+2,
         ExternalHostCallSignature::Return,
         foreign_output_plugin.clone(),
         pop_output,
@@ -153,7 +153,7 @@ pub fn register_log_output_foreign(env: &mut HostEnv) {
 
     env.external_env.register_function(
         "wasm_log_output_switch",
-        std::mem::variant_count::<zkwasm_host_circuits::host::ForeignInst>()+1,
+        std::mem::variant_count::<zkwasm_host_circuits::host::ForeignInst>()+3,
         ExternalHostCallSignature::Argument,
         foreign_output_plugin.clone(),
         switch_output,
