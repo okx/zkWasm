@@ -148,9 +148,12 @@ pub fn register_log_output_foreign(env: &mut HostEnv) {
     );
 }
 
-pub fn get_data(k:u64)->Option<Vec<u64>>{
+pub fn get_data(k:u64)->Option<u64>{
     unsafe {
-        let ret=OUTPUT_CONTEXT.output.borrow().get(&k);
-        ret.cloned()
+        let ret=OUTPUT_CONTEXT.output.borrow_mut().get(&k);
+        if let Some(mut ret)=ret{
+            ret.pop()
+        }
+        None
     }
 }
