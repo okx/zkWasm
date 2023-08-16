@@ -11,6 +11,8 @@ use zkwasm_host_circuits::host::ForeignInst::Log;
 struct Context;
 impl ForeignContext for Context {}
 
+pub static OUTPUT_CONTEXT:OutputContext=OutputContext::default();
+
 pub struct OutputContext {
     pub output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
     pub current_key: u64,
@@ -81,7 +83,9 @@ pub fn register_log_output_foreign(env: &mut HostEnv) {
     let foreign_output_plugin = env
         .external_env
         .register_plugin("foreign_log_output", Box::new(OutputContext::new(outputs)));
-
+    unsafe {
+        OUTPUT_CONTEXT.output= outputs.clone();
+    }
     let push_output = Rc::new(
         |context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
             let context = context.downcast_mut::<OutputContext>().unwrap();
