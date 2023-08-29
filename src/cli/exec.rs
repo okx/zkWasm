@@ -7,6 +7,7 @@ use crate::runtime::CompiledImage;
 use anyhow::Result;
 use halo2_proofs::arithmetic::Engine;
 use halo2_proofs::arithmetic::BaseExt;
+pub use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::dev::MockProver;
 pub use halo2_proofs::pairing::bn256::Bn256;
 pub use halo2_proofs::pairing::bn256::Fr;
