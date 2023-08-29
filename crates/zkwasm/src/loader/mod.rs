@@ -33,6 +33,7 @@ use crate::runtime::CompiledImage;
 use crate::runtime::ExecutionResult;
 use crate::runtime::WasmInterpreter;
 use anyhow::anyhow;
+use zkwasm_host_circuits::host::db::TreeDB;
 
 mod err;
 
@@ -58,6 +59,7 @@ pub struct ZkWasmLoader<E: MultiMillerLoop> {
     module: wasmi::Module,
     phantom_functions: Vec<String>,
     _data: PhantomData<E>,
+    tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
 }
 
 impl<E: MultiMillerLoop> ZkWasmLoader<E> {
@@ -103,12 +105,13 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
         )
     }
 
-    fn circuit_without_witness(&self) -> Result<TestCircuit<E::Scalar>> {
+    pub fn circuit_without_witness(&self) -> Result<TestCircuit<E::Scalar>> {
         let (env, wasm_runtime_io) = HostEnv::new_with_full_foreign_plugins(
             vec![],
             vec![],
             vec![],
             Rc::new(RefCell::new(vec![])),
+            None,
         );
 
         let compiled_module = self.compile(&env)?;
@@ -124,7 +127,12 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
         Ok(builder.build_circuit::<E::Scalar>())
     }
 
-    pub fn new(k: u32, image: Vec<u8>, phantom_functions: Vec<String>) -> Result<Self> {
+    pub fn new(
+        k: u32,
+        image: Vec<u8>,
+        phantom_functions: Vec<String>,
+        tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
+    ) -> Result<Self> {
         set_zkwasm_k(k);
 
         let module = wasmi::Module::from_buffer(&image)?;
@@ -134,6 +142,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             module,
             phantom_functions,
             _data: PhantomData,
+            tree_db,
         };
 
         loader.precheck()?;
@@ -155,6 +164,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             vec![],
             vec![],
             Rc::new(RefCell::new(vec![])),
+            None,
         );
         let compiled = self.compile(&env)?;
 
@@ -169,6 +179,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             arg.private_inputs,
             arg.context_inputs,
             arg.context_outputs,
+            self.tree_db.clone(),
         );
 
         let compiled_module = self.compile(&env)?;
@@ -176,12 +187,17 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
         compiled_module.dry_run(&mut env)
     }
 
-    pub fn run(&self, arg: ExecutionArg) -> Result<ExecutionResult<RuntimeValue>> {
+    pub fn run(
+        &self,
+        arg: ExecutionArg,
+        write_to_file: bool,
+    ) -> Result<ExecutionResult<RuntimeValue>> {
         let (mut env, wasm_runtime_io) = HostEnv::new_with_full_foreign_plugins(
             arg.public_inputs,
             arg.private_inputs,
             arg.context_inputs,
             arg.context_outputs,
+            self.tree_db.clone(),
         );
 
         let compiled_module = self.compile(&env)?;
@@ -189,7 +205,10 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
         let result = compiled_module.run(&mut env, wasm_runtime_io)?;
 
         result.tables.profile_tables();
-        result.tables.write_json(None);
+
+        if write_to_file {
+            result.tables.write_json(None);
+        }
 
         Ok(result)
     }
@@ -198,7 +217,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
         &self,
         arg: ExecutionArg,
     ) -> Result<(TestCircuit<E::Scalar>, Vec<E::Scalar>)> {
-        let execution_result = self.run(arg)?;
+        let execution_result = self.run(arg, true)?;
 
         #[allow(unused_mut)]
         let mut instance: Vec<E::Scalar> = execution_result
@@ -239,6 +258,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             vec![],
             vec![],
             Rc::new(RefCell::new(vec![])),
+            None,
         );
 
         let c = self.compile(&env)?;
@@ -251,19 +271,19 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
     pub fn verify_proof(
         &self,
         params: &Params<E::G1Affine>,
-        _vkey: VerifyingKey<E::G1Affine>,
-        instances: Vec<E::Scalar>,
-        _proof: Vec<u8>,
+        _vkey: &VerifyingKey<E::G1Affine>,
+        instances: &Vec<E::Scalar>,
+        _proof: &Vec<u8>,
     ) -> Result<()> {
         let params_verifier: ParamsVerifier<E> = params.verifier(instances.len()).unwrap();
         let _strategy = SingleVerifier::new(&params_verifier);
 /*
         verify_proof(
             &params_verifier,
-            &vkey,
+            vkey,
             strategy,
-            &[&[&instances]],
-            &mut PoseidonRead::init(&proof[..]),
+            &[&[instances]],
+            &mut PoseidonRead::init(proof),
         )
         .unwrap();
 */
