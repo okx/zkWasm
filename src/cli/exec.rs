@@ -27,7 +27,7 @@ pub use halo2aggregator_s::circuits::utils::load_vkey;
 use halo2aggregator_s::circuits::utils::run_circuit_unsafe_full_pass;
 pub use halo2aggregator_s::circuits::utils::store_instance;
 use halo2aggregator_s::circuits::utils::TranscriptHash;
-use halo2aggregator_s::solidity_verifier::codegen::solidity_aux_gen;
+use halo2aggregator_s::solidity_verifier::codegen::{solidity_aux_gen, solidity_aux_gen_data};
 use halo2aggregator_s::solidity_verifier::solidity_render;
 use halo2aggregator_s::transcript::poseidon::PoseidonRead;
 use halo2aggregator_s::transcript::sha256::ShaRead;
@@ -803,6 +803,29 @@ pub fn exec_verify_aggregate_proof(
     .unwrap();
 
     info!("Verifing Aggregate Proof Passed.")
+}
+
+pub fn gen_solidity_aux(
+    params: &Params<<Bn256 as Engine>::G1Affine>,
+    instances: &Vec<Vec<Fr>>,
+    proof: Vec<u8>,
+    n_proofs: usize,
+    aggregate_vkey_path: &PathBuf
+)-> Vec<Fr>{
+    let public_inputs_size = 6 + 3 * n_proofs;
+    let verifier_params_verifier: ParamsVerifier<Bn256> = params.verifier(public_inputs_size).unwrap();
+    let vkey = load_vkey::<Bn256, AggregatorCircuit<G1Affine>>(
+            &params,
+            &aggregate_vkey_path,
+        );
+
+    solidity_aux_gen_data(
+        &verifier_params_verifier,
+        &vkey,
+        &instances[0],
+        proof,
+        false
+    )
 }
 
 pub fn exec_solidity_aggregate_proof(
