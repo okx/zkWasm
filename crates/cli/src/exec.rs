@@ -1,6 +1,8 @@
 use crate::app_builder::write_context_output;
 use crate::args::parse_args;
 use anyhow::Result;
+use circuits_batcher::proof::CircuitInfo;
+use circuits_batcher::proof::Prover;
 use delphinus_zkwasm::circuits::TestCircuit;
 use delphinus_zkwasm::halo2_proofs;
 use delphinus_zkwasm::halo2aggregator_s;
@@ -19,7 +21,6 @@ use halo2aggregator_s::circuits::utils::load_or_build_unsafe_params;
 use halo2aggregator_s::circuits::utils::load_proof;
 use halo2aggregator_s::circuits::utils::load_vkey;
 use halo2aggregator_s::circuits::utils::run_circuit_unsafe_full_pass;
-use halo2aggregator_s::circuits::utils::store_instance;
 use halo2aggregator_s::circuits::utils::TranscriptHash;
 use halo2aggregator_s::solidity_verifier::codegen::solidity_aux_gen;
 use halo2aggregator_s::solidity_verifier::solidity_render;
@@ -35,7 +36,6 @@ use serde::Serialize;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
-use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -78,7 +78,8 @@ pub fn exec_setup(
             info!("Found Verifying at {:?}", vk_path);
         } else {
             info!("Create Verifying to {:?}", vk_path);
-            let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions)?;
+            let loader =
+                ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions, None)?;
 
             let vkey = loader.create_vkey(&params)?;
 
@@ -97,7 +98,7 @@ pub fn exec_image_checksum(
     phantom_functions: Vec<String>,
     output_dir: &PathBuf,
 ) -> Result<()> {
-    let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions)?;
+    let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions, None)?;
 
     let hash: Fr = loader.checksum()?;
 
@@ -173,6 +174,7 @@ pub fn exec_dry_run_service(
                                 zkwasm_k,
                                 wasm_binary.clone(),
                                 phantom_functions.clone(),
+                                None,
                             )
                             .unwrap();
 
@@ -233,7 +235,7 @@ pub fn exec_dry_run(
     context_outputs: Rc<RefCell<Vec<u64>>>,
     external_outputs: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
 ) -> Result<()> {
-    let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions)?;
+    let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions, None)?;
 
     loader.dry_run(ExecutionArg {
         public_inputs,
@@ -258,17 +260,7 @@ pub fn exec_create_proof(
     context_outputs: Rc<RefCell<Vec<u64>>>,
     external_outputs: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
 ) -> Result<()> {
-    let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions)?;
-
-    let params = load_or_build_unsafe_params::<Bn256>(
-        zkwasm_k,
-        Some(&output_dir.join(format!("K{}.params", zkwasm_k))),
-    );
-
-    let vkey = load_vkey::<Bn256, TestCircuit<_>>(
-        &params,
-        &output_dir.join(format!("{}.{}.vkey.data", prefix, 0)),
-    );
+    let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions, None)?;
 
     let (circuit, instances) = loader.circuit_with_witness(ExecutionArg {
         public_inputs,
@@ -278,28 +270,21 @@ pub fn exec_create_proof(
         external_outputs,
     })?;
 
-    {
-        store_instance(
-            &vec![instances.clone()],
-            &output_dir.join(format!("{}.{}.instance.data", prefix, 0)),
-        );
-    }
-
     if true {
         info!("Mock test...");
         loader.mock_test(&circuit, &instances)?;
         info!("Mock test passed");
     }
 
-    let proof = loader.create_proof(&params, vkey, circuit, instances)?;
-
-    {
-        let proof_path = output_dir.join(format!("{}.{}.transcript.data", prefix, 0));
-        println!("write transcript to {:?}", proof_path);
-        let mut fd = std::fs::File::create(&proof_path)?;
-        fd.write_all(&proof)?;
-    }
-
+    let circuit: CircuitInfo<Bn256, TestCircuit<Fr>>  = CircuitInfo::new(
+        circuit,
+        prefix.to_string(),
+        vec![instances],
+        zkwasm_k as usize,
+        circuits_batcher::args::HashType::Poseidon
+    );
+    circuit.proofloadinfo.save(output_dir);
+    circuit.create_proof(output_dir, 0);
     info!("Proof has been created.");
 
     Ok(())
@@ -328,7 +313,7 @@ pub fn exec_verify_proof(
         Some(&output_dir.join(format!("K{}.params", zkwasm_k))),
     );
 
-    let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions)?;
+    let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions, None)?;
 
     let vkey = load_vkey::<Bn256, TestCircuit<_>>(
         &params,
@@ -358,7 +343,7 @@ pub fn exec_aggregate_create_proof(
 ) -> Result<()> {
     assert_eq!(public_inputs.len(), private_inputs.len());
 
-    let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions)?;
+    let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions, None)?;
 
     let (circuits, instances) = public_inputs
         .into_iter()
@@ -393,6 +378,8 @@ pub fn exec_aggregate_create_proof(
         instances,
         TranscriptHash::Poseidon,
         vec![],
+        vec![],
+        vec![],
         false,
     )
     .unwrap();
@@ -404,6 +391,8 @@ pub fn exec_aggregate_create_proof(
         vec![aggregate_circuit],
         vec![vec![aggregate_instances]],
         TranscriptHash::Sha,
+        vec![],
+        vec![],
         vec![],
         true,
     );

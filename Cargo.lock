@@ -311,6 +311,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "circuits-batcher"
+version = "0.1.0"
+source = "git+https://github.com/DelphinusLab/continuation-batcher.git#815c4b93bcf161d98cb64bd7dcb2f3930eebde22"
+dependencies = [
+ "anyhow",
+ "ark-std",
+ "bitvec",
+ "clap",
+ "downcast-rs",
+ "env_logger",
+ "ff",
+ "halo2_proofs",
+ "halo2aggregator-s",
+ "halo2ecc-s",
+ "hex",
+ "lazy_static",
+ "log",
+ "md5",
+ "num",
+ "num-bigint",
+ "num-derive",
+ "num-integer",
+ "num-traits",
+ "poseidon",
+ "quote",
+ "rand",
+ "serde",
+ "serde_json",
+ "sha2",
+ "strum",
+ "strum_macros",
+ "uuid",
+ "wabt",
+ "wast",
+]
+
+[[package]]
 name = "clap"
 version = "3.2.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -526,9 +563,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "ark-std",
+ "circuits-batcher",
  "clap",
  "delphinus-zkwasm",
  "env_logger",
+ "halo2_proofs",
+ "halo2aggregator-s",
  "hex",
  "log",
  "md5",
@@ -999,7 +1039,7 @@ dependencies = [
 [[package]]
 name = "halo2_proofs"
 version = "0.1.0-beta.1"
-source = "git+https://github.com/junyu0312/halo2?branch=gpu#e02af42177650c1df552f8a6614d4358621e067e"
+source = "git+https://github.com/junyu0312/halo2?branch=gpu#1944d4c03bf7a936690665537ae3fede776c76fe"
 dependencies = [
  "ark-std",
  "blake2b_simd",
@@ -1010,6 +1050,7 @@ dependencies = [
  "ec-gpu-gen",
  "ff",
  "group",
+ "memmap",
  "num",
  "num-bigint",
  "num-derive",
@@ -1025,7 +1066,7 @@ dependencies = [
 [[package]]
 name = "halo2aggregator-s"
 version = "0.1.0"
-source = "git+https://github.com/DelphinusLab/halo2aggregator-s.git?tag=bisect-lookup-0.3.2#fa32d533b617f332728dcaee0f9ecbf54e972ec4"
+source = "git+https://github.com/DelphinusLab/halo2aggregator-s.git?branch=main#11a5ca4f8ae7329775339b697c0a1cdc4ad82ac9"
 dependencies = [
  "ark-std",
  "blake2b_simd",
@@ -1413,6 +1454,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
 
 [[package]]
+name = "memmap"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6585fd95e7bb50d6cc31e20d4cf9afb4e2ba16c5846fc76793f11218da9c475b"
+dependencies = [
+ "libc",
+ "winapi 0.3.9",
+]
+
+[[package]]
 name = "memoffset"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1794,25 +1845,15 @@ dependencies = [
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.12"
+version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12cc1b0bf1727a77a54b6654e7b5f1af8604923edc8b81885f8ec92f9e3f0a05"
+checksum = "8afb450f006bf6385ca15ef45d71d2288452bc3683ce2e2cacc0d18e4be60b58"
 
 [[package]]
 name = "pin-utils"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
-
-[[package]]
-name = "playground"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "delphinus-zkwasm",
- "pairing_bn256",
- "wasmi",
-]
 
 [[package]]
 name = "poseidon"
@@ -3229,9 +3270,10 @@ dependencies = [
 [[package]]
 name = "zkwasm-host-circuits"
 version = "0.1.0"
-source = "git+https://github.com/DelphinusLab/zkWasm-host-circuits.git?branch=main#9b02f05b636b007d50a5cfa5db4274ddb8632198"
+source = "git+https://github.com/DelphinusLab/zkWasm-host-circuits.git?branch=main#3dc9dfd96c18545e6957d0a16732b7e61dee0726"
 dependencies = [
  "ark-std",
+ "circuits-batcher",
  "clap",
  "ff",
  "halo2_proofs",
