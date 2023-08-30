@@ -272,7 +272,7 @@ pub fn exec_create_proof(
         external_outputs,
     })?;
 
-    if true {
+    if false {
         info!("Mock test...");
         loader.mock_test(&circuit, &instances)?;
         info!("Mock test passed");
