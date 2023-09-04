@@ -8,13 +8,13 @@ use crate::circuits::etable::allocator::EventTableCellAllocator;
 use crate::circuits::etable::constraint_builder::ConstraintBuilder;
 use crate::circuits::etable::EventTableCommonConfig;
 use crate::circuits::etable::EventTableOpcodeConfig;
+use crate::foreign::log_helper::register_external_output_foreign;
 use crate::runtime::host::host_env::HostEnv;
 use crate::runtime::wasmi_interpreter::WasmRuntimeIO;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::ConstraintSystem;
 use halo2_proofs::plonk::Expression;
 use halo2_proofs::plonk::VirtualCells;
-use crate::foreign::log_helper::register_external_output_foreign;
 use zkwasm_host_circuits::host::db::TreeDB;
 
 use self::context::runtime::register_context_foreign;
@@ -72,7 +72,7 @@ impl HostEnv {
         private_inputs: Vec<u64>,
         context_input: Vec<u64>,
         context_output: Rc<RefCell<Vec<u64>>>,
-        external_output: Rc<RefCell<HashMap<u64, Vec<u64>>>>
+        external_output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
         tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
     ) -> (Self, WasmRuntimeIO) {
         let mut env = HostEnv::new();
