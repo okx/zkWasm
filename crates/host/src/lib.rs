@@ -1,8 +1,10 @@
 pub mod host;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use delphinus_zkwasm::foreign::context::runtime::register_context_foreign;
+use delphinus_zkwasm::foreign::log_helper::register_external_output_foreign;
 use delphinus_zkwasm::foreign::log_helper::register_log_foreign;
 use delphinus_zkwasm::foreign::require_helper::register_require_foreign;
 use delphinus_zkwasm::foreign::wasm_input_helper::runtime::register_wasm_input_foreign;
@@ -28,6 +30,8 @@ pub struct ExecutionArg {
     pub context_outputs: Arc<Mutex<Vec<u64>>>,
     /// db src
     pub tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
+    /// external outputs for `wasm_external_output_push`
+    pub external_outputs: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
 }
 
 impl ContextOutput for ExecutionArg {
@@ -42,12 +46,14 @@ impl From<Sequence> for ExecutionArg {
         let public_inputs = parse_args(seq.public_inputs.iter().map(|s| s.as_str()).collect());
         let context_inputs = parse_args(seq.context_input.iter().map(|s| s.as_str()).collect());
         let context_outputs = Arc::new(Mutex::new(vec![]));
+        let external_outputs = Rc::new(RefCell::new(HashMap::new()));
         ExecutionArg {
             private_inputs,
             public_inputs,
             context_inputs,
             context_outputs,
             tree_db: None,
+            external_outputs,
         }
     }
 }
@@ -69,6 +75,7 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         host::ecc_helper::bn254::pair::register_bn254pair_foreign(&mut env);
         host::ecc_helper::jubjub::sum::register_babyjubjubsum_foreign(&mut env);
         host::witness_helper::register_witness_foreign(&mut env);
+        register_external_output_foreign(&mut env, Rc::new(RefCell::new(HashMap::new())));
         env.finalize();
 
         (env, wasm_runtime_io)
@@ -87,6 +94,7 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         host::ecc_helper::bn254::pair::register_bn254pair_foreign(&mut env);
         host::ecc_helper::jubjub::sum::register_babyjubjubsum_foreign(&mut env);
         host::witness_helper::register_witness_foreign(&mut env);
+        register_external_output_foreign(&mut env, arg.external_outputs);
         env.finalize();
 
         (env, wasm_runtime_io)
