@@ -21,7 +21,7 @@ pub struct WitnessContext {
 }
 
 impl WitnessContext {
-    fn new(indexed_map: Rc<RefCell<HashMap<u64, Vec<u64>>>>) -> Self {
+    pub fn new(indexed_map: Rc<RefCell<HashMap<u64, Vec<u64>>>>) -> Self {
         WitnessContext {
             buf: vec![],
             indexed_buf: indexed_map,
@@ -49,7 +49,7 @@ impl WitnessContext {
         if let Some(vec) = buf {
             vec.insert(0, new);
         } else {
-            self.indexed_buf.borrow_mut().insert(self.focus, vec![new]);
+            bind.insert(self.focus, vec![new]);
         }
     }
 
@@ -59,7 +59,7 @@ impl WitnessContext {
         if let Some(vec) = buf {
             vec.push(new);
         } else {
-            self.indexed_buf.borrow_mut().insert(self.focus, vec![new]);
+            bind.insert(self.focus, vec![new]);
         }
     }
 

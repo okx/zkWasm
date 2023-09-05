@@ -1,8 +1,10 @@
 pub mod host;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use delphinus_zkwasm::foreign::context::runtime::register_context_foreign;
+use delphinus_zkwasm::foreign::log_helper::register_external_output_foreign;
 use delphinus_zkwasm::foreign::log_helper::register_log_foreign;
 use delphinus_zkwasm::foreign::require_helper::register_require_foreign;
 use delphinus_zkwasm::foreign::wasm_input_helper::runtime::register_wasm_input_foreign;
@@ -13,7 +15,6 @@ use delphinus_zkwasm::runtime::host::ContextOutput;
 use delphinus_zkwasm::runtime::host::HostEnvBuilder;
 use serde::Deserialize;
 use serde::Serialize;
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zkwasm_host_circuits::host::db::TreeDB;
@@ -96,10 +97,9 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         register_log_foreign(&mut env);
         register_context_foreign(&mut env, vec![], Arc::new(Mutex::new(vec![])));
         envconfig.register_ops(&mut env);
-        host::witness_helper::register_witness_foreign(
-            &mut env,
-            Rc::new(RefCell::new(HashMap::new())),
-        );
+        let external_output = Rc::new(RefCell::new(HashMap::new()));
+        host::witness_helper::register_witness_foreign(&mut env, external_output.clone());
+        register_external_output_foreign(&mut env, external_output);
         env.finalize();
 
         (env, wasm_runtime_io)
@@ -112,8 +112,9 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         register_require_foreign(&mut env);
         register_log_foreign(&mut env);
         register_context_foreign(&mut env, arg.context_inputs, arg.context_outputs);
-        host::witness_helper::register_witness_foreign(&mut env, arg.indexed_witness);
+        host::witness_helper::register_witness_foreign(&mut env, arg.indexed_witness.clone());
         envconfig.register_ops(&mut env);
+        register_external_output_foreign(&mut env, arg.indexed_witness);
         env.finalize();
 
         (env, wasm_runtime_io)

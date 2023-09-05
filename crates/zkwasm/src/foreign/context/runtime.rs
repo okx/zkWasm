@@ -13,13 +13,13 @@ use crate::runtime::host::ForeignContext;
 
 use super::Op;
 
-struct Context {
-    inputs: Vec<u64>,
-    outputs: Arc<Mutex<Vec<u64>>>,
+pub struct Context {
+    pub inputs: Vec<u64>,
+    pub outputs: Arc<Mutex<Vec<u64>>>,
 }
 
 impl Context {
-    fn new(context_input: Vec<u64>, context_output: Arc<Mutex<Vec<u64>>>) -> Self {
+    pub fn new(context_input: Vec<u64>, context_output: Arc<Mutex<Vec<u64>>>) -> Self {
         let mut inputs = context_input.clone();
         inputs.reverse();
 
