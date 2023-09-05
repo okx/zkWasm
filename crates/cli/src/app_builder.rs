@@ -8,9 +8,12 @@ use delphinus_host::ExecutionArg as StandardArg;
 use delphinus_host::StandardHostEnvBuilder as StandardEnvBuilder;
 use log::info;
 use log::warn;
+use std::cell::RefCell;
+use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
+use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::Mutex;
 
@@ -205,6 +208,7 @@ pub trait AppBuilder: CommandBuilder {
                                 )?;
                         },
                         _ => {
+                            let external_outputs = Rc::new(RefCell::new(HashMap::new()));
                             exec_dry_run::<StandardArg, StandardEnvBuilder>(
                                 zkwasm_k,
                                 wasm_binary,
@@ -215,8 +219,11 @@ pub trait AppBuilder: CommandBuilder {
                                     context_inputs: context_in,
                                     context_outputs: Arc::new(Mutex::new(vec![])),
                                     tree_db: None,
+                                    external_outputs: external_outputs.clone(),
                                 },
                                 )?;
+
+                                log::info!("external outputs: {:?}", external_outputs);
                         }
                     };
 
@@ -267,6 +274,7 @@ pub trait AppBuilder: CommandBuilder {
                             context_inputs: context_in,
                             context_outputs: context_out.clone(),
                             tree_db: None,
+                            external_outputs: Rc::new(RefCell::new(HashMap::new())),
                         },
                     )?;
                 }

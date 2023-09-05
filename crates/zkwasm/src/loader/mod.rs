@@ -95,7 +95,7 @@ impl<E: MultiMillerLoop, T, EnvBuilder: HostEnvBuilder<Arg = T>> ZkWasmLoader<E,
         )
     }
 
-    fn circuit_without_witness(&self) -> Result<TestCircuit<E::Scalar>> {
+    pub fn circuit_without_witness(&self) -> Result<TestCircuit<E::Scalar>> {
         let (env, wasm_runtime_io) = EnvBuilder::create_env_without_value();
 
         let compiled_module = self.compile(&env)?;
