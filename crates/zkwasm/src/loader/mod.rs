@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::rc::Rc;
 
@@ -51,6 +52,8 @@ pub struct ExecutionArg {
     pub context_inputs: Vec<u64>,
     /// Context outputs for `wasm_write_context()`
     pub context_outputs: Rc<RefCell<Vec<u64>>>,
+    /// external outputs for `wasm_external_output_push`
+    pub external_outputs:Rc<RefCell<HashMap<u64, Vec<u64>>>>,
 }
 
 pub struct ExecutionReturn {
@@ -114,6 +117,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             vec![],
             vec![],
             Rc::new(RefCell::new(vec![])),
+            Rc::new(RefCell::new(HashMap::new())),
             None,
         );
 
@@ -168,6 +172,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             arg.private_inputs,
             arg.context_inputs,
             arg.context_outputs,
+            arg.external_outputs,
             self.tree_db.clone(),
         );
 
@@ -186,6 +191,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             arg.private_inputs,
             arg.context_inputs,
             arg.context_outputs,
+            arg.external_outputs,
             self.tree_db.clone(),
         );
 

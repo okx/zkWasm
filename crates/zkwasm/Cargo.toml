@@ -26,6 +26,10 @@ serde_json = "1.0"
 ff = "0.12"
 sha2 = "0.10.6"
 poseidon = { git = "https://github.com/lanbones/poseidon" }
+wast = "47.0.0"
+uuid = { version = "1.2.2", features = ["serde", "v4"] }
+primitive-types = "0.12.1"
+franklin_crypto = {package = "franklin-crypto",git="https://github.com/okx/franklin-crypto.git",branch="beta" , features = ["multicore", "plonk"]}
 
 anyhow.workspace = true
 halo2aggregator-s.workspace = true

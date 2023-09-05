@@ -24,6 +24,7 @@ use notify::Watcher;
 use serde::Deserialize;
 use serde::Serialize;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
@@ -137,6 +138,7 @@ pub fn exec_dry_run_service(
                                 sequence.context_input.iter().map(|s| s.as_str()).collect(),
                             );
                             let context_outputs = Rc::new(RefCell::new(vec![]));
+                            let external_outputs = Rc::new(RefCell::new(HashMap::new()));
 
                             let loader = ZkWasmLoader::<Bn256>::new(
                                 zkwasm_k,
@@ -152,9 +154,12 @@ pub fn exec_dry_run_service(
                                     private_inputs,
                                     context_inputs,
                                     context_outputs: context_outputs.clone(),
+                                    external_outputs: external_outputs.clone(),
                                 })
                                 .unwrap();
                             println!("return value: {:?}", r);
+
+                            log::info!("external outputs {:?}", external_outputs);
 
                             write_context_output(
                                 &context_outputs.borrow().to_vec(),
@@ -198,6 +203,7 @@ pub fn exec_dry_run(
     private_inputs: Vec<u64>,
     context_inputs: Vec<u64>,
     context_outputs: Rc<RefCell<Vec<u64>>>,
+    external_outputs: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
 ) -> Result<()> {
     let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions, None)?;
 
@@ -206,6 +212,7 @@ pub fn exec_dry_run(
         private_inputs,
         context_inputs,
         context_outputs,
+        external_outputs,
     })?;
 
     Ok(())
@@ -222,6 +229,7 @@ pub fn exec_create_proof(
     private_inputs: Vec<u64>,
     context_inputs: Vec<u64>,
     context_outputs: Rc<RefCell<Vec<u64>>>,
+    external_outputs: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
 ) -> Result<()> {
     use circuits_batcher::proof::K_PARAMS_CACHE;
     use circuits_batcher::proof::PKEY_CACHE;
@@ -232,6 +240,7 @@ pub fn exec_create_proof(
         private_inputs,
         context_inputs,
         context_outputs,
+        external_outputs,
     })?;
 
     if true {

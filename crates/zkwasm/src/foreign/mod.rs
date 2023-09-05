@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::circuits::cell::AllocatedUnlimitedCell;
@@ -13,6 +14,7 @@ use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::plonk::ConstraintSystem;
 use halo2_proofs::plonk::Expression;
 use halo2_proofs::plonk::VirtualCells;
+use crate::foreign::log_helper::register_external_output_foreign;
 use zkwasm_host_circuits::host::db::TreeDB;
 
 use self::context::runtime::register_context_foreign;
@@ -70,6 +72,7 @@ impl HostEnv {
         private_inputs: Vec<u64>,
         context_input: Vec<u64>,
         context_output: Rc<RefCell<Vec<u64>>>,
+        external_output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
         tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
     ) -> (Self, WasmRuntimeIO) {
         let mut env = HostEnv::new();
@@ -85,6 +88,7 @@ impl HostEnv {
         register_poseidon_foreign(&mut env);
         register_babyjubjubsum_foreign(&mut env);
         register_context_foreign(&mut env, context_input, context_output);
+        register_external_output_foreign(&mut env, external_output);
         env.finalize();
 
         (env, wasm_runtime_io)
