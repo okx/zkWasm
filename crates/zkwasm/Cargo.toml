@@ -32,6 +32,8 @@ notify = "6.0.1"
 sha2 = "0.10.6"
 wast = "47.0.0"
 uuid = { version = "1.2.2", features = ["serde", "v4"] }
+primitive-types = "0.12.1"
+franklin_crypto = {package = "franklin-crypto",git="https://github.com/okx/franklin-crypto.git",branch="beta" , features = ["multicore", "plonk"]}
 
 #quote = "1.0.25"
 
