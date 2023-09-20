@@ -228,21 +228,13 @@ pub fn exec_dry_run(
 ) -> Result<()> {
     let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions, None)?;
 
-    let result = loader.run(
-        ExecutionArg {
-            public_inputs,
-            private_inputs,
-            context_inputs,
-            context_outputs,
-            external_outputs,
-        },
-        false,
-    )?;
-
-    log::info!(
-        "etable len: {}",
-        result.tables.execution_tables.etable.entries().len()
-    );
+    loader.dry_run(ExecutionArg {
+        public_inputs,
+        private_inputs,
+        context_inputs,
+        context_outputs,
+        external_outputs,
+    })?;
 
     Ok(())
 }
