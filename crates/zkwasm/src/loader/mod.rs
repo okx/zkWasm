@@ -146,7 +146,9 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
     ) -> Result<Self> {
         set_zkwasm_k(k);
 
-        let module = wasmi::Module::from_buffer(&image)?;
+        let mut module = wasmi::Module::from_buffer(&image)?;
+        let parity_module = module.module().clone().parse_names().unwrap();
+        module.module = parity_module;
 
         let loader = Self {
             k,
