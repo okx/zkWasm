@@ -1,21 +1,34 @@
+use franklin_crypto::alt_babyjubjub::AltJubjubBn256;
+use franklin_crypto::bellman::bn256::Bn256;
+use franklin_crypto::bellman::PrimeField;
+use franklin_crypto::jubjub::edwards;
+use franklin_crypto::jubjub::edwards::Point;
+use franklin_crypto::jubjub::Unknown;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
 use specs::external_host_call_table::ExternalHostCallSignature;
 
+use crate::foreign::log_helper::ExternalOutputForeignInst::*;
 use crate::runtime::host::host_env::HostEnv;
 use crate::runtime::host::ForeignContext;
 use zkwasm_host_circuits::host::ForeignInst::Log;
-use crate::foreign::log_helper::ExternalOutputForeignInst::*;
+
+lazy_static! {
+    pub static ref JUBJUB_PARAMS: AltJubjubBn256 = AltJubjubBn256::new();
+}
 
 struct Context;
 impl ForeignContext for Context {}
 
 pub enum ExternalOutputForeignInst {
-    ExternalOutputPush = std::mem::variant_count::<zkwasm_host_circuits::host::ForeignInst>() as isize,
+    ExternalOutputPush =
+        std::mem::variant_count::<zkwasm_host_circuits::host::ForeignInst>() as isize,
     ExternalOutputPop,
     ExternalOutputAddress,
+
+    ExternalUnpackPublicKey,
 }
 
 pub struct ExternalOutputContext {
@@ -26,7 +39,10 @@ impl ForeignContext for ExternalOutputContext {}
 
 impl ExternalOutputContext {
     pub fn new(output: Rc<RefCell<HashMap<u64, Vec<u64>>>>) -> Self {
-        ExternalOutputContext { output, current_key: 0 }
+        ExternalOutputContext {
+            output,
+            current_key: 0,
+        }
     }
 
     pub fn default() -> ExternalOutputContext {
@@ -51,9 +67,39 @@ impl ExternalOutputContext {
 
     pub fn pop(&self) -> u64 {
         let mut output = self.output.borrow_mut();
-        let target = output.get_mut(&self.current_key).expect(&format!("can't get vec at key {}", self.current_key));
+        let target = output
+            .get_mut(&self.current_key)
+            .expect(&format!("can't get vec at key {}", self.current_key));
 
-        target.pop().expect(&format!("can't pop vec at key {}", self.current_key))
+        target
+            .pop()
+            .expect(&format!("can't pop vec at key {}", self.current_key))
+    }
+
+    pub fn unpack_public_key(&self, address: u64) {
+        let mut output = self.output.borrow_mut();
+        let target = output.get_mut(&address).unwrap();
+
+        let data_len = target.len();
+        assert!(data_len >= 4, "unpack public key len < 4, {:?}", target);
+
+        let data = &mut target[data_len - 4..data_len];
+
+        let mut packed = [0u64; 4];
+        packed.copy_from_slice(data);
+        let mut packed_le = [0u8; 32];
+        primitive_types::U256(packed).to_little_endian(&mut packed_le);
+
+        let r: std::io::Result<Point<Bn256, Unknown>> =
+            edwards::Point::read(packed_le.as_slice(), &JUBJUB_PARAMS as &AltJubjubBn256);
+        if let Ok(r) = r {
+            let (x, _y) = r.into_xy();
+            let x = x.into_repr();
+
+            data.copy_from_slice(&x.0);
+        } else {
+            log::error!("unpack err: {:?}", r.err());
+        }
     }
 }
 
@@ -81,10 +127,14 @@ pub fn register_log_foreign(env: &mut HostEnv) {
     );
 }
 
-pub fn register_external_output_foreign(env: &mut HostEnv, external_output: Rc<RefCell<HashMap<u64, Vec<u64>>>>) {
-    let foreign_output_plugin = env
-        .external_env
-        .register_plugin("foreign_external_output", Box::new(ExternalOutputContext::new(external_output)));
+pub fn register_external_output_foreign(
+    env: &mut HostEnv,
+    external_output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
+) {
+    let foreign_output_plugin = env.external_env.register_plugin(
+        "foreign_external_output",
+        Box::new(ExternalOutputContext::new(external_output)),
+    );
 
     let push_output = Rc::new(
         |context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
@@ -123,6 +173,17 @@ pub fn register_external_output_foreign(env: &mut HostEnv, external_output: Rc<R
         },
     );
 
+    let unpack_public_key = Rc::new(
+        |context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
+            let context = context.downcast_mut::<ExternalOutputContext>().unwrap();
+
+            let address: u64 = args.nth(0);
+            context.unpack_public_key(address);
+
+            None
+        },
+    );
+
     env.external_env.register_function(
         "wasm_external_output_push",
         ExternalOutputPush as usize,
@@ -145,5 +206,13 @@ pub fn register_external_output_foreign(env: &mut HostEnv, external_output: Rc<R
         ExternalHostCallSignature::Argument,
         foreign_output_plugin.clone(),
         address_output,
+    );
+
+    env.external_env.register_function(
+        "wasm_external_unpack_public_key",
+        ExternalUnpackPublicKey as usize,
+        ExternalHostCallSignature::Argument,
+        foreign_output_plugin.clone(),
+        unpack_public_key,
     );
 }
