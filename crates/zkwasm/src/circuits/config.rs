@@ -21,7 +21,6 @@ pub struct CircuitConfigure {
     pub opcode_selector: HashSet<OpcodeClassPlain>,
 }
 
-#[thread_local]
 static mut CIRCUIT_CONFIGURE: Option<CircuitConfigure> = None;
 
 impl CircuitConfigure {
