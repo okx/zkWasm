@@ -8,7 +8,7 @@
 
 # Overview：
 
-The mission of DelphiusLab is to provide Web2 developers with a consise toolset to leverage the power of Web3 in their applications. The ZKWASM (ZKSNARK virtual machine that supports Web Assembly) serves as a trustless layer between rich applilcations running on WASM runtime and smart contracts on chain.
+The mission of DelphiusLab is to provide Web2 developers with a concise toolset to leverage the power of Web3 in their applications. The ZKWASM (ZKSNARK virtual machine that supports Web Assembly) serves as a trustless layer between rich applilcations running on WASM runtime and smart contracts on chain.
 
 WASM (or WebAssembly) is an open standard binary code format similar to assembly. Its initial objective was to provide an alternative to java-script with improved performance for the current web ecosystem. Benefiting from its platform independence, front-end flexibility (can be compiled from the majority of languages including C, C++, assembly script, rust, etc.), good isolated runtime and speed comes closer to the speed of a native binary, its usage is arising in distributed cloud and edge computing. Recently it has become a popular binary format for users to run customized functions on AWS Lambda, Open Yurt, AZURE, etc.
 
@@ -20,11 +20,18 @@ https://jhc.sjtu.edu.cn/~hongfeifu/manuscriptb.pdf
 
 # Quick start with ZKWASM command line
 
+## Dependency
+
+Make sure the following packages are installed.
+```
+clang lld
+```
+
 ## Setup input:
 wasm code
 
 ## Runtime input:
-input of wasm function and the top level function must be main.
+input of wasm function and the name of the top level function (usually we call the entry function zkmain).
 
 ## Proving target:
 simulation of wasm execution of target wasm bytecode with particular inputs are correct.
@@ -45,6 +52,8 @@ with OPTIONS:
     -o, --output [<OUTPUT_PATH>...]
             Path of the output files.
             The md5 of the wasm binary file is the default path if not supplied.
+    -p, --param [<OUTPUT_PATH>...]
+            Path of the parameter files. (trusted setup, etc)
 
         --private [<PRIVATE_INPUT>...]
             Private arguments of your wasm program arguments of format value:type where
@@ -55,15 +64,7 @@ with OPTIONS:
             type=i64|bytes|bytes-packed, multiple values should be separated with ' ' (space)
 ```
 ## Batch prove and verify:
-```
-cargo run --release -- --function <FUNCTION_NAME> --wasm <WASM_BINARY> aggregate-prove [OPTIONS]
-cargo run --release -- --function <FUNCTION_NAME> --wasm <WASM_BINARY> aggregate-verify --proof <PROOF_PATH> --instances <AGGREGATE_INSTANCE_PATH>
-```
-
-## Generate verify contract:
-```
-cargo run --release --function <FUNCTION_NAME> --wasm <WASM_BINARY> solidity-aggregate-verifier --proof <PROOF_PATH> --instances <AGGREGATE_INSTANCE_PATH>
-```
+Please see zkWASM continuation batcher at https://github.com/DelphinusLab/continuation-batcher for batching proof with host circuits and verifier generation in smart contracts.
 
 # Operations Spec [WIP]
 We uses z3 (https://github.com/Z3Prover/z3) to check that all operation are compiled to zkp circuits correctly.

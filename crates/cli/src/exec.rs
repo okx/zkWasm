@@ -4,29 +4,17 @@ use anyhow::Result;
 use circuits_batcher::proof::CircuitInfo;
 use circuits_batcher::proof::ProofInfo;
 use circuits_batcher::proof::ProofLoadInfo;
-use circuits_batcher::proof::Prover;
 use delphinus_zkwasm::circuits::TestCircuit;
 use delphinus_zkwasm::halo2_proofs;
 use delphinus_zkwasm::halo2aggregator_s;
 use delphinus_zkwasm::loader::ExecutionArg;
 use delphinus_zkwasm::loader::ZkWasmLoader;
-use halo2_proofs::pairing::bn256::Bn256;
+use halo2_proofs::pairing::bn256::{Bn256, G1Affine};
 use halo2_proofs::pairing::bn256::Fr;
-use halo2_proofs::pairing::bn256::G1Affine;
-use halo2_proofs::plonk::verify_proof;
-use halo2_proofs::plonk::SingleVerifier;
 use halo2_proofs::poly::commitment::ParamsVerifier;
-use halo2aggregator_s::circuit_verifier::circuit::AggregatorCircuit;
-use halo2aggregator_s::circuits::utils::load_instance;
-use halo2aggregator_s::circuits::utils::load_or_build_unsafe_params;
-use halo2aggregator_s::circuits::utils::load_proof;
-use halo2aggregator_s::circuits::utils::load_vkey;
-use halo2aggregator_s::circuits::utils::run_circuit_unsafe_full_pass;
+use halo2aggregator_s::circuits::utils::{load_instance, load_or_build_unsafe_params, load_proof, load_vkey, run_circuit_unsafe_full_pass};
 use halo2aggregator_s::circuits::utils::TranscriptHash;
 use halo2aggregator_s::native_verifier;
-use halo2aggregator_s::solidity_verifier::codegen::solidity_aux_gen;
-use halo2aggregator_s::solidity_verifier::solidity_render;
-use halo2aggregator_s::transcript::sha256::ShaRead;
 use log::debug;
 use log::error;
 use log::info;
@@ -42,6 +30,12 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::rc::Rc;
 use wasmi::RuntimeValue;
+use std::io::Write;
+use halo2_proofs::plonk::{SingleVerifier, verify_proof};
+use halo2aggregator_s::circuit_verifier::circuit::AggregatorCircuit;
+use halo2aggregator_s::solidity_verifier::codegen::solidity_aux_gen;
+use halo2aggregator_s::solidity_verifier::solidity_render;
+use halo2aggregator_s::transcript::sha256::ShaRead;
 
 const AGGREGATE_PREFIX: &'static str = "aggregate-circuit";
 
@@ -51,13 +45,14 @@ pub fn exec_setup(
     prefix: &str,
     wasm_binary: Vec<u8>,
     phantom_functions: Vec<String>,
-    output_dir: &PathBuf,
+    _output_dir: &PathBuf,
+    param_dir: &PathBuf,
 ) -> Result<()> {
     info!("Setup Params and VerifyingKey");
 
     macro_rules! prepare_params {
         ($k: expr) => {{
-            let params_path = &output_dir.join(format!("K{}.params", $k));
+            let params_path = &param_dir.join(format!("K{}.params", $k));
 
             if params_path.exists() {
                 info!("Found Params with K = {} at {:?}", $k, params_path);
@@ -74,7 +69,7 @@ pub fn exec_setup(
 
     // Setup ZkWasm Vkey
     {
-        let vk_path = &output_dir.join(format!("{}.{}.vkey.data", prefix, 0));
+        let vk_path = &param_dir.join(format!("{}.vkey.data", prefix));
 
         if vk_path.exists() {
             info!("Found Verifying at {:?}", vk_path);
@@ -93,7 +88,6 @@ pub fn exec_setup(
     Ok(())
 }
 
-#[cfg(feature = "checksum")]
 pub fn exec_image_checksum(
     zkwasm_k: u32,
     wasm_binary: Vec<u8>,
@@ -102,14 +96,21 @@ pub fn exec_image_checksum(
 ) -> Result<()> {
     let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions, None)?;
 
-    let hash: Fr = loader.checksum()?;
+    let params = load_or_build_unsafe_params::<Bn256>(
+        zkwasm_k,
+        Some(&output_dir.join(format!("K{}.params", zkwasm_k))),
+    );
+
+    let checksum = loader.checksum(&params)?;
+    assert_eq!(checksum.len(), 1);
+    let checksum = checksum[0];
+
+    println!("image checksum: {:?}", checksum);
 
     let mut fd =
         std::fs::File::create(&output_dir.join(format!("checksum.data",)).as_path()).unwrap();
 
-    let hash = hash.to_string();
-    write!(fd, "{}", hash).unwrap();
-    println!("{}", hash);
+    write!(fd, "{:?}", checksum)?;
 
     Ok(())
 }
@@ -256,15 +257,18 @@ pub fn exec_create_proof(
     wasm_binary: Vec<u8>,
     phantom_functions: Vec<String>,
     output_dir: &PathBuf,
+    param_dir: &PathBuf,
     public_inputs: Vec<u64>,
     private_inputs: Vec<u64>,
     context_inputs: Vec<u64>,
     context_outputs: Rc<RefCell<Vec<u64>>>,
     external_outputs: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
 ) -> Result<()> {
+    use circuits_batcher::proof::K_PARAMS_CACHE;
+    use circuits_batcher::proof::PKEY_CACHE;
     let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions, None)?;
 
-    let (circuit, instances) = loader.circuit_with_witness(ExecutionArg {
+    let (circuit, instances, _) = loader.circuit_with_witness(ExecutionArg {
         public_inputs,
         private_inputs,
         context_inputs,
@@ -286,7 +290,14 @@ pub fn exec_create_proof(
         circuits_batcher::args::HashType::Poseidon
     );
     circuit.proofloadinfo.save(output_dir);
-    circuit.create_proof(output_dir, 0);
+    circuit.exec_create_proof(
+        output_dir,
+        param_dir,
+        PKEY_CACHE.lock().as_mut().unwrap(),
+        0,
+        K_PARAMS_CACHE.lock().as_mut().unwrap()
+    );
+
     info!("Proof has been created.");
 
     Ok(())
@@ -295,13 +306,14 @@ pub fn exec_create_proof(
 pub fn exec_verify_proof(
     prefix: &'static str,
     output_dir: &PathBuf,
+    param_dir: &PathBuf,
 ) -> Result<()> {
     let load_info = output_dir.join(format!("{}.loadinfo.json", prefix));
     let proofloadinfo = ProofLoadInfo::load(&load_info);
-    let proofs:Vec<ProofInfo<Bn256>> = ProofInfo::load_proof(&output_dir, &proofloadinfo);
+    let proofs:Vec<ProofInfo<Bn256>> = ProofInfo::load_proof(&output_dir, &param_dir, &proofloadinfo);
     let params = load_or_build_unsafe_params::<Bn256>(
         proofloadinfo.k as u32,
-        Some(&output_dir.join(format!("K{}.params", proofloadinfo.k))),
+        Some(&param_dir.join(format!("K{}.params", proofloadinfo.k))),
     );
     let mut public_inputs_size = 0;
     for proof in proofs.iter() {
@@ -351,7 +363,7 @@ pub fn exec_aggregate_create_proof(
             Ok::<_, anyhow::Error>((vec![], vec![])),
             |acc, (((public_inputs, private_inputs), context_inputs), context_outputs)| {
                 acc.and_then(|(mut circuits, mut instances)| {
-                    let (circuit, instance) = loader.circuit_with_witness(ExecutionArg {
+                    let (circuit, instance, _) = loader.circuit_with_witness(ExecutionArg {
                         public_inputs,
                         private_inputs,
                         context_inputs,
