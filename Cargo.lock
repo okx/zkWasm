@@ -3727,6 +3727,8 @@ dependencies = [
 name = "wasmi"
 version = "0.11.0"
 dependencies = [
+ "lazy_static",
+ "log",
  "parity-wasm",
  "specs",
  "wasmi-validation",
