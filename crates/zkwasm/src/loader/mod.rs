@@ -400,5 +400,5 @@ mod tests {
 }
 
 pub fn get_trace_count() -> usize {
-    return wasmi::runner::get_trace_count();
+    return wasmi::tracer::phantom::get_trace_count();
 }
