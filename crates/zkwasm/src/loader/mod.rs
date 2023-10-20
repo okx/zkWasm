@@ -57,7 +57,7 @@ pub struct ExecutionArg {
     /// Context outputs for `wasm_write_context()`
     pub context_outputs: Rc<RefCell<Vec<u64>>>,
     /// external outputs for `wasm_external_output_push`
-    pub external_outputs:Rc<RefCell<HashMap<u64, Vec<u64>>>>,
+    pub external_outputs: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
 }
 
 pub struct ExecutionReturn {
@@ -204,6 +204,21 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
         compiled_module.dry_run(&mut env)
     }
 
+    pub fn dry_run_trace_count(&self, arg: ExecutionArg) -> Result<Option<RuntimeValue>> {
+        let (mut env, _) = HostEnv::new_with_full_foreign_plugins(
+            arg.public_inputs,
+            arg.private_inputs,
+            arg.context_inputs,
+            arg.context_outputs,
+            arg.external_outputs,
+            self.tree_db.clone(),
+        );
+
+        let compiled_module = self.compile(&env)?;
+
+        compiled_module.dry_run_trace_count(&mut env)
+    }
+
     pub fn run(
         &self,
         arg: ExecutionArg,
@@ -307,7 +322,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             &[&[&instances]],
             &mut PoseidonRead::init(&proof[..]),
         )
-        .unwrap();
+            .unwrap();
 
         {
             let img_col_idx = vkey
@@ -322,7 +337,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
                     &vkey,
                     &mut PoseidonRead::init(&proof[..]),
                 )
-                .unwrap();
+                    .unwrap();
             let checksum = self.checksum(params)?;
 
             assert!(vec![img_col_commitment[img_col_idx as usize]] == checksum)
