@@ -1,3 +1,4 @@
 [submodule "third-party/wasmi"]
 	path = third-party/wasmi
-	url = https://github.com/DelphinusLab/wasmi.git
+	url = https://github.com/okx/wasmi.git
+	branch = trace_count

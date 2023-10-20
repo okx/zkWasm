@@ -383,3 +383,7 @@ mod tests {
         }
     }
 }
+
+pub fn get_trace_count() -> usize {
+    return wasmi::runner::get_trace_count();
+}
