@@ -127,7 +127,6 @@ impl WasmiRuntime {
         entry: &str,
         phantom_functions: &Vec<String>,
     ) -> Result<CompiledImage<wasmi::NotStartedModuleRef<'a>, wasmi::tracer::Tracer>> {
-        wasmi::tracer::phantom::reset_trace_count();
         let tracer = wasmi::tracer::Tracer::new(host_plugin_lookup.clone(), phantom_functions);
         let tracer = Rc::new(RefCell::new(tracer));
 
