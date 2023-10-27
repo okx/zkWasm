@@ -57,7 +57,7 @@ pub struct ExecutionArg {
     /// Context outputs for `wasm_write_context()`
     pub context_outputs: Rc<RefCell<Vec<u64>>>,
     /// external outputs for `wasm_external_output_push`
-    pub external_outputs: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
+    pub external_outputs:Rc<RefCell<HashMap<u64, Vec<u64>>>>,
 }
 
 pub struct ExecutionReturn {
