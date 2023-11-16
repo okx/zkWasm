@@ -4,7 +4,6 @@
 #![feature(thread_local)]
 #![feature(variant_count)]
 
-pub mod checksum;
 pub mod circuits;
 pub mod foreign;
 pub mod loader;
