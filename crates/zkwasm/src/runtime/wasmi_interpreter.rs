@@ -36,7 +36,7 @@ impl WasmRuntimeIO {
 pub trait Execution<R> {
     fn dry_run<E: Externals>(self, externals: &mut E) -> Result<Option<R>>;
 
-    fn dry_run_trace_count<E: Externals>(self, externals: &mut E) -> Result<Option<RuntimeValue>>;
+    fn dry_run_trace_count<E: Externals>(self, externals: &mut E) -> Result<(Option<RuntimeValue>, usize)>;
 
     fn run<E: Externals>(
         self,
@@ -56,14 +56,14 @@ impl Execution<RuntimeValue>
         Ok(result)
     }
 
-    fn dry_run_trace_count<E: Externals>(self, externals: &mut E) -> Result<Option<RuntimeValue>> {
+    fn dry_run_trace_count<E: Externals>(self, externals: &mut E) -> Result<(Option<RuntimeValue>, usize)> {
         let instance = self.instance.run_start(externals).unwrap();
 
         let result = instance.invoke_export_trace_count(
             &self.entry, &[], externals, self.tracer.clone()
         )?;
 
-        Ok(result)
+        Ok((result, wasmi::tracer::phantom::get_trace_count()))
     }
 
     fn run<E: Externals>(

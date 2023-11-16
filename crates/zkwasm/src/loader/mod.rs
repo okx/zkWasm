@@ -181,7 +181,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
         compiled_module.dry_run(&mut env)
     }
 
-    pub fn dry_run_trace_count(&self, arg: ExecutionArg) -> Result<Option<RuntimeValue>> {
+    pub fn dry_run_trace_count(&self, arg: ExecutionArg) -> Result<(Option<RuntimeValue>, usize)> {
         let (mut env, _) = HostEnv::new_with_full_foreign_plugins(
             arg.public_inputs,
             arg.private_inputs,
@@ -355,8 +355,4 @@ mod tests {
             self.verify_proof(&params, vkey, instances, proof).unwrap();
         }
     }
-}
-
-pub fn get_trace_count() -> usize {
-    return wasmi::tracer::phantom::get_trace_count();
 }
