@@ -37,14 +37,14 @@ pub enum ExternalOutputForeignInst {
 pub struct ExternalOutputContext {
     pub output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
     pub current_key: u64,
-    pub trace_counter: Option<Rc<RefCell<Tracer>>>,
+    pub trace_counter: Option<Rc<RefCell<Option<Rc<RefCell<Tracer>>>>>>,
 }
 impl ForeignContext for ExternalOutputContext {}
 
 impl ExternalOutputContext {
     pub fn new(
         output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
-        trace_counter: Option<Rc<RefCell<Tracer>>>,
+        trace_counter: Option<Rc<RefCell<Option<Rc<RefCell<Tracer>>>>>>,
     ) -> Self {
         ExternalOutputContext {
             output,
@@ -116,7 +116,16 @@ impl ExternalOutputContext {
         let target = output.get_mut(&address).unwrap();
 
         let trace_count = if let Some(trace_counter) = &self.trace_counter {
-            trace_counter.borrow().get_trace_count()
+            if trace_counter.borrow().is_some() {
+                trace_counter
+                    .borrow()
+                    .as_ref()
+                    .unwrap()
+                    .borrow()
+                    .get_trace_count()
+            } else {
+                0
+            }
         } else {
             0
         };
@@ -242,14 +251,11 @@ pub fn register_external_output_foreign(
 pub fn register_external_log_trace_foreign(
     env: &mut HostEnv,
     external_output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
-    trace_counter: Rc<RefCell<Tracer>>,
+    trace_counter: Option<Rc<RefCell<Option<Rc<RefCell<Tracer>>>>>>,
 ) {
     let foreign_output_plugin = env.external_env.register_plugin(
         "foreign_external_log_trace",
-        Box::new(ExternalOutputContext::new(
-            external_output,
-            Some(trace_counter),
-        )),
+        Box::new(ExternalOutputContext::new(external_output, trace_counter)),
     );
 
     let log_trace_count = Rc::new(

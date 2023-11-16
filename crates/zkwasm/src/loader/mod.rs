@@ -23,7 +23,6 @@ use crate::image_hasher::ImageHasher;
 use crate::circuits::config::set_zkwasm_k;
 use crate::circuits::TestCircuit;
 use crate::circuits::ZkWasmCircuitBuilder;
-use crate::foreign::log_helper::register_external_log_trace_foreign;
 use crate::loader::err::Error;
 use crate::loader::err::PreCheckErr;
 use crate::profile::Profiler;
@@ -116,6 +115,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             Rc::new(RefCell::new(vec![])),
             Rc::new(RefCell::new(HashMap::new())),
             None,
+            None,
         );
 
         let compiled_module = self.compile(&env)?;
@@ -170,6 +170,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             Rc::new(RefCell::new(vec![])),
             Rc::new(RefCell::new(HashMap::new())),
             None,
+            None,
         );
         let compiled = self.compile(&env)?;
 
@@ -183,6 +184,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
         arg: ExecutionArg,
         trace_count: Option<&mut usize>,
     ) -> Result<Option<RuntimeValue>> {
+        let trace_counter = Rc::new(RefCell::new(None));
         let (mut env, _) = HostEnv::new_with_full_foreign_plugins(
             arg.public_inputs,
             arg.private_inputs,
@@ -190,6 +192,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             arg.context_outputs,
             arg.external_outputs.clone(),
             self.tree_db.clone(),
+            Some(trace_counter.clone()),
         );
 
         if trace_count.is_some() {
@@ -198,11 +201,10 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
 
         let compiled_module = self.compile(&env)?;
 
-        register_external_log_trace_foreign(
-            &mut env,
-            arg.external_outputs,
-            compiled_module.tracer.clone(),
-        );
+        if trace_count.is_some() {
+            let mut trace_counter = trace_counter.borrow_mut();
+            let _ = trace_counter.replace(compiled_module.tracer.clone());
+        }
 
         let tracer = compiled_module.tracer.clone();
 
@@ -226,15 +228,10 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             arg.context_outputs,
             arg.external_outputs.clone(),
             self.tree_db.clone(),
+            None,
         );
 
         let compiled_module = self.compile(&env)?;
-
-        register_external_log_trace_foreign(
-            &mut env,
-            arg.external_outputs,
-            compiled_module.tracer.clone(),
-        );
 
         let result = compiled_module.run(&mut env, wasm_runtime_io)?;
 
@@ -293,6 +290,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             vec![],
             Rc::new(RefCell::new(vec![])),
             Rc::new(RefCell::new(HashMap::new())),
+            None,
             None,
         );
 

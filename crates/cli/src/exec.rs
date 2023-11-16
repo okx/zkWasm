@@ -228,6 +228,7 @@ pub fn exec_dry_run(
     context_inputs: Vec<u64>,
     context_outputs: Rc<RefCell<Vec<u64>>>,
     external_outputs: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
+    trace_count: Option<&mut usize>,
 ) -> Result<()> {
     let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions, None)?;
 
@@ -239,7 +240,7 @@ pub fn exec_dry_run(
             context_outputs,
             external_outputs,
         },
-        None,
+        trace_count,
     )?;
 
     Ok(())

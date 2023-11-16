@@ -96,8 +96,7 @@ pub trait AppBuilder: CommandBuilder {
         let md5 = format!("{:X}", md5::compute(&wasm_binary));
         let phantom_functions = Self::parse_phantom_functions(&top_matches);
 
-        let param_dir =
-            load_or_generate_output_path(&md5, top_matches.get_one::<PathBuf>("param"));
+        let param_dir = load_or_generate_output_path(&md5, top_matches.get_one::<PathBuf>("param"));
 
         let output_dir =
             load_or_generate_output_path(&md5, top_matches.get_one::<PathBuf>("output"));
@@ -141,6 +140,8 @@ pub trait AppBuilder: CommandBuilder {
                     let context_output = Rc::new(RefCell::new(vec![]));
                     let external_outputs = Rc::new(RefCell::new(HashMap::new()));
 
+                    let mut trace_count = 0;
+
                     exec_dry_run(
                         zkwasm_k,
                         wasm_binary,
@@ -150,9 +151,11 @@ pub trait AppBuilder: CommandBuilder {
                         context_in,
                         Rc::new(RefCell::new(vec![])),
                         external_outputs.clone(),
+                        Some(&mut trace_count),
                     )?;
 
                     log::info!("external outputs: {:?}", external_outputs);
+                    log::info!("trace count: {}", trace_count);
 
                     write_context_output(&context_output.borrow(), context_out_path)?;
 
@@ -192,11 +195,7 @@ pub trait AppBuilder: CommandBuilder {
                 let _proof_path: PathBuf = Self::parse_proof_path_arg(&sub_matches);
                 let _instance_path: PathBuf = Self::parse_single_instance_arg(&sub_matches);
 
-                exec_verify_proof(
-                    Self::NAME,
-                    &output_dir,
-                    &param_dir
-                )
+                exec_verify_proof(Self::NAME, &output_dir, &param_dir)
             }
             Some((_, _)) => todo!(),
             None => todo!(),
