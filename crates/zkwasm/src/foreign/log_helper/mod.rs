@@ -113,6 +113,9 @@ impl ExternalOutputContext {
 
     pub fn log_trace_count(&self, address: u64) {
         let mut output = self.output.borrow_mut();
+        if !output.contains_key(&address) {
+            output.insert(address, vec![]);
+        }
         let target = output.get_mut(&address).unwrap();
 
         let trace_count = if let Some(trace_counter) = &self.trace_counter {
