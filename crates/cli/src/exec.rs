@@ -243,6 +243,19 @@ pub fn exec_dry_run(
         trace_count,
     )?;
 
+    // let result = loader.run(
+    //     ExecutionArg {
+    //         public_inputs,
+    //         private_inputs,
+    //         context_inputs,
+    //         context_outputs,
+    //         external_outputs,
+    //     },
+    //     false,
+    // )?;
+    //
+    // log::info!("{}", result.tables.execution_tables.etable.entries().len());
+
     Ok(())
 }
 
