@@ -170,13 +170,16 @@ pub fn exec_dry_run_service(
                             .unwrap();
 
                             let r = loader
-                                .dry_run(ExecutionArg {
-                                    public_inputs,
-                                    private_inputs,
-                                    context_inputs,
-                                    context_outputs: context_outputs.clone(),
-                                    external_outputs: external_outputs.clone(),
-                                })
+                                .dry_run(
+                                    ExecutionArg {
+                                        public_inputs,
+                                        private_inputs,
+                                        context_inputs,
+                                        context_outputs: context_outputs.clone(),
+                                        external_outputs: external_outputs.clone(),
+                                    },
+                                    None,
+                                )
                                 .unwrap();
                             println!("return value: {:?}", r);
 
@@ -228,13 +231,16 @@ pub fn exec_dry_run(
 ) -> Result<()> {
     let loader = ZkWasmLoader::<Bn256>::new(zkwasm_k, wasm_binary, phantom_functions, None)?;
 
-    loader.dry_run(ExecutionArg {
-        public_inputs,
-        private_inputs,
-        context_inputs,
-        context_outputs,
-        external_outputs,
-    })?;
+    loader.dry_run(
+        ExecutionArg {
+            public_inputs,
+            private_inputs,
+            context_inputs,
+            context_outputs,
+            external_outputs,
+        },
+        None,
+    )?;
 
     Ok(())
 }
@@ -268,12 +274,12 @@ pub fn exec_create_proof(
         info!("Mock test passed");
     }
 
-    let circuit: CircuitInfo<Bn256, TestCircuit<Fr>>  = CircuitInfo::new(
+    let circuit: CircuitInfo<Bn256, TestCircuit<Fr>> = CircuitInfo::new(
         circuit,
         prefix.to_string(),
         vec![instances],
         zkwasm_k as usize,
-        circuits_batcher::args::HashType::Poseidon
+        circuits_batcher::args::HashType::Poseidon,
     );
     circuit.proofloadinfo.save(output_dir);
     circuit.exec_create_proof(output_dir, param_dir, 0);
@@ -289,17 +295,21 @@ pub fn exec_verify_proof(
 ) -> Result<()> {
     let load_info = output_dir.join(format!("{}.loadinfo.json", prefix));
     let proofloadinfo = ProofLoadInfo::load(&load_info);
-    let proofs:Vec<ProofInfo<Bn256>> = ProofInfo::load_proof(&output_dir, &param_dir, &proofloadinfo);
+    let proofs: Vec<ProofInfo<Bn256>> =
+        ProofInfo::load_proof(&output_dir, &param_dir, &proofloadinfo);
     let params = load_or_build_unsafe_params::<Bn256>(
         proofloadinfo.k as u32,
         Some(&param_dir.join(format!("K{}.params", proofloadinfo.k))),
     );
     let mut public_inputs_size = 0;
     for proof in proofs.iter() {
-        public_inputs_size =
-            usize::max(public_inputs_size,
-                proof.instances.iter().fold(0, |acc, x| usize::max(acc, x.len()))
-            );
+        public_inputs_size = usize::max(
+            public_inputs_size,
+            proof
+                .instances
+                .iter()
+                .fold(0, |acc, x| usize::max(acc, x.len())),
+        );
     }
 
     let params_verifier: ParamsVerifier<Bn256> = params.verifier(public_inputs_size).unwrap();

@@ -27,6 +27,7 @@ pub struct HostEnv {
 
     /// Profile foreign function time
     time_profile: BTreeMap<String, u128>,
+    only_count_trace: bool,
 }
 
 impl HostEnv {
@@ -48,6 +49,7 @@ impl HostEnv {
             cached_lookup: None,
             finalized,
             time_profile: BTreeMap::new(),
+            only_count_trace: false,
         }
     }
 
@@ -133,6 +135,14 @@ impl HostEnv {
         self.time_profile.iter().for_each(|(func, ms)| {
             debug!("{}:\t{}", func, ms);
         })
+    }
+
+    pub fn make_only_count_trace(&mut self) {
+        self.only_count_trace = true;
+    }
+
+    pub fn only_count_trace(&self) -> bool {
+        self.only_count_trace
     }
 }
 

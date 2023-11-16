@@ -23,6 +23,7 @@ use crate::image_hasher::ImageHasher;
 use crate::circuits::config::set_zkwasm_k;
 use crate::circuits::TestCircuit;
 use crate::circuits::ZkWasmCircuitBuilder;
+use crate::foreign::log_helper::register_external_log_trace_foreign;
 use crate::loader::err::Error;
 use crate::loader::err::PreCheckErr;
 use crate::profile::Profiler;
@@ -48,7 +49,7 @@ pub struct ExecutionArg {
     /// Context outputs for `wasm_write_context()`
     pub context_outputs: Rc<RefCell<Vec<u64>>>,
     /// external outputs for `wasm_external_output_push`
-    pub external_outputs:Rc<RefCell<HashMap<u64, Vec<u64>>>>,
+    pub external_outputs: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
 }
 
 pub struct ExecutionReturn {
@@ -103,6 +104,7 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             &env.function_description_table(),
             ENTRY,
             &self.phantom_functions,
+            env.only_count_trace(),
         )
     }
 
@@ -176,19 +178,40 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
 }
 
 impl<E: MultiMillerLoop> ZkWasmLoader<E> {
-    pub fn dry_run(&self, arg: ExecutionArg) -> Result<Option<RuntimeValue>> {
+    pub fn dry_run(
+        &self,
+        arg: ExecutionArg,
+        trace_count: Option<&mut usize>,
+    ) -> Result<Option<RuntimeValue>> {
         let (mut env, _) = HostEnv::new_with_full_foreign_plugins(
             arg.public_inputs,
             arg.private_inputs,
             arg.context_inputs,
             arg.context_outputs,
-            arg.external_outputs,
+            arg.external_outputs.clone(),
             self.tree_db.clone(),
         );
 
+        if trace_count.is_some() {
+            env.make_only_count_trace();
+        }
+
         let compiled_module = self.compile(&env)?;
 
-        compiled_module.dry_run(&mut env)
+        register_external_log_trace_foreign(
+            &mut env,
+            arg.external_outputs,
+            compiled_module.tracer.clone(),
+        );
+
+        let tracer = compiled_module.tracer.clone();
+
+        let result = compiled_module.dry_run(&mut env);
+        if let Some(trace_count) = trace_count {
+            *trace_count = tracer.borrow().get_trace_count();
+        }
+
+        result
     }
 
     pub fn run(
@@ -201,11 +224,17 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
             arg.private_inputs,
             arg.context_inputs,
             arg.context_outputs,
-            arg.external_outputs,
+            arg.external_outputs.clone(),
             self.tree_db.clone(),
         );
 
         let compiled_module = self.compile(&env)?;
+
+        register_external_log_trace_foreign(
+            &mut env,
+            arg.external_outputs,
+            compiled_module.tracer.clone(),
+        );
 
         let result = compiled_module.run(&mut env, wasm_runtime_io)?;
 
