@@ -53,7 +53,7 @@ pub struct ExecutionArg {
     /// Context outputs for `wasm_write_context()`
     pub context_outputs: Rc<RefCell<Vec<u64>>>,
     /// external outputs for `wasm_external_output_push`
-    pub external_outputs:Rc<RefCell<HashMap<u64, Vec<u64>>>>,
+    pub external_outputs: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
 }
 
 pub struct ExecutionReturn {
@@ -177,8 +177,9 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
         );
 
         let compiled_module = self.compile(&env)?;
-
-        compiled_module.dry_run(&mut env)
+        let result = compiled_module.dry_run(&mut env);
+        env.display_time_profile();
+        result
     }
 
     pub fn run(
