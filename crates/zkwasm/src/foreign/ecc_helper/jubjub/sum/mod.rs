@@ -43,6 +43,13 @@ pub fn print_jubjub_sum_profile() {
     JUBJUB_SUM_TIMER.store(0, Ordering::Relaxed);
 }
 
+static JUBJUB_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+pub fn print_jubjub_count() {
+    println!("jubjub count:{:?}", JUBJUB_COUNT);
+    JUBJUB_COUNT.store(0, Ordering::Relaxed);
+}
+
 impl BabyJubjubSumContext {
     pub fn default() -> Self {
         BabyJubjubSumContext {
@@ -56,6 +63,7 @@ impl BabyJubjubSumContext {
     }
 
     pub fn babyjubjub_sum_new(&mut self, new: usize) {
+        JUBJUB_COUNT.fetch_add(1, Ordering::Relaxed);
         let start = Instant::now();
         self.result_limbs = None;
         self.result_cursor = 0;
