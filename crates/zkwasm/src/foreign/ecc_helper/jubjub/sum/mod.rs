@@ -1,5 +1,6 @@
 use crate::runtime::host::host_env::HostEnv;
 use crate::runtime::host::ForeignContext;
+use log::log;
 use num_bigint::BigUint;
 use std::rc::Rc;
 use std::sync::atomic::AtomicUsize;
@@ -39,14 +40,14 @@ pub struct BabyJubjubSumContext {
 static JUBJUB_SUM_TIMER: AtomicUsize = AtomicUsize::new(0);
 
 pub fn print_jubjub_sum_profile() {
-    println!("jubjub sum time elapsed:{:?}micros", JUBJUB_SUM_TIMER);
+    log::info!("jubjub sum time elapsed:{:?}micros", JUBJUB_SUM_TIMER);
     JUBJUB_SUM_TIMER.store(0, Ordering::Relaxed);
 }
 
 static JUBJUB_COUNT: AtomicUsize = AtomicUsize::new(0);
 
 pub fn print_jubjub_count() {
-    println!("jubjub count:{:?}", JUBJUB_COUNT);
+    log::info!("jubjub count:{:?}", JUBJUB_COUNT);
     JUBJUB_COUNT.store(0, Ordering::Relaxed);
 }
 
