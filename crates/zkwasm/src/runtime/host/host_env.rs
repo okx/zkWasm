@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::time::Instant;
 
-use log::debug;
+use log::info;
 use specs::host_function::HostFunctionDesc;
 use wasmi::Externals;
 use wasmi::ModuleImportResolver;
@@ -129,9 +129,9 @@ impl HostEnv {
     }
 
     pub fn display_time_profile(&self) {
-        debug!("Execution time(ms) of Foreign Functions:");
+        info!("Execution time(ms) of Foreign Functions:");
         self.time_profile.iter().for_each(|(func, ms)| {
-            debug!("{}:\t{}", func, ms);
+            info!("{}:\t{}", func, ms);
         })
     }
 }
