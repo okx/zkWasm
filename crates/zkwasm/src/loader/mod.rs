@@ -178,7 +178,6 @@ impl<E: MultiMillerLoop> ZkWasmLoader<E> {
 
         let compiled_module = self.compile(&env)?;
         let result = compiled_module.dry_run(&mut env);
-        env.display_time_profile();
         result
     }
 
