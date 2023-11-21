@@ -39,7 +39,7 @@ pub struct BabyJubjubSumContext {
 static JUBJUB_SUM_TIMER: AtomicUsize = AtomicUsize::new(0);
 
 pub fn print_jubjub_sum_profile() {
-    log::info!("jubjub sum time elapsed:{:?}micros", JUBJUB_SUM_TIMER);
+    println!("jubjub sum time elapsed:{:?}micros", JUBJUB_SUM_TIMER);
     JUBJUB_SUM_TIMER.store(0, Ordering::Relaxed);
 }
 
