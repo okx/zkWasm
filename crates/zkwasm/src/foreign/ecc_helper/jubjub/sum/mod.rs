@@ -1,6 +1,5 @@
 use crate::runtime::host::host_env::HostEnv;
 use crate::runtime::host::ForeignContext;
-use log::log;
 use num_bigint::BigUint;
 use std::rc::Rc;
 use std::sync::atomic::AtomicUsize;
