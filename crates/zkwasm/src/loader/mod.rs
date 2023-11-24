@@ -92,7 +92,12 @@ impl<E: MultiMillerLoop, T, EnvBuilder: HostEnvBuilder<Arg = T>> ZkWasmLoader<E,
             &env.function_description_table(),
             ENTRY,
             &self.phantom_functions,
+            env.only_count_trace(),
         )
+        .map(|compiled| {
+            env.register_trace_counter(&compiled.tracer);
+            compiled
+        })
     }
 
     pub fn circuit_without_witness(&self) -> Result<TestCircuit<E::Scalar>> {

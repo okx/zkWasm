@@ -27,6 +27,7 @@ pub struct HostEnv {
 
     /// Profile foreign function time
     time_profile: BTreeMap<String, u128>,
+    trace_counter: Option<Rc<RefCell<Option<Rc<RefCell<wasmi::tracer::Tracer>>>>>>,
 }
 
 impl HostEnv {
@@ -48,6 +49,7 @@ impl HostEnv {
             cached_lookup: None,
             finalized,
             time_profile: BTreeMap::new(),
+            trace_counter: None,
         }
     }
 
@@ -133,6 +135,29 @@ impl HostEnv {
         self.time_profile.iter().for_each(|(func, ms)| {
             debug!("{}:\t{}", func, ms);
         })
+    }
+
+    pub fn make_only_count_trace(
+        &mut self,
+    ) -> Rc<RefCell<Option<Rc<RefCell<wasmi::tracer::Tracer>>>>> {
+        let trace_counter = Rc::new(RefCell::new(None));
+        self.trace_counter = Some(trace_counter.clone());
+
+        trace_counter
+    }
+
+    pub fn only_count_trace(&self) -> bool {
+        self.trace_counter.is_some()
+    }
+
+    pub fn register_trace_counter(&self, tracer: &Rc<RefCell<wasmi::tracer::Tracer>>) {
+        if self.trace_counter.is_some() {
+            self.trace_counter
+                .as_ref()
+                .unwrap()
+                .borrow_mut()
+                .replace(tracer.clone());
+        }
     }
 }
 

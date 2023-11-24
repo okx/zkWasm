@@ -7,6 +7,7 @@ use franklin_crypto::jubjub::Unknown;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use wasmi::tracer::Tracer;
 
 use specs::external_host_call_table::ExternalHostCallSignature;
 
@@ -30,19 +31,26 @@ pub enum ExternalOutputForeignInst {
     ExternalOutputAddress,
 
     ExternalUnpackPublicKey,
+
+    ExternalLogTraceCount,
 }
 
 pub struct ExternalOutputContext {
     pub output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
     pub current_key: u64,
+    pub trace_counter: Option<Rc<RefCell<Option<Rc<RefCell<Tracer>>>>>>,
 }
 impl ForeignContext for ExternalOutputContext {}
 
 impl ExternalOutputContext {
-    pub fn new(output: Rc<RefCell<HashMap<u64, Vec<u64>>>>) -> Self {
+    pub fn new(
+        output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
+        trace_counter: Option<Rc<RefCell<Option<Rc<RefCell<Tracer>>>>>>,
+    ) -> Self {
         ExternalOutputContext {
             output,
             current_key: 0,
+            trace_counter,
         }
     }
 
@@ -50,6 +58,7 @@ impl ExternalOutputContext {
         ExternalOutputContext {
             output: Rc::new(RefCell::new(HashMap::new())),
             current_key: 0,
+            trace_counter: None,
         }
     }
 
@@ -102,6 +111,31 @@ impl ExternalOutputContext {
             log::error!("unpack err: {:?}", r.err());
         }
     }
+
+    pub fn log_trace_count(&self, address: u64) {
+        let mut output = self.output.borrow_mut();
+        if !output.contains_key(&address) {
+            output.insert(address, vec![]);
+        }
+        let target = output.get_mut(&address).unwrap();
+
+        let trace_count = if let Some(trace_counter) = &self.trace_counter {
+            if trace_counter.borrow().is_some() {
+                trace_counter
+                    .borrow()
+                    .as_ref()
+                    .unwrap()
+                    .borrow()
+                    .get_trace_count()
+            } else {
+                0
+            }
+        } else {
+            0
+        };
+
+        target.push(trace_count as u64);
+    }
 }
 
 pub fn register_log_foreign(env: &mut HostEnv) {
@@ -145,10 +179,17 @@ pub fn register_log_foreign(env: &mut HostEnv) {
 pub fn register_external_output_foreign(
     env: &mut HostEnv,
     external_output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
+    trace_count: Option<Rc<RefCell<usize>>>,
 ) {
+    let trace_counter = if trace_count.is_some() {
+        Some(env.make_only_count_trace())
+    } else {
+        None
+    };
+
     let foreign_output_plugin = env.external_env.register_plugin(
         "foreign_external_output",
-        Box::new(ExternalOutputContext::new(external_output)),
+        Box::new(ExternalOutputContext::new(external_output, trace_counter)),
     );
 
     let push_output = Rc::new(
@@ -199,6 +240,17 @@ pub fn register_external_output_foreign(
         },
     );
 
+    let log_trace_count = Rc::new(
+        |context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
+            let context = context.downcast_mut::<ExternalOutputContext>().unwrap();
+
+            let address: u64 = args.nth(0);
+            context.log_trace_count(address);
+
+            None
+        },
+    );
+
     env.external_env.register_function(
         "wasm_external_output_push",
         ExternalOutputPush as usize,
@@ -229,5 +281,13 @@ pub fn register_external_output_foreign(
         ExternalHostCallSignature::Argument,
         foreign_output_plugin.clone(),
         unpack_public_key,
+    );
+
+    env.external_env.register_function(
+        "wasm_external_log_trace_count",
+        ExternalLogTraceCount as usize,
+        ExternalHostCallSignature::Argument,
+        foreign_output_plugin.clone(),
+        log_trace_count,
     );
 }
