@@ -38,14 +38,14 @@ pub enum ExternalOutputForeignInst {
 pub struct ExternalOutputContext {
     pub output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
     pub current_key: u64,
-    pub trace_counter: Option<Rc<RefCell<Option<Rc<RefCell<Tracer>>>>>>,
+    pub trace_counter: Rc<RefCell<Option<Rc<RefCell<Tracer>>>>>,
 }
 impl ForeignContext for ExternalOutputContext {}
 
 impl ExternalOutputContext {
     pub fn new(
         output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
-        trace_counter: Option<Rc<RefCell<Option<Rc<RefCell<Tracer>>>>>>,
+        trace_counter: Rc<RefCell<Option<Rc<RefCell<Tracer>>>>>,
     ) -> Self {
         ExternalOutputContext {
             output,
@@ -58,7 +58,7 @@ impl ExternalOutputContext {
         ExternalOutputContext {
             output: Rc::new(RefCell::new(HashMap::new())),
             current_key: 0,
-            trace_counter: None,
+            trace_counter: Rc::new(RefCell::new(None)),
         }
     }
 
@@ -119,17 +119,8 @@ impl ExternalOutputContext {
         }
         let target = output.get_mut(&address).unwrap();
 
-        let trace_count = if let Some(trace_counter) = &self.trace_counter {
-            if trace_counter.borrow().is_some() {
-                trace_counter
-                    .borrow()
-                    .as_ref()
-                    .unwrap()
-                    .borrow()
-                    .get_trace_count()
-            } else {
-                0
-            }
+        let trace_count = if let Some(trace_count) = self.trace_counter.borrow().as_ref() {
+            trace_count.borrow().get_trace_count()
         } else {
             0
         };
@@ -179,17 +170,13 @@ pub fn register_log_foreign(env: &mut HostEnv) {
 pub fn register_external_output_foreign(
     env: &mut HostEnv,
     external_output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
-    trace_count: Option<Rc<RefCell<usize>>>,
 ) {
-    let trace_counter = if trace_count.is_some() {
-        Some(env.make_only_count_trace())
-    } else {
-        None
-    };
-
     let foreign_output_plugin = env.external_env.register_plugin(
         "foreign_external_output",
-        Box::new(ExternalOutputContext::new(external_output, trace_counter)),
+        Box::new(ExternalOutputContext::new(
+            external_output,
+            env.get_tracer(),
+        )),
     );
 
     let push_output = Rc::new(

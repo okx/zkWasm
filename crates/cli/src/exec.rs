@@ -160,7 +160,7 @@ where
                                 phantom_functions.clone(),
                             )
                             .unwrap();
-                            let r = loader.dry_run(arg).unwrap();
+                            let r = loader.dry_run(arg, None).unwrap();
                             println!("return value: {:?}", r);
 
                             write_context_output(
@@ -206,7 +206,11 @@ pub fn exec_dry_run<Arg, Builder: HostEnvBuilder<Arg = Arg>>(
     let loader =
         ZkWasmLoader::<Bn256, Arg, Builder>::new(zkwasm_k, wasm_binary, phantom_functions)?;
 
-    loader.dry_run(arg)?;
+    let mut trace_count = 0;
+
+    loader.dry_run(arg, Some(&mut trace_count))?;
+
+    log::info!("trace count: {}", trace_count);
 
     Ok(())
 }

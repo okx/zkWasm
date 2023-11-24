@@ -208,7 +208,6 @@ pub trait AppBuilder: CommandBuilder {
                                     context_outputs: Arc::new(Mutex::new(vec![])),
                                     tree_db: None,
                                     external_outputs: external_outputs.clone(),
-                                    trace_count: None,
                                 },
                             )?;
 
@@ -264,7 +263,6 @@ pub trait AppBuilder: CommandBuilder {
                                 context_outputs: context_out.clone(),
                                 tree_db: None,
                                 external_outputs: Rc::new(RefCell::new(HashMap::new())),
-                                trace_count: None,
                             },
                         )?;
                     }

@@ -92,10 +92,10 @@ impl<E: MultiMillerLoop, T, EnvBuilder: HostEnvBuilder<Arg = T>> ZkWasmLoader<E,
             &env.function_description_table(),
             ENTRY,
             &self.phantom_functions,
-            env.only_count_trace(),
+            env.is_only_count_trace(),
         )
         .map(|compiled| {
-            env.register_trace_counter(&compiled.tracer);
+            env.register_tracer(&compiled.tracer);
             compiled
         })
     }
@@ -159,12 +159,22 @@ impl<E: MultiMillerLoop, T, EnvBuilder: HostEnvBuilder<Arg = T>> ZkWasmLoader<E,
 }
 
 impl<E: MultiMillerLoop, T, EnvBuilder: HostEnvBuilder<Arg = T>> ZkWasmLoader<E, T, EnvBuilder> {
-    pub fn dry_run(&self, arg: T) -> Result<Option<RuntimeValue>> {
+    pub fn dry_run(&self, arg: T, trace_count: Option<&mut usize>) -> Result<Option<RuntimeValue>> {
         let (mut env, _) = EnvBuilder::create_env(arg);
+
+        if trace_count.is_some() {
+            env.make_only_count_trace();
+        }
 
         let compiled_module = self.compile(&env)?;
 
-        compiled_module.dry_run(&mut env)
+        let result = compiled_module.dry_run(&mut env);
+
+        if let Some(trace_count) = trace_count {
+            *trace_count = env.get_trace_count().unwrap()
+        }
+
+        result
     }
 
     pub fn run(&self, arg: T, write_to_file: bool) -> Result<ExecutionResult<RuntimeValue>> {

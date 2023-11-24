@@ -27,7 +27,8 @@ pub struct HostEnv {
 
     /// Profile foreign function time
     time_profile: BTreeMap<String, u128>,
-    trace_counter: Option<Rc<RefCell<Option<Rc<RefCell<wasmi::tracer::Tracer>>>>>>,
+    tracer: Rc<RefCell<Option<Rc<RefCell<wasmi::tracer::Tracer>>>>>,
+    only_count_trace: bool,
 }
 
 impl HostEnv {
@@ -49,7 +50,8 @@ impl HostEnv {
             cached_lookup: None,
             finalized,
             time_profile: BTreeMap::new(),
-            trace_counter: None,
+            tracer: Rc::new(RefCell::new(None)),
+            only_count_trace: false,
         }
     }
 
@@ -137,27 +139,27 @@ impl HostEnv {
         })
     }
 
-    pub fn make_only_count_trace(
-        &mut self,
-    ) -> Rc<RefCell<Option<Rc<RefCell<wasmi::tracer::Tracer>>>>> {
-        let trace_counter = Rc::new(RefCell::new(None));
-        self.trace_counter = Some(trace_counter.clone());
-
-        trace_counter
+    pub fn make_only_count_trace(&mut self) {
+        self.only_count_trace = true;
     }
 
-    pub fn only_count_trace(&self) -> bool {
-        self.trace_counter.is_some()
+    pub fn get_tracer(&self) -> Rc<RefCell<Option<Rc<RefCell<wasmi::tracer::Tracer>>>>> {
+        self.tracer.clone()
     }
 
-    pub fn register_trace_counter(&self, tracer: &Rc<RefCell<wasmi::tracer::Tracer>>) {
-        if self.trace_counter.is_some() {
-            self.trace_counter
-                .as_ref()
-                .unwrap()
-                .borrow_mut()
-                .replace(tracer.clone());
-        }
+    pub fn get_trace_count(&self) -> Option<usize> {
+        self.tracer
+            .borrow()
+            .as_ref()
+            .map(|tracer| tracer.borrow().get_trace_count())
+    }
+
+    pub fn is_only_count_trace(&self) -> bool {
+        self.only_count_trace
+    }
+
+    pub fn register_tracer(&self, tracer: &Rc<RefCell<wasmi::tracer::Tracer>>) {
+        self.tracer.borrow_mut().replace(tracer.clone());
     }
 }
 

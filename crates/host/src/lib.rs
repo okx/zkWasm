@@ -32,7 +32,6 @@ pub struct ExecutionArg {
     pub tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
     /// external outputs for `wasm_external_output_push`
     pub external_outputs: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
-    pub trace_count: Option<Rc<RefCell<usize>>>,
 }
 
 impl ContextOutput for ExecutionArg {
@@ -55,7 +54,6 @@ impl From<Sequence> for ExecutionArg {
             context_outputs,
             tree_db: None,
             external_outputs,
-            trace_count: None,
         }
     }
 }
@@ -77,7 +75,7 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         host::ecc_helper::bn254::pair::register_bn254pair_foreign(&mut env);
         host::ecc_helper::jubjub::sum::register_babyjubjubsum_foreign(&mut env);
         host::witness_helper::register_witness_foreign(&mut env);
-        register_external_output_foreign(&mut env, Rc::new(RefCell::new(HashMap::new())), None);
+        register_external_output_foreign(&mut env, Rc::new(RefCell::new(HashMap::new())));
         env.finalize();
 
         (env, wasm_runtime_io)
@@ -96,7 +94,7 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         host::ecc_helper::bn254::pair::register_bn254pair_foreign(&mut env);
         host::ecc_helper::jubjub::sum::register_babyjubjubsum_foreign(&mut env);
         host::witness_helper::register_witness_foreign(&mut env);
-        register_external_output_foreign(&mut env, arg.external_outputs, arg.trace_count);
+        register_external_output_foreign(&mut env, arg.external_outputs);
         env.finalize();
 
         (env, wasm_runtime_io)
