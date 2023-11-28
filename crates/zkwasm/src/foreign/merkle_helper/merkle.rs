@@ -3,6 +3,9 @@ use crate::runtime::host::ForeignContext;
 use halo2_proofs::pairing::bn256::Fr;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
+use std::time::Instant;
 use zkwasm_host_circuits::host::datahash as datahelper;
 use zkwasm_host_circuits::host::datahash::DataHashRecord;
 use zkwasm_host_circuits::host::db::TreeDB;
@@ -38,9 +41,15 @@ fn new_reduce(rules: Vec<ReduceRule<Fr>>) -> Reduce<Fr> {
     Reduce { cursor: 0, rules }
 }
 
+static MERKLE_TIMER: AtomicUsize = AtomicUsize::new(0);
+pub fn print_merkle_profile() {
+    log::info!("merkle time elapsed:{:?}micros", MERKLE_TIMER);
+    MERKLE_TIMER.store(0, Ordering::Relaxed);
+}
 impl MerkleContext {
     pub fn new(tree_db: Option<Rc<RefCell<dyn TreeDB>>>) -> Self {
-        MerkleContext {
+        let start = Instant::now();
+        let ret = MerkleContext {
             set_root: new_reduce(vec![ReduceRule::Bytes(vec![], 4)]),
             get_root: new_reduce(vec![ReduceRule::Bytes(vec![], 4)]),
             address: new_reduce(vec![ReduceRule::U64(0)]),
@@ -57,10 +66,14 @@ impl MerkleContext {
             mongo_merkle: None,
             mongo_datahash: datahelper::MongoDataHash::construct([0; 32], tree_db.clone()),
             tree_db,
-        }
+        };
+        let elapsed = start.elapsed().as_micros();
+        MERKLE_TIMER.fetch_add(elapsed as usize, Ordering::Relaxed);
+        ret
     }
 
     pub fn merkle_setroot(&mut self, v: u64) {
+        let start = Instant::now();
         self.set_root.reduce(v);
         if self.set_root.cursor == 0 {
             log::debug!("set root: {:?}", &self.set_root.rules[0].bytes_value());
@@ -74,9 +87,12 @@ impl MerkleContext {
                 self.tree_db.clone(),
             ));
         }
+        let elapsed = start.elapsed().as_micros();
+        MERKLE_TIMER.fetch_add(elapsed as usize, Ordering::Relaxed);
     }
 
     pub fn merkle_getroot(&mut self) -> u64 {
+        let start = Instant::now();
         let mt = self
             .mongo_merkle
             .as_ref()
@@ -89,16 +105,23 @@ impl MerkleContext {
             .collect::<Vec<u64>>();
         let cursor = self.get_root.cursor;
         self.get_root.reduce(values[self.get_root.cursor]);
-        values[cursor]
+        let ret = values[cursor];
+        let elapsed = start.elapsed().as_micros();
+        MERKLE_TIMER.fetch_add(elapsed as usize, Ordering::Relaxed);
+        ret
     }
 
     pub fn merkle_address(&mut self, v: u64) {
+        let start = Instant::now();
         self.data = vec![];
         self.fetch = false;
         self.address.reduce(v);
+        let elapsed = start.elapsed().as_micros();
+        MERKLE_TIMER.fetch_add(elapsed as usize, Ordering::Relaxed);
     }
 
     pub fn merkle_set(&mut self, v: u64) {
+        let start = Instant::now();
         self.set.reduce(v);
         if self.set.cursor == 0 {
             let address = self.address.rules[0].u64_value().unwrap() as u32;
@@ -127,9 +150,12 @@ impl MerkleContext {
                     .unwrap();
             }
         }
+        let elapsed = start.elapsed().as_micros();
+        MERKLE_TIMER.fetch_add(elapsed as usize, Ordering::Relaxed);
     }
 
     pub fn merkle_get(&mut self) -> u64 {
+        let start = Instant::now();
         let address = self.address.rules[0].u64_value().unwrap() as u32;
         let index = (address as u64) + (1u64 << MERKLE_TREE_HEIGHT) - 1;
         let mt = self
@@ -181,17 +207,24 @@ impl MerkleContext {
                     .collect::<Vec<u64>>()
             });
         }
-        values[cursor]
+        let ret = values[cursor];
+        let elapsed = start.elapsed().as_micros();
+        MERKLE_TIMER.fetch_add(elapsed as usize, Ordering::Relaxed);
+        ret
     }
 
     pub fn merkle_fetch_data(&mut self) -> u64 {
-        if self.fetch == false {
+        let start = Instant::now();
+        let ret = if self.fetch == false {
             self.fetch = true;
             self.data.reverse();
             self.data.len() as u64
         } else {
             self.data.pop().unwrap()
-        }
+        };
+        let elapsed = start.elapsed().as_micros();
+        MERKLE_TIMER.fetch_add(elapsed as usize, Ordering::Relaxed);
+        ret
     }
 
     pub fn merkle_put_data(&mut self, v: u64) {
