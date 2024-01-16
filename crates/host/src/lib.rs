@@ -1,8 +1,10 @@
 pub mod host;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use delphinus_zkwasm::foreign::context::runtime::register_context_foreign;
+use delphinus_zkwasm::foreign::log_helper::register_external_output_foreign;
 use delphinus_zkwasm::foreign::log_helper::register_log_foreign;
 use delphinus_zkwasm::foreign::require_helper::register_require_foreign;
 use delphinus_zkwasm::foreign::wasm_input_helper::runtime::register_wasm_input_foreign;
@@ -13,7 +15,6 @@ use delphinus_zkwasm::runtime::host::ContextOutput;
 use delphinus_zkwasm::runtime::host::HostEnvBuilder;
 use serde::Deserialize;
 use serde::Serialize;
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zkwasm_host_circuits::host::db::TreeDB;
@@ -60,7 +61,7 @@ impl Default for HostEnvConfig {
 }
 
 impl HostEnvConfig {
-    fn register_op(op: &OpType, env: &mut HostEnv) {
+    fn register_op(op: &OpType, env: &mut HostEnv, tree_db: Option<Rc<RefCell<dyn TreeDB>>>) {
         match op {
             OpType::BLS381PAIR => host::ecc_helper::bls381::pair::register_blspair_foreign(env),
             OpType::BLS381SUM => host::ecc_helper::bls381::sum::register_blssum_foreign(env),
@@ -68,17 +69,17 @@ impl HostEnvConfig {
             OpType::BN256SUM => host::ecc_helper::bn254::sum::register_bn254sum_foreign(env),
             OpType::POSEIDONHASH => host::hash_helper::poseidon::register_poseidon_foreign(env),
             OpType::MERKLE => {
-                host::merkle_helper::merkle::register_merkle_foreign(env, None);
-                host::merkle_helper::datacache::register_datacache_foreign(env, None);
+                host::merkle_helper::merkle::register_merkle_foreign(env, tree_db.clone());
+                host::merkle_helper::datacache::register_datacache_foreign(env, tree_db.clone());
             }
             OpType::JUBJUBSUM => host::ecc_helper::jubjub::sum::register_babyjubjubsum_foreign(env),
             OpType::KECCAKHASH => host::hash_helper::keccak256::register_keccak_foreign(env),
         }
     }
 
-    fn register_ops(&self, env: &mut HostEnv) {
+    fn register_ops(&self, env: &mut HostEnv, tree_db: Option<Rc<RefCell<dyn TreeDB>>>) {
         for op in &self.ops {
-            Self::register_op(op, env);
+            Self::register_op(op, env, tree_db.clone());
         }
     }
 }
@@ -95,11 +96,10 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         register_require_foreign(&mut env);
         register_log_foreign(&mut env);
         register_context_foreign(&mut env, vec![], Arc::new(Mutex::new(vec![])));
-        envconfig.register_ops(&mut env);
-        host::witness_helper::register_witness_foreign(
-            &mut env,
-            Rc::new(RefCell::new(HashMap::new())),
-        );
+        envconfig.register_ops(&mut env, None);
+        let external_output = Rc::new(RefCell::new(HashMap::new()));
+        host::witness_helper::register_witness_foreign(&mut env, external_output.clone());
+        register_external_output_foreign(&mut env, external_output);
         env.finalize();
 
         (env, wasm_runtime_io)
@@ -112,8 +112,9 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         register_require_foreign(&mut env);
         register_log_foreign(&mut env);
         register_context_foreign(&mut env, arg.context_inputs, arg.context_outputs);
-        host::witness_helper::register_witness_foreign(&mut env, arg.indexed_witness);
-        envconfig.register_ops(&mut env);
+        host::witness_helper::register_witness_foreign(&mut env, arg.indexed_witness.clone());
+        envconfig.register_ops(&mut env, arg.tree_db);
+        register_external_output_foreign(&mut env, arg.indexed_witness);
         env.finalize();
 
         (env, wasm_runtime_io)

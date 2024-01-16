@@ -13,14 +13,23 @@ wasmi = { path = "third-party/wasmi" }
 [profile.dev]
 opt-level = 3
 
+#[patch."https://github.com/DelphinusLab/halo2-gpu-specific.git"]
+#halo2_proofs = { path = "../halo2/halo2_proofs" }
+#
+#[patch."https://github.com/lanbones/halo2ecc-s.git"]
+#halo2ecc-s = { path = "../halo2ecc-s" }
+#
+#[patch."https://github.com/DelphinusLab/halo2aggregator-s.git"]
+#halo2aggregator-s = { path = "../halo2aggregator-s" }
+#
+#[patch."https://github.com/DelphinusLab/zkWasm-host-circuits.git"]
+#zkwasm-host-circuits = { path = "../zkWasm-host-circuits" }
+
 [patch."https://github.com/DelphinusLab/halo2-gpu-specific.git"]
-halo2_proofs = { path = "../halo2/halo2_proofs" }
-
+halo2_proofs = { git = "https://github.com/DelphinusLab//halo2-gpu-specific.git", branch = "xgao/para-synthesize"  }
 [patch."https://github.com/lanbones/halo2ecc-s.git"]
-halo2ecc-s = { path = "../halo2ecc-s" }
-
+halo2ecc-s = { git = "https://github.com/lanbones//halo2ecc-s.git", branch = "para-synthesize"}
 [patch."https://github.com/DelphinusLab/halo2aggregator-s.git"]
-halo2aggregator-s = { path = "../halo2aggregator-s" }
-
+halo2aggregator-s = { git = "https://github.com/DelphinusLab//halo2aggregator-s.git", branch = "para-synthesize"}
 [patch."https://github.com/DelphinusLab/zkWasm-host-circuits.git"]
-zkwasm-host-circuits = { path = "../zkWasm-host-circuits" }
+zkwasm-host-circuits = { git = "https://github.com/DelphinusLab//zkWasm-host-circuits.git", branch = "para-synthesize"}
