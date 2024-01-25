@@ -27,6 +27,7 @@ sha2 = "0.10.6"
 poseidon = { git = "https://github.com/lanbones/poseidon" }
 primitive-types = "0.12.1"
 franklin_crypto = {package = "franklin-crypto",git="https://github.com/okx/franklin-crypto.git",branch="beta" , features = ["multicore", "plonk"]}
+rayon = "1.5"
 
 anyhow.workspace = true
 cfg-if.workspace = true
