@@ -4,7 +4,7 @@ use ark_std::end_timer;
 use ark_std::start_timer;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::circuit::Layouter;
-use halo2_proofs::circuit::SimpleFloorPlanner;
+use halo2_proofs::circuit::FlatFloorPlanner;
 use halo2_proofs::plonk::Circuit;
 use halo2_proofs::plonk::Column;
 use halo2_proofs::plonk::ConstraintSystem;
@@ -71,7 +71,7 @@ pub struct TestCircuitConfig<F: FieldExt> {
 impl<F: FieldExt> Circuit<F> for TestCircuit<F> {
     type Config = TestCircuitConfig<F>;
 
-    type FloorPlanner = SimpleFloorPlanner;
+    type FloorPlanner = FlatFloorPlanner;
 
     fn without_witnesses(&self) -> Self {
         TestCircuit::new(Tables {
