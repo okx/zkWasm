@@ -279,7 +279,7 @@ impl<F: FieldExt> EventTableChip<F> {
             assign_advice!(eid_cell, F::from(entry.eentry.eid as u64));
             assign_advice!(fid_cell, F::from(entry.eentry.fid as u64));
             assign_advice!(iid_cell, F::from(entry.eentry.iid as u64));
-            assign_advice!(itable_lookup_cell, bn_to_field(&instruction.encode));
+            assign_advice!(itable_lookup_cell, bn_to_field(&instruction.encode_self()));
 
             let op_config = op_configs.get(&((&instruction.opcode).into())).unwrap();
             op_config.assign(ctx, &step_status, &entry)?;

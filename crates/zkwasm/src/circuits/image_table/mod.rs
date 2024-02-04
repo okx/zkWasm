@@ -72,7 +72,7 @@ impl<F: FieldExt> EncodeCompilationTableValues<F> for CompilationTable {
 
             for e in instruction_table.iter() {
                 cells.push(bn_to_field(
-                    &ImageTableEncoder::Instruction.encode(e.encode.clone()),
+                    &ImageTableEncoder::Instruction.encode(e.encode_self().clone()),
                 ));
             }
 

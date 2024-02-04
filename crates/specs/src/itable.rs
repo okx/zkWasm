@@ -594,20 +594,24 @@ pub struct InstructionTableEntry {
     pub function_name: String,
     pub iid: u32,
     pub opcode: Opcode,
-    pub encode: BigUint,
+    // pub encode: BigUint,
 }
 
 impl InstructionTableEntry {
     pub fn new(fid: u32, function_name: String, iid: u32, opcode: Opcode) -> Self {
-        let encode = InstructionTableEntry::encode(fid, iid, &opcode);
+        // let encode = InstructionTableEntry::encode(fid, iid, &opcode);
 
         Self {
             fid,
             function_name,
             iid,
             opcode,
-            encode,
+            // encode,
         }
+    }
+
+    pub fn encode_self(&self) -> BigUint {
+        InstructionTableEntry::encode(self.fid, self.iid, &self.opcode)
     }
 
     pub fn to_string(&self) -> String {
