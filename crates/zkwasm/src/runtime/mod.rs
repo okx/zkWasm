@@ -1,7 +1,6 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::sync::Arc;
 
 use specs::etable::EventTableEntry;
 use specs::external_host_call_table::ExternalHostCallSignature;
@@ -23,7 +22,7 @@ pub struct CompiledImage<I, T> {
     pub entry: String,
     pub tables: CompilationTable,
     pub instance: I,
-    pub tracer: Arc<RefCell<T>>,
+    pub tracer: Rc<RefCell<T>>,
 }
 
 unsafe impl<I, T> std::marker::Sync for CompiledImage<I, T> {}
