@@ -36,7 +36,7 @@ impl WasmRuntimeIO {
 
 pub trait Execution<R> {
     fn run(
-        self,
+        &self,
         externals: HostEnv,
         dryrun: bool,
         wasm_io: WasmRuntimeIO,
@@ -45,7 +45,7 @@ pub trait Execution<R> {
 
 impl Execution<RuntimeValue> for CompiledImage<wasmi::NotStartedModuleRef, wasmi::tracer::Tracer> {
     fn run(
-        self,
+        &self,
         externals: HostEnv,
         dryrun: bool,
         wasm_io: WasmRuntimeIO,
