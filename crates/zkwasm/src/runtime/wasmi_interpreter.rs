@@ -43,9 +43,7 @@ pub trait Execution<R> {
     ) -> Result<ExecutionResult<R>>;
 }
 
-impl Execution<RuntimeValue>
-    for CompiledImage<wasmi::NotStartedModuleRef<'_>, wasmi::tracer::Tracer>
-{
+impl Execution<RuntimeValue> for CompiledImage<wasmi::NotStartedModuleRef, wasmi::tracer::Tracer> {
     fn run(
         self,
         externals: HostEnv,
@@ -109,19 +107,19 @@ impl WasmiRuntime {
         WasmiRuntime
     }
 
-    pub fn compile<'a, I: ImportResolver>(
-        module: &'a wasmi::Module,
+    pub fn compile<I: ImportResolver>(
+        module: std::rc::Rc<wasmi::Module>,
         imports: &I,
         host_plugin_lookup: &HashMap<usize, HostFunctionDesc>,
         entry: &str,
         dry_run: bool,
         phantom_functions: &Vec<String>,
-    ) -> Result<CompiledImage<wasmi::NotStartedModuleRef<'a>, wasmi::tracer::Tracer>> {
+    ) -> Result<CompiledImage<wasmi::NotStartedModuleRef, wasmi::tracer::Tracer>> {
         let tracer =
             wasmi::tracer::Tracer::new(host_plugin_lookup.clone(), phantom_functions, dry_run);
         let tracer = Rc::new(RefCell::new(tracer));
 
-        let instance = ModuleInstance::new(&module, imports, Some(tracer.clone()))
+        let instance = ModuleInstance::new(module.clone(), imports, Some(tracer.clone()))
             .expect("failed to instantiate wasm module");
 
         let fid_of_entry = {
