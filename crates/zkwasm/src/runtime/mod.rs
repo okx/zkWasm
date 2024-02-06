@@ -25,6 +25,9 @@ pub struct CompiledImage<I, T> {
     pub tracer: Rc<RefCell<T>>,
 }
 
+unsafe impl<I, T> std::marker::Sync for CompiledImage<I, T> {}
+unsafe impl<I, T> std::marker::Send for CompiledImage<I, T> {}
+
 #[derive(Clone)]
 pub struct ExecutionResult<R> {
     pub tables: Tables,

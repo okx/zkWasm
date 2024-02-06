@@ -9,6 +9,7 @@ use halo2_proofs::poly::commitment::Params;
 use halo2_proofs::poly::commitment::ParamsVerifier;
 use log::warn;
 use std::marker::PhantomData;
+use std::rc::Rc;
 
 use halo2aggregator_s::circuits::utils::load_or_create_proof;
 use halo2aggregator_s::circuits::utils::TranscriptHash;
@@ -48,7 +49,7 @@ pub struct ExecutionReturn {
 
 pub struct ZkWasmLoader<E: MultiMillerLoop, Arg, EnvBuilder: HostEnvBuilder<Arg = Arg>> {
     k: u32,
-    module: wasmi::Module,
+    module: Rc<wasmi::Module>,
     phantom_functions: Vec<String>,
     _mark: PhantomData<(Arg, EnvBuilder, E)>,
 }
@@ -88,11 +89,11 @@ impl<E: MultiMillerLoop, T, EnvBuilder: HostEnvBuilder<Arg = T>> ZkWasmLoader<E,
         &self,
         env: &HostEnv,
         dryrun: bool,
-    ) -> Result<CompiledImage<NotStartedModuleRef<'_>, Tracer>> {
+    ) -> Result<CompiledImage<NotStartedModuleRef, Tracer>> {
         let imports = ImportsBuilder::new().with_resolver("env", env);
 
         WasmInterpreter::compile(
-            &self.module,
+            self.module.clone(),
             &imports,
             &env.function_description_table(),
             ENTRY,
@@ -137,7 +138,7 @@ impl<E: MultiMillerLoop, T, EnvBuilder: HostEnvBuilder<Arg = T>> ZkWasmLoader<E,
 
         let loader = Self {
             k,
-            module,
+            module: Rc::new(module),
             phantom_functions,
             _mark: PhantomData,
         };

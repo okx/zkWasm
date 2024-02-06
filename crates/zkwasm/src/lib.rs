@@ -21,4 +21,5 @@ extern crate downcast_rs;
 
 pub extern crate halo2_proofs;
 pub extern crate halo2aggregator_s;
+pub extern crate wasmi;
 pub extern crate zkwasm_host_circuits;
