@@ -35,6 +35,10 @@ pub struct ExecutionArg {
     pub tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
 }
 
+// because it is singleton
+unsafe impl Send for ExecutionArg{}
+unsafe impl Sync for ExecutionArg{}
+
 impl ContextOutput for ExecutionArg {
     fn get_context_outputs(&self) -> Arc<Mutex<Vec<u64>>> {
         self.context_outputs.clone()
@@ -91,7 +95,7 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
     type Arg = ExecutionArg;
     type HostConfig = HostEnvConfig;
 
-    fn create_env_without_value(envconfig: Self::HostConfig) -> (HostEnv, WasmRuntimeIO) {
+    fn create_env_without_value(envconfig: &Self::HostConfig) -> (HostEnv, WasmRuntimeIO) {
         let mut env = HostEnv::new();
         let wasm_runtime_io = register_wasm_input_foreign(&mut env, vec![], vec![]);
         register_require_foreign(&mut env);
@@ -106,7 +110,7 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         (env, wasm_runtime_io)
     }
 
-    fn create_env(arg: Self::Arg, envconfig: Self::HostConfig) -> (HostEnv, WasmRuntimeIO) {
+    fn create_env(arg: Self::Arg, envconfig: &Self::HostConfig) -> (HostEnv, WasmRuntimeIO) {
         let mut env = HostEnv::new();
         let wasm_runtime_io =
             register_wasm_input_foreign(&mut env, arg.public_inputs, arg.private_inputs);

@@ -162,8 +162,8 @@ impl WasmiRuntime {
             }
         };
 
-        let itable = tracer.borrow().itable.clone().into();
-        let imtable = tracer.borrow().imtable.finalized(zkwasm_k());
+        let itable = tracer.borrow().itable.borrow().clone().into();
+        let imtable = tracer.borrow().imtable.borrow().clone().finalized(zkwasm_k());
         let elem_table = tracer.borrow().elem_table.clone();
         let configure_table = tracer.borrow().configure_table.clone();
         let static_jtable = tracer.borrow().static_jtable_entries.clone();

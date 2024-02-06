@@ -1,4 +1,6 @@
 use anyhow::Result;
+use ark_std::end_timer;
+use ark_std::start_timer;
 use halo2_proofs::arithmetic::MultiMillerLoop;
 use halo2_proofs::dev::MockProver;
 use halo2_proofs::plonk::keygen_vk;
@@ -21,6 +23,7 @@ use wasmi::ImportsBuilder;
 use wasmi::NotStartedModuleRef;
 use wasmi::RuntimeValue;
 
+use crate::profile::Profiler;
 use crate::checksum::CompilationTableWithParams;
 use crate::checksum::ImageCheckSum;
 use crate::circuits::config::init_zkwasm_runtime;
@@ -29,7 +32,6 @@ use crate::circuits::TestCircuit;
 use crate::circuits::ZkWasmCircuitBuilder;
 use crate::loader::err::Error;
 use crate::loader::err::PreCheckErr;
-use crate::profile::Profiler;
 use crate::runtime::host::host_env::HostEnv;
 use crate::runtime::host::HostEnvBuilder;
 use crate::runtime::wasmi_interpreter::Execution;
@@ -103,7 +105,7 @@ impl<E: MultiMillerLoop, T, EnvBuilder: HostEnvBuilder<Arg = T>> ZkWasmLoader<E,
 
     pub fn circuit_without_witness(
         &self,
-        envconfig: EnvBuilder::HostConfig,
+        envconfig: &EnvBuilder::HostConfig,
     ) -> Result<TestCircuit<E::Scalar>> {
         let (env, wasm_runtime_io) = EnvBuilder::create_env_without_value(envconfig);
 
@@ -151,7 +153,7 @@ impl<E: MultiMillerLoop, T, EnvBuilder: HostEnvBuilder<Arg = T>> ZkWasmLoader<E,
     pub fn create_vkey(
         &self,
         params: &Params<E::G1Affine>,
-        envconfig: EnvBuilder::HostConfig,
+        envconfig: &EnvBuilder::HostConfig,
     ) -> Result<VerifyingKey<E::G1Affine>> {
         let circuit = self.circuit_without_witness(envconfig)?;
 
@@ -161,7 +163,7 @@ impl<E: MultiMillerLoop, T, EnvBuilder: HostEnvBuilder<Arg = T>> ZkWasmLoader<E,
     pub fn checksum(
         &self,
         params: &Params<E::G1Affine>,
-        envconfig: EnvBuilder::HostConfig,
+        envconfig: &EnvBuilder::HostConfig,
     ) -> Result<Vec<E::G1Affine>> {
         let (env, _) = EnvBuilder::create_env_without_value(envconfig);
         let compiled = self.compile(&env, true)?;
@@ -179,12 +181,20 @@ impl<E: MultiMillerLoop, T, EnvBuilder: HostEnvBuilder<Arg = T>> ZkWasmLoader<E,
     pub fn run(
         &self,
         arg: T,
-        config: EnvBuilder::HostConfig,
+        config: &EnvBuilder::HostConfig,
         dryrun: bool,
         write_to_file: bool,
     ) -> Result<ExecutionResult<RuntimeValue>> {
         let (env, wasm_runtime_io) = EnvBuilder::create_env(arg, config);
+
+        let timer = start_timer!(|| "compile");
         let compiled_module = self.compile(&env, dryrun)?;
+        end_timer!(timer);
+
+        let timer = start_timer!(|| "recompile");
+        let compiled_module = compiled_module.clone_from_clean_image();
+        end_timer!(timer);
+
         let result = compiled_module.run(env, dryrun, wasm_runtime_io)?;
         if !dryrun {
             result.tables.profile_tables();

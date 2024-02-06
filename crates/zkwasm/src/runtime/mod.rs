@@ -25,6 +25,21 @@ pub struct CompiledImage<I, T> {
     pub tracer: Rc<RefCell<T>>,
 }
 
+impl<T: Clone> CompiledImage<wasmi::NotStartedModuleRef<'_>, T> {
+    pub fn clone_from_clean_image(&self) -> Self {
+        let tables = self.tables.clone();
+        let tracer = Rc::new((*self.tracer).clone());
+        let instance = self.instance.deep_clone();
+
+        CompiledImage {
+            entry: self.entry.to_owned(),
+            tables,
+            instance,
+            tracer,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct ExecutionResult<R> {
     pub tables: Tables,

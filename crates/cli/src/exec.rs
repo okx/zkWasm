@@ -60,7 +60,7 @@ pub fn exec_setup<Builder: HostEnvBuilder>(
                 phantom_functions,
             )?;
 
-            let vkey = loader.create_vkey(&params, envconfig)?;
+            let vkey = loader.create_vkey(&params, &envconfig)?;
 
             let mut fd = std::fs::File::create(&vk_path)?;
             vkey.write(&mut fd)?;
@@ -91,7 +91,7 @@ where
         Some(&output_dir.join(format!("K{}.params", zkwasm_k))),
     );
 
-    let checksum = loader.checksum(&params, hostenv)?;
+    let checksum = loader.checksum(&params, &hostenv)?;
     assert_eq!(checksum.len(), 1);
     let checksum = checksum[0];
 
@@ -117,7 +117,7 @@ pub fn exec_dry_run<Builder: HostEnvBuilder>(
         wasm_binary,
         phantom_functions,
     )?;
-    let result = loader.run(arg, config, true, false)?;
+    let result = loader.run(arg, &config, true, false)?;
     log::info!("total guest instructions used {:?}", result.guest_statics);
     log::info!("total host api used {:?}", result.host_statics);
     Ok(())
@@ -139,7 +139,7 @@ pub fn exec_create_proof<Builder: HostEnvBuilder>(
         phantom_functions,
     )?;
 
-    let execution_result = loader.run(arg, config, false, true)?;
+    let execution_result = loader.run(arg, &config, false, true)?;
 
     println!(
         "total guest instructions used {:?}",
