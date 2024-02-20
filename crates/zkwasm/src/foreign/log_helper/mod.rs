@@ -15,6 +15,7 @@ use wasmi::tracer::Observer;
 use crate::foreign::log_helper::ExternalOutputForeignInst::*;
 use crate::runtime::host::host_env::HostEnv;
 use crate::runtime::host::ForeignContext;
+use crate::runtime::host::ForeignPlugin;
 use zkwasm_host_circuits::host::ForeignInst::Log;
 use zkwasm_host_circuits::host::ForeignInst::LogChar;
 
@@ -29,6 +30,7 @@ pub enum ExternalOutputForeignInst {
     ExternalUnpackPublicKey =
         std::mem::variant_count::<zkwasm_host_circuits::host::ForeignInst>() as isize,
     ExternalLogTraceCount,
+    ExternalLogHostTrace,
 
     ExternalLogStdoutWrite,
     ExternalLogStdoutFlush,
@@ -37,14 +39,20 @@ pub enum ExternalOutputForeignInst {
 pub struct ExternalOutputContext {
     pub output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
     pub current_key: u64,
+
+    pub foreigns: Vec<Rc<ForeignPlugin>>,
 }
 impl ForeignContext for ExternalOutputContext {}
 
 impl ExternalOutputContext {
-    pub fn new(output: Rc<RefCell<HashMap<u64, Vec<u64>>>>) -> Self {
+    pub fn new(
+        output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
+        foreigns: Vec<Rc<ForeignPlugin>>,
+    ) -> Self {
         ExternalOutputContext {
             output,
             current_key: 0,
+            foreigns,
         }
     }
 
@@ -52,6 +60,7 @@ impl ExternalOutputContext {
         ExternalOutputContext {
             output: Rc::new(RefCell::new(HashMap::new())),
             current_key: 0,
+            foreigns: vec![],
         }
     }
 
@@ -89,6 +98,29 @@ impl ExternalOutputContext {
         let target = output.get_mut(&address).unwrap();
 
         target.push(trace_count as u64);
+    }
+
+    pub fn log_host_trace(&self, address: u64) {
+        let mut m = HashMap::new();
+        for v in &self.foreigns {
+            let plugin_name = &v.name;
+
+            if !m.contains_key(plugin_name) {
+                if let Some(stat) = (v.ctx).as_ref().borrow().get_statics() {
+                    m.insert(plugin_name.clone(), stat.used_round);
+                }
+            }
+        }
+        let result = serde_json::to_string(&m).unwrap();
+
+        let mut output = self.output.borrow_mut();
+        if !output.contains_key(&address) {
+            output.insert(address, vec![]);
+        }
+        let target = output.get_mut(&address).unwrap();
+        for b in result.as_bytes() {
+            target.push(*b as u64);
+        }
     }
 
     pub fn log_stdout_write(&self, address: u64) {
@@ -150,13 +182,21 @@ pub fn register_log_foreign(env: &mut HostEnv) {
     );
 }
 
+// It should be the last registered function in HostEnv.
 pub fn register_external_output_foreign(
     env: &mut HostEnv,
     external_output: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
 ) {
+    let foreigns = env
+        .external_env
+        .functions
+        .values()
+        .map(|f| f.plugin.clone())
+        .collect::<Vec<_>>();
+
     let foreign_output_plugin = env.external_env.register_plugin(
         "foreign_external_output",
-        Box::new(ExternalOutputContext::new(external_output)),
+        Box::new(ExternalOutputContext::new(external_output, foreigns)),
     );
 
     let unpack_public_key = Rc::new(
@@ -176,6 +216,17 @@ pub fn register_external_output_foreign(
 
             let address: u64 = args.nth(0);
             context.log_trace_count(address, ob.counter);
+
+            None
+        },
+    );
+
+    let log_host_trace = Rc::new(
+        |_ob: &Observer, context: &mut dyn ForeignContext, args: wasmi::RuntimeArgs| {
+            let context = context.downcast_mut::<ExternalOutputContext>().unwrap();
+
+            let address: u64 = args.nth(0);
+            context.log_host_trace(address);
 
             None
         },
@@ -214,6 +265,14 @@ pub fn register_external_output_foreign(
         ExternalHostCallSignature::Argument,
         foreign_output_plugin.clone(),
         log_trace_count,
+    );
+
+    env.external_env.register_function(
+        "wasm_external_log_host_trace",
+        ExternalLogHostTrace as usize,
+        ExternalHostCallSignature::Argument,
+        foreign_output_plugin.clone(),
+        log_host_trace,
     );
 
     env.external_env.register_function(
