@@ -273,7 +273,7 @@ impl<F: FieldExt> EventTableChip<F> {
             }).zip(rest_ops.iter()).collect::<Vec<_>>();
 
         println!("instruction length {}", instructions.len());
-        let chunk_len = instructions.len()/9;
+        let chunk_len = instructions.len()/20;
         let chunk_len = if chunk_len == 0 { instructions.len() } else { chunk_len };
 
         let chunks = instructions.chunks(chunk_len).map(|x| (x, ctx.clone())).collect::<Vec<_>>();
