@@ -105,7 +105,7 @@ impl<F: FieldExt> MemoryTableChip<F> {
             (entry, context)
         }).collect::<Vec<_>>();
 
-        let chunk_len = entries.len()/4;
+        let chunk_len = entries.len()/9;
 
         let chunks = entries.chunks(chunk_len).map(|x| (x, ctx.clone())).collect::<Vec<_>>();
 
