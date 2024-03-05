@@ -187,6 +187,7 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
 
         let (sender, receiver) = std::sync::mpsc::channel();
         end_timer!(assign_timer_bfs);
+        let assign_timer_first_scope = start_timer!(|| " first scope timer ");
 
         rayon::scope(|s| {
             let context_inputs = etable.get_context_inputs();
@@ -260,6 +261,8 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
                 ).unwrap();
             });
         });
+                end_timer!(assign_timer_first_scope);
+
         let assign_timer_bss = start_timer!(|| "Assign before second scope");
 
         let (etable, etable_permutation_cells) = receiver.recv().expect("can not receiver obj ...");
@@ -292,11 +295,10 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
             .encode_compilation_table_values();
 
         end_timer!(assign_timer_bss);
+        let assign_timer_second_scope = start_timer!(|| " second scope timer ");
 
         rayon::scope(|s| {
             s.spawn(move |_| {
-                let assign_timer_ssf = start_timer!(|| "Assign second scope first");
-
                 mtable_assigner.assign_region(
                     || "jtable mtable etable",
                     |region| {
@@ -315,13 +317,9 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
                         }
                         Ok(())
                     }).unwrap();
-                        end_timer!(assign_timer_ssf);
-
             });
 
             s.spawn(move |_| {
-                                let assign_timer_sss = start_timer!(|| "Assign second scope second");
-
                 let image_chip = ImageTableChip::new(config.image_table.clone());
                 let static_frame_entries = jme_assigner.assign_region(
                     || "jtable mtable etable",
@@ -356,13 +354,9 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
                         }
                         ).unwrap()
                     );
-                                        end_timer!(assign_timer_sss);
-
             });
 
             s.spawn(move |_| {
-                                                let assign_timer_ssth = start_timer!(|| "Assign second scope third");
-
                 layouter.assign_region(
                     || "jtable mtable etable",
                     |region| {
@@ -375,10 +369,10 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
                         Ok(())
                     },
                     ).unwrap();
-                                                        end_timer!(assign_timer_ssth);
-
             });
         });
+                end_timer!(assign_timer_second_scope);
+
 
         end_timer!(assign_timer);
 
