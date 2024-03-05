@@ -295,6 +295,8 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
 
         rayon::scope(|s| {
             s.spawn(move |_| {
+                let assign_timer_ssf = start_timer!(|| "Assign second scope first");
+
                 mtable_assigner.assign_region(
                     || "jtable mtable etable",
                     |region| {
@@ -313,9 +315,13 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
                         }
                         Ok(())
                     }).unwrap();
+                        end_timer!(assign_timer_ssf);
+
             });
 
             s.spawn(move |_| {
+                                let assign_timer_sss = start_timer!(|| "Assign second scope second");
+
                 let image_chip = ImageTableChip::new(config.image_table.clone());
                 let static_frame_entries = jme_assigner.assign_region(
                     || "jtable mtable etable",
@@ -350,9 +356,13 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
                         }
                         ).unwrap()
                     );
+                                        end_timer!(assign_timer_sss);
+
             });
 
             s.spawn(move |_| {
+                                                let assign_timer_ssth = start_timer!(|| "Assign second scope third");
+
                 layouter.assign_region(
                     || "jtable mtable etable",
                     |region| {
@@ -365,6 +375,8 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
                         Ok(())
                     },
                     ).unwrap();
+                                                        end_timer!(assign_timer_ssth);
+
             });
         });
 
