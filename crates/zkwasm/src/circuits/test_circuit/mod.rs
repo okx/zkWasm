@@ -154,6 +154,7 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
         layouter: impl Layouter<F>,
     ) -> Result<(), Error> {
         let assign_timer = start_timer!(|| "Assign");
+        let assign_timer_bfs = start_timer!(|| "Assign before first scope");
 
         let rchip = RangeTableChip::new(config.rtable);
         let mchip = MemoryTableChip::new(config.mtable, config.max_available_rows);
@@ -185,6 +186,7 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
         let fid_of_entry = self.tables.compilation_tables.fid_of_entry;
 
         let (sender, receiver) = std::sync::mpsc::channel();
+        end_timer!(assign_timer_bfs);
 
         rayon::scope(|s| {
             let context_inputs = etable.get_context_inputs();
@@ -258,6 +260,7 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
                 ).unwrap();
             });
         });
+        let assign_timer_bss = start_timer!(|| "Assign before second scope");
 
         let (etable, etable_permutation_cells) = receiver.recv().expect("can not receiver obj ...");
 
@@ -288,6 +291,7 @@ impl<F: FieldExt> Circuit<F> for ZkWasmCircuit<F> {
             .compilation_tables
             .encode_compilation_table_values();
 
+        end_timer!(assign_timer_bss);
 
         rayon::scope(|s| {
             s.spawn(move |_| {
