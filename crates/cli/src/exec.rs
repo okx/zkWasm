@@ -123,8 +123,8 @@ pub fn exec_dry_run<Builder: HostEnvBuilder>(
         phantom_functions,
     )?;
     let result = loader.run(arg, config, true, false)?;
-    println!("total guest instructions used {:?}", result.guest_statics);
-    println!("total host api used {:?}", result.host_statics);
+    log::info!("total guest instructions used {:?}", result.guest_statics);
+    log::info!("total host api used {:?}", result.host_statics);
     Ok(())
 }
 

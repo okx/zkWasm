@@ -3,6 +3,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use delphinus_zkwasm::foreign::context::runtime::register_context_foreign;
+use delphinus_zkwasm::foreign::log_helper::register_external_output_foreign;
 use delphinus_zkwasm::foreign::log_helper::register_log_foreign;
 use delphinus_zkwasm::foreign::require_helper::register_require_foreign;
 use delphinus_zkwasm::foreign::wasm_input_helper::runtime::register_wasm_input_foreign;
@@ -113,6 +114,9 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
             &mut env,
             Rc::new(RefCell::new(HashMap::new())),
         );
+        let external_output = Rc::new(RefCell::new(HashMap::new()));
+        host::witness_helper::register_witness_foreign(&mut env, external_output.clone());
+        register_external_output_foreign(&mut env, external_output);
         env.finalize();
 
         (env, wasm_runtime_io)
@@ -125,8 +129,9 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         register_require_foreign(&mut env);
         register_log_foreign(&mut env);
         register_context_foreign(&mut env, arg.context_inputs, arg.context_outputs);
-        host::witness_helper::register_witness_foreign(&mut env, arg.indexed_witness);
+        host::witness_helper::register_witness_foreign(&mut env, arg.indexed_witness.clone());
         envconfig.register_ops(&mut env, arg.tree_db, arg.merkle_proof_recorder);
+        register_external_output_foreign(&mut env, arg.indexed_witness);
         env.finalize();
 
         (env, wasm_runtime_io)
