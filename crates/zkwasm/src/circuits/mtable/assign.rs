@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::env;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::circuit::AssignedCell;
@@ -19,6 +21,15 @@ use crate::circuits::utils::table_entry::MemoryWritingTable;
 use crate::circuits::utils::Context;
 
 use super::MEMORY_TABLE_ENTRY_ROWS;
+
+lazy_static! {
+    static ref MTABLE_THREAD: AtomicU32 =
+        AtomicU32::new(env::var("MTABLE_THREAD").map_or(8, |k| k.parse().unwrap()));
+}
+
+pub fn mtable_thread() -> u32 {
+    MTABLE_THREAD.load(Ordering::Relaxed)
+}
 
 impl<F: FieldExt> MemoryTableChip<F> {
     fn assign_fixed(&self, ctx: &mut Context<'_, F>) -> Result<(), Error> {
@@ -105,7 +116,7 @@ impl<F: FieldExt> MemoryTableChip<F> {
             (entry, context)
         }).collect::<Vec<_>>();
 
-        let chunk_len = entries.len()/4;
+        let chunk_len = entries.len()/(mtable_thread() as usize);
 
         let chunks = entries.chunks(chunk_len).map(|x| (x, ctx.clone())).collect::<Vec<_>>();
 

@@ -101,7 +101,7 @@ impl<E: MultiMillerLoop, T, EnvBuilder: HostEnvBuilder<Arg = T>> ZkWasmLoader<E,
         )
     }
 
-    fn circuit_without_witness(
+    pub fn circuit_without_witness(
         &self,
         envconfig: EnvBuilder::HostConfig,
     ) -> Result<ZkWasmCircuit<E::Scalar>> {
