@@ -15,3 +15,9 @@ zkwasm-host-circuits = { git = "https://github.com/DelphinusLab/zkWasm-host-circ
 
 [profile.dev]
 opt-level = 3
+
+[patch."https://github.com/DelphinusLab/continuation-batcher.git"]
+circuits-batcher = { git = "https://github.com/okx/continuation-batcher.git", branch = "main-okx" }
+
+[patch."https://github.com/okx/zkWasm-prover.git"]
+zkwasm-prover = { path = "../zkWasm-prover" }
