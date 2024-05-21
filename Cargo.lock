@@ -4241,7 +4241,7 @@ dependencies = [
 [[package]]
 name = "zkwasm-host-circuits"
 version = "0.1.0"
-source = "git+https://github.com/okx/zkWasm-host-circuits.git?branch=update-synthesize-helper#8302b8ce0b123df5e826e3dda0b85653bd3ec547"
+source = "git+https://github.com/okx/zkWasm-host-circuits.git?branch=refactor-synthesize-helper#8ed7513b57b1966ae1edb3935f5012e60c956911"
 dependencies = [
  "ark-std 0.3.0",
  "cfg-if 1.0.0",
