@@ -191,6 +191,7 @@ pub trait AppBuilder: CommandBuilder {
                         )?;
                     }
                     HostMode::STANDARD => {
+                        let external_outputs = Rc::new(RefCell::new(HashMap::new()));
                         exec_dry_run::<StandardEnvBuilder>(
                             zkwasm_k,
                             wasm_binary,
@@ -200,11 +201,12 @@ pub trait AppBuilder: CommandBuilder {
                                 private_inputs,
                                 context_inputs: context_in,
                                 context_outputs: context_output.clone(),
-                                indexed_witness: Rc::new(RefCell::new(HashMap::new())),
+                                indexed_witness: external_outputs.clone(),
                                 tree_db: None,
                             },
                             HostEnvConfig::default(),
                         )?;
+                        log::info!("external outputs: {:?}", external_outputs);
                     }
                 };
 
