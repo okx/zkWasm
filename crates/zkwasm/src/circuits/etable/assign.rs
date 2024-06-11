@@ -11,6 +11,7 @@ use specs::itable::InstructionTable;
 use specs::itable::OpcodeClassPlain;
 use specs::step::StepInfo;
 use std::collections::BTreeMap;
+use std::env;
 use wasmi::DEFAULT_VALUE_STACK_LIMIT;
 
 use super::EventTableChip;
@@ -24,6 +25,17 @@ use crate::circuits::utils::table_entry::EventTableEntryWithMemoryInfo;
 use crate::circuits::utils::table_entry::EventTableWithMemoryInfo;
 use crate::circuits::utils::Context;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
+
+lazy_static! {
+    static ref ETABLE_THREAD: AtomicU32 =
+        AtomicU32::new(env::var("ETABLE_THREAD").map_or(20, |k| k.parse().unwrap()));
+}
+
+pub fn etable_thread() -> u32 {
+    ETABLE_THREAD.load(Ordering::Relaxed)
+}
+
 
 pub(in crate::circuits) struct EventTablePermutationCells {
     pub(in crate::circuits) rest_mops: Option<Cell>,
@@ -275,12 +287,8 @@ impl<F: FieldExt> EventTableChip<F> {
             .collect::<Vec<_>>();
 
         println!("instruction length {}", instructions.len());
-        let chunk_len = instructions.len() / 8;
-        let chunk_len = if chunk_len == 0 {
-            instructions.len()
-        } else {
-            chunk_len
-        };
+        let chunk_len = instructions.len()/(etable_thread() as usize);
+        let chunk_len = if chunk_len == 0 { instructions.len() } else { chunk_len };
 
         let chunks = instructions
             .chunks(chunk_len)

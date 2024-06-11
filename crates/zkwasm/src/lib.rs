@@ -2,6 +2,7 @@
 //#![deny(unused_variables)]
 #![deny(unused_imports)]
 #![feature(thread_local)]
+#![feature(variant_count)]
 
 pub mod checksum;
 pub mod circuits;
@@ -19,4 +20,5 @@ extern crate lazy_static;
 extern crate downcast_rs;
 
 pub extern crate halo2_proofs;
+pub extern crate specs;
 pub extern crate zkwasm_host_circuits;
