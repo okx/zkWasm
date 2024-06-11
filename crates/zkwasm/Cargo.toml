@@ -26,6 +26,8 @@ ff = "0.12"
 sha2 = "0.10.6"
 poseidon = { git = "https://github.com/DelphinusLab/poseidon" }
 rayon = "1.5"
+primitive-types = "0.12.1"
+franklin_crypto = {package = "franklin-crypto",git="https://github.com/okx/franklin-crypto.git",branch="beta" , features = ["multicore", "plonk"]}
 
 anyhow.workspace = true
 cfg-if.workspace = true
@@ -45,3 +47,4 @@ default = []
 cuda = ["halo2_proofs/cuda", "specs/cuda"]
 profile = ["ark-std/print-trace"]
 uniform-circuit = []
+complex-leaf = ["zkwasm-host-circuits/complex-leaf"]
