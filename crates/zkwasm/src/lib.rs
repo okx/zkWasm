@@ -4,6 +4,7 @@
 #![feature(int_roundings)]
 #![feature(stmt_expr_attributes)]
 #![feature(trait_upcasting)]
+#![feature(variant_count)]
 
 pub mod checksum;
 pub mod circuits;
@@ -22,4 +23,5 @@ extern crate lazy_static;
 extern crate downcast_rs;
 
 pub extern crate halo2_proofs;
+pub extern crate specs;
 pub extern crate zkwasm_host_circuits;

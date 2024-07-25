@@ -14,7 +14,7 @@ use super::ForeignPlugin;
 use super::ForeignStatics;
 use super::MatchForeignOpSignature;
 
-pub(super) struct ForeignOp {
+pub struct ForeignOp {
     pub op_index: usize,
     pub sig: ExternalHostCallSignature,
     pub plugin: Rc<ForeignPlugin>,
@@ -22,7 +22,7 @@ pub(super) struct ForeignOp {
 }
 
 pub struct ExternalCircuitEnv {
-    pub(super) functions: HashMap<String, ForeignOp>,
+    pub functions: HashMap<String, ForeignOp>,
     finalized: Rc<RefCell<bool>>,
 }
 

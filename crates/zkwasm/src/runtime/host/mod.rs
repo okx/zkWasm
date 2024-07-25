@@ -81,7 +81,7 @@ impl_downcast!(ForeignContext);
 
 pub struct ForeignPlugin {
     pub name: String,
-    ctx: Rc<RefCell<Box<dyn ForeignContext>>>,
+    pub ctx: Rc<RefCell<Box<dyn ForeignContext>>>,
 }
 
 #[derive(Clone)]

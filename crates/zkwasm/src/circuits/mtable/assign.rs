@@ -27,6 +27,18 @@ use crate::circuits::utils::Context;
 
 use super::MEMORY_TABLE_ENTRY_ROWS;
 
+use std::env;
+use std::sync::atomic::{AtomicU32, Ordering};
+
+lazy_static! {
+    static ref MTABLE_THREAD: AtomicU32 =
+        AtomicU32::new(env::var("MTABLE_THREAD").map_or(8, |k| k.parse().unwrap()));
+}
+
+pub fn mtable_thread() -> u32 {
+    MTABLE_THREAD.load(Ordering::Relaxed)
+}
+
 impl<F: FieldExt> MemoryTableChip<F> {
     fn assign_fixed(&self, ctx: &mut Context<'_, F>) -> Result<(), Error> {
         let capability = self.maximal_available_rows / MEMORY_TABLE_ENTRY_ROWS as usize;
@@ -246,11 +258,11 @@ impl<F: FieldExt> MemoryTableChip<F> {
             status
         };
 
-        const THREAD: usize = 8;
+        let thread: usize = mtable_thread() as usize;
         let chunk_size = if mtable.0.is_empty() {
             1
         } else {
-            (mtable.0.len() + THREAD - 1) / THREAD
+            (mtable.0.len() + thread - 1) / thread
         };
 
         mtable

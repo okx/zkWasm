@@ -20,7 +20,7 @@ pub struct WitnessContext {
 }
 
 impl WitnessContext {
-    fn new(indexed_map: Rc<RefCell<HashMap<u64, Vec<u64>>>>) -> Self {
+    pub fn new(indexed_map: Rc<RefCell<HashMap<u64, Vec<u64>>>>) -> Self {
         WitnessContext {
             buf: vec![],
             indexed_buf: indexed_map,
