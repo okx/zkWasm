@@ -11,7 +11,7 @@ use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
-
+use serde::{Deserialize, Serialize};
 use brtable::BrTable;
 use brtable::ElemTable;
 use configure_table::ConfigureTable;
@@ -56,7 +56,7 @@ pub enum TableBackend<Table> {
     Json(PathBuf),
 }
 
-#[derive(Debug)]
+#[derive(Debug,Serialize, Deserialize)]
 pub struct CompilationTable {
     pub itable: Arc<InstructionTable>,
     pub imtable: Arc<InitMemoryTable>,

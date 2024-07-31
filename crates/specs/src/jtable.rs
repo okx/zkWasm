@@ -1,9 +1,10 @@
-use std::io::Read;
-use std::io::Write;
+use std::fmt;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::sync::Arc;
-
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer, Serializer};
+use serde::de::{ SeqAccess, Visitor};
+use serde::ser::SerializeSeq;
 use serde::Serialize;
 
 // Inherited frame table entries:
@@ -39,6 +40,56 @@ impl From<Vec<InheritedFrameTableEntry>> for InheritedFrameEntries {
 
 #[derive(Debug)]
 pub struct InheritedFrameTable(pub Box<[InheritedFrameTableEntry; INHERITED_FRAME_TABLE_ENTRIES]>);
+
+impl Serialize for InheritedFrameTable {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut seq = serializer.serialize_seq(Some(INHERITED_FRAME_TABLE_ENTRIES))?;
+        for elem in self.0.iter() {
+            seq.serialize_element(elem)?;
+        }
+        seq.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for InheritedFrameTable {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct InheritedFrameTableVisitor;
+
+        impl<'de> Visitor<'de> for InheritedFrameTableVisitor {
+            type Value = InheritedFrameTable;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a sequence of InheritedFrameTableEntry")
+            }
+
+            fn visit_seq<V>(self, mut seq: V) -> Result<InheritedFrameTable, V::Error>
+            where
+                V: SeqAccess<'de>,
+            {
+                let mut entries = Box::new([InheritedFrameTableEntry(None); INHERITED_FRAME_TABLE_ENTRIES]);
+                for i in 0..INHERITED_FRAME_TABLE_ENTRIES {
+                    if let Some(value) = seq.next_element()? {
+                        entries[i] = value;
+                    } else {
+                        panic!("fff")
+                    }
+                }
+                Ok(InheritedFrameTable(entries))
+            }
+        }
+
+        deserializer.deserialize_seq(InheritedFrameTableVisitor)
+    }
+}
+
+
+
 
 impl Default for InheritedFrameTable {
     fn default() -> Self {
