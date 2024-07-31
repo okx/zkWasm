@@ -40,7 +40,7 @@ pub mod state;
 pub mod step;
 pub mod types;
 
-#[derive(Debug,Serialize, Deserialize)]
+#[derive(Debug,Serialize, Deserialize,Clone)]
 pub struct CompilationTable {
     pub itable: Arc<InstructionTable>,
     pub imtable: Arc<InitMemoryTable>,
