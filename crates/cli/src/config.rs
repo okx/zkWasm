@@ -31,7 +31,6 @@ use serde::Serialize;
 
 use crate::args::HostMode;
 use crate::names::name_of_circuit_data;
-use crate::names::name_of_frame_table_slice;
 use crate::names::name_of_instance;
 use crate::names::name_of_loadinfo;
 use crate::names::name_of_params;
