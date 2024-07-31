@@ -51,7 +51,7 @@ pub struct CompilationTable {
     pub initialization_state: Arc<InitializationState<u32>>,
 }
 
-#[derive(Default)]
+#[derive(Default,Serialize, Deserialize)]
 pub struct ExecutionTable {
     pub etable: Vec<EventTable>,
     pub frame_table: Vec<FrameTable>,
