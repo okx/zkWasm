@@ -300,7 +300,7 @@ impl Config {
                 style("[5/8]").bold().dim(),
                 dir
             );
-            tables.write(&dir, |slice| name_of_frame_table_slice(&self.name, slice));
+            // tables.write(&dir, |slice| name_of_frame_table_slice(&self.name, slice));
         }
 
         println!("{} Build circuit(s)...", style("[6/8]").bold().dim(),);
