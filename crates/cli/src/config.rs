@@ -28,7 +28,6 @@ use halo2_proofs::poly::commitment::Params;
 use indicatif::ProgressBar;
 use serde::Deserialize;
 use serde::Serialize;
-use specs::TraceBackend;
 
 use crate::args::HostMode;
 use crate::names::name_of_circuit_data;
@@ -244,7 +243,6 @@ impl Config {
         arg: ExecutionArg,
         context_output_filename: Option<String>,
         mock_test: bool,
-        table_backend: TraceBackend,
         skip: usize,
         padding: Option<usize>,
     ) -> anyhow::Result<()> {
@@ -258,7 +256,7 @@ impl Config {
 
         let env = env_builder.create_env(self.k, arg);
 
-        let mut monitor = TableMonitor::new(self.k, &self.phantom_functions, table_backend, &env);
+        let mut monitor = TableMonitor::new(self.k, &self.phantom_functions, &env);
 
         let (result, tables) = {
             println!("{} Executing...", style("[3/8]").bold().dim(),);

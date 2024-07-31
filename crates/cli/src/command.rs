@@ -24,7 +24,6 @@ use halo2_proofs::plonk::CircuitData;
 use halo2_proofs::poly::commitment::Params;
 use specs::slice::Slice;
 use specs::CompilationTable;
-use specs::TraceBackend;
 
 use crate::args::HostMode;
 use crate::config::Config;
@@ -158,7 +157,7 @@ impl SetupArg {
 
         let env = env_builder.create_env_without_value(self.k);
         let mut monitor =
-            TableMonitor::new(self.k, &self.phantom_functions, TraceBackend::Memory, &env);
+            TableMonitor::new(self.k, &self.phantom_functions, &env);
 
         let loader = ZkWasmLoader::new(self.k, env)?;
 
@@ -261,7 +260,6 @@ pub(crate) struct ProveArg {
     pub(crate) output_dir: PathBuf,
     pub(crate) running_arg: RunningArg,
     pub(crate) mock_test: bool,
-    pub(crate) file_backend: bool,
     // skip first n slice(s) proving.
     pub(crate) skip: usize,
     // add trivial circuits to padding

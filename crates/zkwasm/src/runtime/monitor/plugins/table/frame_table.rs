@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use std::sync::Arc;
 
 use specs::jtable::CalledFrameTable;
@@ -6,8 +5,6 @@ use specs::jtable::CalledFrameTableEntry;
 use specs::jtable::FrameTableEntryInternal;
 use specs::jtable::InheritedFrameTable;
 use specs::jtable::InheritedFrameTableEntry;
-use specs::TableBackend;
-use specs::TraceBackend;
 
 #[derive(Clone)]
 struct FrameTableEntry {
@@ -52,24 +49,20 @@ impl From<&FrameTableEntry> for InheritedFrameTableEntry {
 
 pub(super) struct FrameTable {
     initial_frame_entries: Vec<FrameTableEntry>,
-    slices: Vec<TableBackend<specs::jtable::FrameTable>>,
+    slices: Vec<specs::jtable::FrameTable>,
 
     current_unreturned: Vec<FrameTableEntry>,
     current_returned: Vec<FrameTableEntry>,
-
-    backend: Rc<TraceBackend>,
 }
 
 impl FrameTable {
-    pub(super) fn new(backend: Rc<TraceBackend>) -> Self {
+    pub(super) fn new() -> Self {
         Self {
             initial_frame_entries: Vec::new(),
             slices: Vec::new(),
 
             current_unreturned: Vec::new(),
             current_returned: Vec::new(),
-
-            backend,
         }
     }
 
@@ -139,13 +132,7 @@ impl FrameTable {
                     called: CalledFrameTable::new(called),
                 }
             };
-
-            match self.backend.as_ref() {
-                TraceBackend::Memory => TableBackend::Memory(frame_table),
-                TraceBackend::File {
-                    frame_table_writer, ..
-                } => TableBackend::Json(frame_table_writer(self.slices.len(), &frame_table)),
-            }
+            frame_table
         };
 
         self.slices.push(frame_table);
@@ -162,7 +149,7 @@ impl FrameTable {
         self.current_returned.push(entry);
     }
 
-    pub(super) fn finalized(mut self) -> Vec<TableBackend<specs::jtable::FrameTable>> {
+    pub(super) fn finalized(mut self) -> Vec<specs::jtable::FrameTable> {
         self.flush();
 
         assert!(

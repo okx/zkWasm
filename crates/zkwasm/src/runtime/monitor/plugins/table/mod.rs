@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::rc::Rc;
 use std::sync::Arc;
 
 use parity_wasm::elements::External;
@@ -23,7 +22,6 @@ use specs::types::ValueType;
 use specs::CompilationTable;
 use specs::ExecutionTable;
 use specs::Tables;
-use specs::TraceBackend;
 use wasmi::func::FuncInstanceInternal;
 
 use wasmi::isa::Instruction;
@@ -94,10 +92,9 @@ impl TablePlugin {
         host_function_desc: HashMap<usize, HostFunctionDesc>,
         phantom_regex: &[String],
         wasm_input: FuncRef,
-        trace_backend: TraceBackend,
+
     ) -> Self {
         let capacity = compute_slice_capability(k);
-        let trace_backend = Rc::new(trace_backend);
 
         Self {
             capacity,
@@ -114,8 +111,8 @@ impl TablePlugin {
             start_fid: None,
 
             last_jump_eid: vec![],
-            etable: ETable::new(capacity, trace_backend.clone()),
-            frame_table: FrameTable::new(trace_backend),
+            etable: ETable::new(capacity),
+            frame_table: FrameTable::new(),
             external_host_call_table: ExternalHostCallTable::default(),
             context_input_table: vec![],
             context_output_table: vec![],

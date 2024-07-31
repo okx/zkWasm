@@ -39,11 +39,6 @@ pub(crate) fn name_of_transcript(name: &str, index: usize) -> String {
 }
 
 #[inline(always)]
-pub(crate) fn name_of_etable_slice(name: &str, index: usize) -> String {
-    format!("{}.etable.{}.data", name, index)
-}
-
-#[inline(always)]
 pub(crate) fn name_of_frame_table_slice(name: &str, index: usize) -> String {
     format!("{}.frame_table.{}.data", name, index)
 }
