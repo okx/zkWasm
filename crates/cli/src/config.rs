@@ -329,7 +329,9 @@ impl Config {
             .enumerate()
             .skip(skip)
             .peekable();
+        println!("scf-debug slice");
         while let Some((index, circuit)) = slices.next() {
+            println!("scf-debug begin next");
             let circuit = circuit?;
 
             let _is_finalized_circuit = slices.peek().is_none();
