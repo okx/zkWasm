@@ -73,9 +73,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.86"
+version = "1.0.81"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3d1d046238990b9cf5bcde22a3fb3584ee5cf65fb2765f454ed428c7a0063da"
+checksum = "0952808a6c2afd1aa8947271f3a60f1a6763c7b912d210184c5149b5cf147247"
 dependencies = [
  "backtrace",
 ]
@@ -87,6 +87,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0e60b75072ecd4168020818c0107f2857bb6c4e64252d8d3983f6263b40a5c3"
 dependencies = [
  "num-traits",
+]
+
+[[package]]
+name = "ark-std"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1df2c09229cbc5a028b1d70e00fdb2acee28b1055dfb5ca73eea49c5a25c4e7c"
+dependencies = [
+ "colored",
+ "num-traits",
+ "rand 0.8.5",
 ]
 
 [[package]]
@@ -495,10 +506,10 @@ dependencies = [
 [[package]]
 name = "circuits-batcher"
 version = "0.1.0"
-source = "git+https://github.com/DelphinusLab/continuation-batcher.git#694993eaa77b24144ebaddd2dc84fecb26cdd975"
+source = "git+https://github.com/DelphinusLab/continuation-batcher.git#12cefe8364f44c89afeb1f28fae701aeb90d06a0"
 dependencies = [
  "anyhow",
- "ark-std",
+ "ark-std 0.4.0",
  "bitvec",
  "clap",
  "downcast-rs",
@@ -872,7 +883,7 @@ name = "delphinus-host"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "ark-std",
+ "ark-std 0.4.0",
  "bitvec",
  "delphinus-zkwasm",
  "downcast-rs",
@@ -904,7 +915,7 @@ name = "delphinus-zkwasm"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "ark-std",
+ "ark-std 0.4.0",
  "bitvec",
  "cfg-if 1.0.0",
  "downcast-rs",
@@ -1039,7 +1050,7 @@ name = "ec-gpu-gen"
 version = "0.4.0"
 source = "git+https://github.com/lanbones/ec-gpu?branch=halo2-opt-v2#aedc591657644f047f25a2e089f0b489eba0bf38"
 dependencies = [
- "ark-std",
+ "ark-std 0.4.0",
  "bitvec",
  "crossbeam-channel 0.5.12",
  "ec-gpu",
@@ -1487,7 +1498,7 @@ name = "halo2_proofs"
 version = "0.1.0-beta.1"
 source = "git+https://github.com/DelphinusLab/halo2-gpu-specific.git#fe464bd14d7d1155964d39a029c9903b453aeac8"
 dependencies = [
- "ark-std",
+ "ark-std 0.4.0",
  "blake2b_simd",
  "bumpalo",
  "cfg-if 0.1.10",
@@ -1516,7 +1527,7 @@ name = "halo2aggregator-s"
 version = "1.0.2"
 source = "git+https://github.com/DelphinusLab/halo2aggregator-s.git?tag=1.0.3#79bb1d5c491af63052c292713aa27e54a9432203"
 dependencies = [
- "ark-std",
+ "ark-std 0.4.0",
  "blake2b_simd",
  "halo2_proofs",
  "halo2ecc-s 0.3.2 (git+https://github.com/DelphinusLab/halo2ecc-s.git?tag=bisect-lookup-0.5.8)",
@@ -1532,9 +1543,9 @@ dependencies = [
 [[package]]
 name = "halo2ecc-s"
 version = "0.3.2"
-source = "git+https://github.com/DelphinusLab/halo2ecc-s.git?tag=bisect-lookup-0.5.6#deba857a9f31dbf34d38a306b590fba96b0e9c1a"
+source = "git+https://github.com/DelphinusLab/halo2ecc-s.git?tag=bisect-lookup-0.5.6#3b8b424f#3b8b424f009fd945fc982f530ed29b555f8002e6"
 dependencies = [
- "ark-std",
+ "ark-std 0.4.0",
  "halo2_proofs",
  "num-bigint 0.4.4",
  "num-integer",
@@ -1546,7 +1557,7 @@ name = "halo2ecc-s"
 version = "0.3.2"
 source = "git+https://github.com/DelphinusLab/halo2ecc-s.git?tag=bisect-lookup-0.5.8#ddad2af04c28c33c2aa1192f4529d59abdf624b8"
 dependencies = [
- "ark-std",
+ "ark-std 0.4.0",
  "halo2_proofs",
  "num-bigint 0.4.4",
  "num-integer",
@@ -4207,16 +4218,15 @@ dependencies = [
 [[package]]
 name = "zkwasm-host-circuits"
 version = "0.1.0"
-source = "git+https://github.com/DelphinusLab/zkWasm-host-circuits.git#411641fcc6cb091fcd872d3fbf44b2275509ebe6"
+source = "git+https://github.com/DelphinusLab/zkWasm-host-circuits.git#924a0088929e4aa323827e74ae2bfe45fdf1c5b9"
 dependencies = [
- "anyhow",
- "ark-std",
+ "ark-std 0.3.0",
  "cfg-if 1.0.0",
  "circuits-batcher",
  "clap",
  "ff",
  "halo2_proofs",
- "halo2ecc-s 0.3.2 (git+https://github.com/DelphinusLab/halo2ecc-s.git?tag=bisect-lookup-0.5.6)",
+ "halo2ecc-s 0.3.2 (git+https://github.com/DelphinusLab/halo2ecc-s.git?tag=bisect-lookup-0.5.6#3b8b424f)",
  "hex",
  "itertools 0.10.5",
  "lazy_static",
@@ -4239,7 +4249,7 @@ name = "zkwasm-prover"
 version = "0.1.0"
 source = "git+https://github.com/DelphinusLab/zkWasm-prover.git#d7244c637ca7d64afee4e66caea6f0cf4ccc6cc5"
 dependencies = [
- "ark-std",
+ "ark-std 0.4.0",
  "cc",
  "cuda-runtime-sys",
  "halo2_proofs",
