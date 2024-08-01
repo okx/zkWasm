@@ -392,15 +392,19 @@ impl Config {
             };
 
             let proof = match circuit {
-                ZkWasmCircuit::Ongoing(circuit) => proof_piece_info.create_proof::<Bn256, _>(
+                ZkWasmCircuit::Ongoing(circuit) => {
+                    println!("scf-debug-1 etable_len={:?} instances={:?} hashtype={:?}",circuit.slice.etable.entries().len(),instances.clone(),proof_load_info.hashtype);
+                    proof_piece_info.create_proof::<Bn256, _>(
                     &circuit,
                     &vec![instances.clone()],
                     &params,
                     &cached_proving_key.as_ref().unwrap().1,
                     proof_load_info.hashtype,
                     OpenSchema::Shplonk,
-                ),
-                ZkWasmCircuit::LastSliceCircuit(circuit) => proof_piece_info
+                )}
+                ZkWasmCircuit::LastSliceCircuit(circuit) => {
+                    println!("scf-debug etable_len={:?} instances={:?} hashtype={:?}",circuit.slice.etable.entries().len(),instances.clone(),proof_load_info.hashtype);
+                    proof_piece_info
                     .create_proof::<Bn256, _>(
                         &circuit,
                         &vec![instances.clone()],
@@ -408,7 +412,7 @@ impl Config {
                         &cached_proving_key.as_ref().unwrap().1,
                         proof_load_info.hashtype,
                         OpenSchema::Shplonk,
-                    ),
+                    )}
             };
 
             proof_piece_info.save_proof_data(&vec![instances.clone()], &proof, output_dir);
