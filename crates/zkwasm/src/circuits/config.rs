@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 pub const POW_TABLE_POWER_START: u64 = 128;
 
 pub const MIN_K: u32 = 18;
-const MAX_K: u32 = 23;
+const MAX_K: u32 = 22;
 
 lazy_static! {
     static ref ZKWASM_K: AtomicU32 =
