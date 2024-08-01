@@ -5,17 +5,20 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use delphinus_zkwasm::foreign::context::runtime::register_context_foreign;
+use delphinus_zkwasm::foreign::log_helper::register_external_output_foreign;
 use delphinus_zkwasm::foreign::log_helper::register_log_foreign;
 use delphinus_zkwasm::foreign::require_helper::register_require_foreign;
 use delphinus_zkwasm::foreign::wasm_input_helper::runtime::register_wasm_input_foreign;
 use delphinus_zkwasm::runtime::host::default_env::ExecutionArg;
-use delphinus_zkwasm::foreign::log_helper::register_external_output_foreign;
 
 use delphinus_zkwasm::runtime::host::host_env::HostEnv;
 use delphinus_zkwasm::runtime::host::HostEnvBuilder;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
+use std::fmt;
+use std::fmt::Debug;
+use std::fmt::Formatter;
 use zkwasm_host_circuits::host::db::TreeDB;
 use zkwasm_host_circuits::proof::OpType;
 
@@ -32,9 +35,19 @@ pub struct StandardExecutionArg {
     pub tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct HostEnvConfig {
     pub ops: Vec<OpType>,
+    #[serde(skip)]
+    pub tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
+}
+
+impl Debug for HostEnvConfig {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("HostEnvConfig")
+            .field("ops", &self.ops)
+            .finish()
+    }
 }
 
 impl HostEnvConfig {
@@ -57,12 +70,35 @@ impl HostEnvConfig {
     fn register_ops(&self, env: &mut HostEnv) {
         for op in &self.ops {
             Self::register_op(op, env);
+            match op {
+                OpType::BLS381PAIR
+                | OpType::BLS381SUM
+                | OpType::BN256PAIR
+                | OpType::BN256SUM
+                | OpType::POSEIDONHASH
+                | OpType::KECCAKHASH
+                | OpType::JUBJUBSUM => Self::register_op(op, env),
+                OpType::MERKLE => {
+                    host::merkle_helper::merkle::register_merkle_foreign(env, self.tree_db.clone());
+                    host::merkle_helper::datacache::register_datacache_foreign(
+                        env,
+                        self.tree_db.clone(),
+                    );
+                }
+            }
         }
     }
 }
 
 pub struct StandardHostEnvBuilder {
     ops: Vec<OpType>,
+    tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
+}
+
+impl StandardHostEnvBuilder {
+    pub fn set_tree_db(&mut self, tree_db: Option<Rc<RefCell<dyn TreeDB>>>) {
+        self.tree_db = tree_db;
+    }
 }
 
 impl Default for StandardHostEnvBuilder {
@@ -75,6 +111,7 @@ impl Default for StandardHostEnvBuilder {
                 OpType::KECCAKHASH,
                 OpType::BN256SUM,
             ],
+            tree_db: None,
         }
     }
 }
@@ -84,6 +121,7 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         let mut env = HostEnv::new(k);
         let host_env_config = HostEnvConfig {
             ops: self.ops.clone(),
+            tree_db: None,
         };
         register_wasm_input_foreign(&mut env, vec![], vec![]);
         register_require_foreign(&mut env);
@@ -107,6 +145,7 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         let mut env = HostEnv::new(k);
         let host_env_config = HostEnvConfig {
             ops: self.ops.clone(),
+            tree_db: self.tree_db.clone(),
         };
         let arg = StandardExecutionArg {
             public_inputs: arg.public_inputs,
