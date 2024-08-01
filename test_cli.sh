@@ -11,8 +11,8 @@ test_default_cli() {
     cargo build --release $CUDA
     rm -rf params/*.data params/*.config output
     $CLI --params ./params wasm_output setup --wasm ./crates/zkwasm/wasm/wasm_output.wasm -k 23 --host standard
-    $CLI --params ./params wasm_output dry-run --wasm crates/zkwasm/wasm/wasm_output.wasm --private 0x040000000000000000010101:bytes-packed --output ./output
-#    $CLI --params ./params wasm_output prove --wasm crates/zkwasm/wasm/wasm_output.wasm --public 133:i64 --public 2:i64 --output ./output
+    $CLI --params ./params wasm_output dry-run --wasm crates/zkwasm/wasm/wasm_output.wasm --private 0x010000000000000003:bytes-packed --output ./output
+    $CLI --params ./params wasm_output prove --wasm crates/zkwasm/wasm/wasm_output.wasm --private 0x010000000000000003:bytes-packed --output ./output
 #    $CLI --params ./params wasm_output verify --output ./output
 }
 
