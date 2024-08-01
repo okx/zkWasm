@@ -93,6 +93,7 @@ impl HostEnvConfig {
 pub struct StandardHostEnvBuilder {
     ops: Vec<OpType>,
     tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
+    pub indexed_witness: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
 }
 
 impl StandardHostEnvBuilder {
@@ -112,6 +113,7 @@ impl Default for StandardHostEnvBuilder {
                 OpType::BN256SUM,
             ],
             tree_db: None,
+            indexed_witness: Rc::new(RefCell::new(HashMap::new())),
         }
     }
 }
@@ -159,9 +161,9 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         register_require_foreign(&mut env);
         register_log_foreign(&mut env);
         register_context_foreign(&mut env, arg.context_inputs);
-        host::witness_helper::register_witness_foreign(&mut env, arg.indexed_witness.clone());
+        host::witness_helper::register_witness_foreign(&mut env, self.indexed_witness.clone());
         host_env_config.register_ops(&mut env);
-        register_external_output_foreign(&mut env, arg.indexed_witness);
+        register_external_output_foreign(&mut env, self.indexed_witness.clone());
 
         env.finalize();
 
