@@ -27,7 +27,7 @@ use crate::circuits::utils::bn_to_field;
 
 pub const STACK_CAPABILITY: usize = DEFAULT_VALUE_STACK_LIMIT;
 pub const GLOBAL_CAPABILITY: usize = DEFAULT_VALUE_STACK_LIMIT;
-pub const INIT_MEMORY_ENTRIES_OFFSET: usize = 40960;
+pub const INIT_MEMORY_ENTRIES_OFFSET: usize = 40960*4;
 
 pub(crate) struct InitMemoryLayouter {
     pub(crate) pages: u32,
@@ -129,7 +129,6 @@ impl ImageTableAssigner {
         let padding_offset = br_table_offset + br_table_number;
         let init_memory_offset = INIT_MEMORY_ENTRIES_OFFSET;
 
-        println!("scf-debug padding_offset={:?}",padding_offset);
         assert!(
             padding_offset <= init_memory_offset,
             "The number of instructions of the image({}) is too large",
