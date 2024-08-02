@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fmt;
 use serde::de::{MapAccess, Visitor};
 use std::collections::BTreeMap;
@@ -72,7 +71,7 @@ impl<'de> Deserialize<'de> for InitMemoryTable {
             where
                 M: MapAccess<'de>,
             {
-                let mut map = HashMap::with_capacity(access.size_hint().unwrap_or(0));
+                let mut map = BTreeMap::new();
 
                 while let Some((key, value)) = access.next_entry()? {
                     map.insert(key, value);
