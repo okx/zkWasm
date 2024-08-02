@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::fmt;
 use serde::de::{MapAccess, Visitor};
+use std::collections::BTreeMap;
+
 use crate::mtable::LocationType;
 use crate::mtable::VarType;
 use serde::Deserialize;
@@ -19,11 +21,11 @@ pub struct InitMemoryTableEntry {
 }
 
 #[derive(Default, Debug)]
-pub struct InitMemoryTable(pub HashMap<(LocationType, u32), InitMemoryTableEntry>);
+pub struct InitMemoryTable(pub BTreeMap<(LocationType, u32), InitMemoryTableEntry>);
 
 impl InitMemoryTable {
     pub fn new(entries: Vec<InitMemoryTableEntry>) -> Self {
-        let mut map = HashMap::new();
+        let mut map = BTreeMap::new();
 
         entries.into_iter().for_each(|entry| {
             map.insert((entry.ltype, entry.offset), entry);
