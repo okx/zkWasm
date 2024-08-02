@@ -38,23 +38,37 @@ impl From<ExternalHostCallSignature> for Signature {
 pub struct ExternalHostCallEntry {
     pub op: usize,
     pub value: u64,
+    #[serde(rename = "is_ret", with = "serde_sig")]
     pub sig: ExternalHostCallSignature,
 }
 
-// impl Serialize for ExternalHostCallEntry {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: serde::Serializer,
-//     {
-//         let mut s = serializer.serialize_struct("ExternalHostCallEntry", 3)?;
-//         s.serialize_field("op", &self.op)?;
-//         s.serialize_field("value", &self.value)?;
-//         s.serialize_field("is_ret", &self.sig.is_ret())?;
-//         s.end()
-//     }
-// }
+mod serde_sig {
+    use super::ExternalHostCallSignature;
+    use serde::Deserialize;
+    use serde::Deserializer;
+    use serde::Serializer;
 
-#[derive(Default, Serialize,Deserialize)]
+    pub fn serialize<S>(sig: &ExternalHostCallSignature, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_bool(sig.is_ret())
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<ExternalHostCallSignature, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = bool::deserialize(deserializer)?;
+        if s {
+            Ok(ExternalHostCallSignature::Return)
+        } else {
+            Ok(ExternalHostCallSignature::Argument)
+        }
+    }
+}
+
+#[derive(Default, Serialize, Deserialize)]
 pub struct ExternalHostCallTable(pub(crate) Vec<ExternalHostCallEntry>);
 
 impl ExternalHostCallTable {
