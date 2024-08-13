@@ -3,6 +3,7 @@ use std::io::Cursor;
 use std::io::Read;
 use std::io::Write;
 use std::path::Path;
+use crate::names::name_of_frame_table_slice;
 use std::path::PathBuf;
 
 use anyhow::Result;
@@ -299,7 +300,7 @@ impl Config {
                 style("[5/8]").bold().dim(),
                 dir
             );
-            // tables.write(&dir, |slice| name_of_frame_table_slice(&self.name, slice));
+            tables.write(&dir, |slice| name_of_frame_table_slice(&self.name, slice));
         }
 
         println!("{} Build circuit(s)...", style("[6/8]").bold().dim(),);
