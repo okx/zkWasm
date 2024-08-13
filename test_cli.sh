@@ -49,7 +49,9 @@ test_phantom_cli() {
 #while [ $x -gt 0 ]; do
 #    test_phantom_cli
     test_default_cli
+    echo "test_default_cli end scf-debug"
 #    test_uniform_circuit_cli
-#    test_continuation_cli
+    test_continuation_cli
+        echo "test_continuation_cli end scf-debug"
 #    x=$(($x-1))
 #done
