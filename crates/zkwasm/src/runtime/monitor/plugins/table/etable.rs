@@ -3,12 +3,11 @@
 use specs::etable::EventTable;
 use specs::etable::EventTableEntry;
 use specs::step::StepInfo;
-use specs::TableBackend;
 use wasmi::DEFAULT_VALUE_STACK_LIMIT;
 
 pub(super) struct ETable {
     pub(crate) eid: u32,
-    slices: Vec<TableBackend<EventTable>>,
+    slices: Vec<EventTable>,
     entries: Vec<EventTableEntry>,
     capacity: u32,
 }
@@ -27,7 +26,7 @@ impl ETable {
         let empty = Vec::with_capacity(self.capacity as usize);
         let entries = std::mem::replace(&mut self.entries, empty);
 
-        let event_table = TableBackend::Memory(EventTable::new(entries));
+        let event_table = EventTable::new(entries);
 
         self.slices.push(event_table);
     }
@@ -70,7 +69,7 @@ impl ETable {
         &mut self.entries
     }
 
-    pub fn finalized(mut self) -> Vec<TableBackend<EventTable>> {
+    pub fn finalized(mut self) -> Vec<EventTable> {
         self.flush();
 
         self.slices

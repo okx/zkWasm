@@ -5,7 +5,6 @@ use specs::jtable::CalledFrameTableEntry;
 use specs::jtable::FrameTableEntryInternal;
 use specs::jtable::InheritedFrameTable;
 use specs::jtable::InheritedFrameTableEntry;
-use specs::TableBackend;
 
 #[derive(Clone)]
 struct FrameTableEntry {
@@ -50,7 +49,7 @@ impl From<&FrameTableEntry> for InheritedFrameTableEntry {
 
 pub(super) struct FrameTable {
     initial_frame_entries: Vec<FrameTableEntry>,
-    slices: Vec<TableBackend<specs::jtable::FrameTable>>,
+    slices: Vec<specs::jtable::FrameTable>,
 
     current_unreturned: Vec<FrameTableEntry>,
     current_returned: Vec<FrameTableEntry>,
@@ -135,7 +134,7 @@ impl FrameTable {
                 }
             };
 
-            TableBackend::Memory(frame_table)
+         frame_table
         };
 
         self.slices.push(frame_table);
@@ -152,7 +151,7 @@ impl FrameTable {
         self.current_returned.push(entry);
     }
 
-    pub(super) fn finalized(mut self) -> Vec<TableBackend<specs::jtable::FrameTable>> {
+    pub(super) fn finalized(mut self) -> Vec<specs::jtable::FrameTable> {
         self.flush();
 
         assert!(

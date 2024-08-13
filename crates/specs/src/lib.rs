@@ -42,9 +42,6 @@ pub mod state;
 pub mod step;
 pub mod types;
 
-pub enum TableBackend<Table> {
-    Memory(Table),
-}
 
 #[derive(Debug)]
 pub struct CompilationTable {
@@ -59,8 +56,8 @@ pub struct CompilationTable {
 
 #[derive(Default)]
 pub struct ExecutionTable {
-    pub etable: Vec<TableBackend<EventTable>>,
-    pub frame_table: Vec<TableBackend<FrameTable>>,
+    pub etable: Vec<EventTable>,
+    pub frame_table: Vec<FrameTable>,
     pub external_host_call_table: ExternalHostCallTable,
     pub context_input_table: Vec<u64>,
     pub context_output_table: Vec<u64>,
@@ -90,15 +87,14 @@ impl Tables {
             .iter()
             .enumerate()
             .for_each(|(slice, frame_table)| {
-                match frame_table {
-                    TableBackend::Memory(frame_table)=>{
+
                         write_file(
                             dir,
                             &name_of_frame_table_slice(slice),
                             &serde_json::to_string_pretty(frame_table).unwrap(),
                         );
-                    }
-                }
+
+
             });
         write_file(
             dir,
