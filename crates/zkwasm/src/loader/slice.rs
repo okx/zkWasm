@@ -12,7 +12,6 @@ use specs::jtable::InheritedFrameTable;
 use specs::slice::FrameTableSlice;
 use specs::slice::Slice;
 use specs::state::InitializationState;
-use specs::TableBackend;
 use specs::Tables;
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -33,11 +32,11 @@ pub struct Slices<F: FieldExt> {
     elem_table: Arc<ElemTable>,
     configure_table: Arc<ConfigureTable>,
     initial_frame_table: Arc<InheritedFrameTable>,
-    frame_table: VecDeque<TableBackend<FrameTable>>,
+    frame_table: VecDeque<FrameTable>,
 
     imtable: Arc<InitMemoryTable>,
     initialization_state: Arc<InitializationState<u32>>,
-    etables: VecDeque<TableBackend<EventTable>>,
+    etables: VecDeque<EventTable>,
 
     external_host_call_table: Arc<ExternalHostCallTable>,
     context_input_table: Arc<Vec<u64>>,
@@ -161,21 +160,12 @@ impl<F: FieldExt> Iterator for Slices<F> {
             return Some(self.trivial_slice());
         }
 
-        let etable = match self.etables.pop_front().unwrap() {
-            TableBackend::Memory(etable) => etable,
-            TableBackend::Json(path) => EventTable::read(&path).unwrap(),
-        };
+        let etable = self.etables.pop_front().unwrap();
 
         let post_imtable = Arc::new(self.imtable.update_init_memory_table(&etable));
         let post_initialization_state = Arc::new({
-            let next_event_entry = if let Some(next_event_table) = self.etables.front() {
-                match next_event_table {
-                    TableBackend::Memory(etable) => etable.entries().first().cloned(),
-                    TableBackend::Json(path) => {
-                        let etable = EventTable::read(path).unwrap();
-                        etable.entries().first().cloned()
-                    }
-                }
+            let next_event_entry = if let Some(_next_event_table) = self.etables.front() {
+                etable.entries().first().cloned()
             } else {
                 None
             };
@@ -187,19 +177,12 @@ impl<F: FieldExt> Iterator for Slices<F> {
             )
         });
 
-        let frame_table = match self.frame_table.pop_front().unwrap() {
-            TableBackend::Memory(frame_table) => frame_table,
-            TableBackend::Json(path) => FrameTable::read(&path).unwrap(),
-        }
-        .into();
+        let frame_table = self.frame_table.pop_front().unwrap().into();
 
         let post_inherited_frame_table = self.frame_table.front().map_or(
             Arc::new(InheritedFrameTable::default()),
             |frame_table| {
-                let post_inherited_frame_table = match frame_table {
-                    TableBackend::Memory(frame_table) => frame_table.inherited.clone(),
-                    TableBackend::Json(path) => FrameTable::read(path).unwrap().inherited,
-                };
+                let post_inherited_frame_table = frame_table.inherited.clone();
 
                 Arc::new((*post_inherited_frame_table).clone().try_into().unwrap())
             },

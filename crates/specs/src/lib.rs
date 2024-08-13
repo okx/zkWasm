@@ -6,8 +6,6 @@
     clippy::type_complexity
 )]
 
-use std::fs::File;
-use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -69,8 +67,8 @@ pub struct CompilationTable {
 
 #[derive(Default)]
 pub struct ExecutionTable {
-    pub etable: Vec<TableBackend<EventTable>>,
-    pub frame_table: Vec<TableBackend<FrameTable>>,
+    pub etable: Vec<EventTable>,
+    pub frame_table: Vec<FrameTable>,
     pub external_host_call_table: ExternalHostCallTable,
     pub context_input_table: Vec<u64>,
     pub context_output_table: Vec<u64>,
@@ -82,36 +80,7 @@ pub struct Tables {
 }
 
 impl Tables {
-    pub fn write(&self, dir: &Path, name_of_frame_table_slice: impl Fn(usize) -> String) {
-        fn write_file(folder: &Path, filename: &str, buf: &String) {
-            let folder = folder.join(filename);
-            let mut fd = File::create(folder.as_path()).unwrap();
-
-            fd.write_all(buf.as_bytes()).unwrap();
-        }
-
-        write_file(
-            dir,
-            "itable.json",
-            &serde_json::to_string_pretty(&self.compilation_tables.itable).unwrap(),
-        );
-        self.execution_tables
-            .frame_table
-            .iter()
-            .enumerate()
-            .for_each(|(slice, frame_table)| {
-                if let TableBackend::Memory(frame_table) = frame_table {
-                    write_file(
-                        dir,
-                        &name_of_frame_table_slice(slice),
-                        &serde_json::to_string_pretty(frame_table).unwrap(),
-                    );
-                }
-            });
-        write_file(
-            dir,
-            "external_host_table.json",
-            &serde_json::to_string_pretty(&self.execution_tables.external_host_call_table).unwrap(),
-        );
+    pub fn write(&self, _dir: &Path, _name_of_frame_table_slice: impl Fn(usize) -> String) {
+        panic!("modify by scf")
     }
 }
