@@ -16,7 +16,6 @@ use config::Config;
 use delphinus_zkwasm::runtime::host::HostEnvBuilder;
 use names::name_of_config;
 use specs::args::parse_args;
-use specs::TraceBackend;
 
 mod app_builder;
 mod args;
@@ -95,9 +94,6 @@ fn main() -> Result<()> {
             let private_inputs = parse_args(&arg.running_arg.private_inputs);
             let context_inputs = parse_args(&arg.running_arg.context_inputs);
 
-            println!("args.file {:?}",arg.file_backend);
-            let trace_backend=
-                TraceBackend::Memory;
 
             let env_builder: Box<dyn HostEnvBuilder> = match config.host_mode {
                 HostMode::Default => Box::new(DefaultHostEnvBuilder),
@@ -116,7 +112,6 @@ fn main() -> Result<()> {
                 },
                 arg.running_arg.context_output,
                 arg.mock_test,
-                trace_backend,
                 arg.skip,
                 arg.padding,
             )?;

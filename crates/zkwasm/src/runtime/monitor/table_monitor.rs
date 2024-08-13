@@ -4,7 +4,6 @@ use std::rc::Rc;
 use parity_wasm::elements::Module;
 use specs::CompilationTable;
 use specs::Tables;
-use specs::TraceBackend;
 use wasmi::isa::Instruction;
 use wasmi::monitor::Monitor;
 use wasmi::runner::FunctionContext;
@@ -30,7 +29,7 @@ pub struct TableMonitor {
 }
 
 impl TableMonitor {
-    pub fn new(k: u32, phantom_regex: &[String], _backend: TraceBackend, env: &HostEnv) -> Self {
+    pub fn new(k: u32, phantom_regex: &[String], env: &HostEnv) -> Self {
         let wasm_input = env
             .resolve_func(
                 "wasm_input",

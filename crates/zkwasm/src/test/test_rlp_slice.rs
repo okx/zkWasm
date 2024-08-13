@@ -159,7 +159,6 @@ fn test_slices() -> Result<()> {
         },
         (),
         false,
-        TraceBackend::Memory,
     )?;
     let instances = execution_result.public_inputs_and_outputs();
 

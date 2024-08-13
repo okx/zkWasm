@@ -306,7 +306,6 @@ impl From<&ArgMatches> for ProveArg {
             output_dir: OutputDirArg::parse(val),
             running_arg: val.into(),
             mock_test: MockTestArg::parse(val),
-            file_backend: FileBackendArg::parse(val),
             skip: SkipArg::parse(val),
             padding: PaddingArg::parse(val),
         }
