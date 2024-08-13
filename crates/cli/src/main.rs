@@ -99,6 +99,7 @@ fn main() -> Result<()> {
             let private_inputs = parse_args(&arg.running_arg.private_inputs);
             let context_inputs = parse_args(&arg.running_arg.context_inputs);
 
+            println!("args.file {:?}",arg.file_backend);
             let trace_backend: TraceBackend = if arg.file_backend {
                 let event_table_writer = {
                     let name = cli.name.clone();
