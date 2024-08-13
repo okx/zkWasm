@@ -10,7 +10,7 @@ CUDA="--features perf"
 test_default_cli() {
     cargo build --release $CUDA
     rm -rf params/*.data params/*.config output
-    CUDA_VISIBLE_DEVICES=1 $CLI --params ./params wasm_output setup --wasm ./crates/zkwasm/wasm/wasm_output.wasm -k 22 --host standard
+    CUDA_VISIBLE_DEVICES=1 $CLI --params ./params wasm_output setup --wasm ./crates/zkwasm/wasm/wasm_output.wasm -k 23 --host standard
 #    CUDA_VISIBLE_DEVICES=1 $CLI --params ./params wasm_output dry-run --wasm crates/zkwasm/wasm/wasm_output.wasm --private 0x00:bytes-packed --output ./output
     CUDA_VISIBLE_DEVICES=1 $CLI --params ./params wasm_output dry-run --wasm crates/zkwasm/wasm/wasm_output.wasm --public 133:i64 --public 2:i64 --output ./output
 #    CUDA_VISIBLE_DEVICES=1 $CLI --params ./params wasm_output prove --wasm crates/zkwasm/wasm/wasm_output.wasm --private 0x00:bytes-packed --output ./output

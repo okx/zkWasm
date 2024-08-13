@@ -4247,7 +4247,7 @@ dependencies = [
 [[package]]
 name = "zkwasm-prover"
 version = "0.1.0"
-source = "git+https://github.com/DelphinusLab/zkWasm-prover.git#d7244c637ca7d64afee4e66caea6f0cf4ccc6cc5"
+source = "git+https://github.com/DelphinusLab/zkWasm-prover.git#6c57a7378415a6f70a81a5a0c41393b219627a44"
 dependencies = [
  "ark-std 0.4.0",
  "cc",
