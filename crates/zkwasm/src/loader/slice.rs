@@ -163,7 +163,6 @@ impl<F: FieldExt> Iterator for Slices<F> {
 
         let etable = match self.etables.pop_front().unwrap() {
             TableBackend::Memory(etable) => etable,
-            TableBackend::Json(path) => EventTable::read(&path).unwrap(),
         };
 
         let post_imtable = Arc::new(self.imtable.update_init_memory_table(&etable));
@@ -171,10 +170,6 @@ impl<F: FieldExt> Iterator for Slices<F> {
             let next_event_entry = if let Some(next_event_table) = self.etables.front() {
                 match next_event_table {
                     TableBackend::Memory(etable) => etable.entries().first().cloned(),
-                    TableBackend::Json(path) => {
-                        let etable = EventTable::read(path).unwrap();
-                        etable.entries().first().cloned()
-                    }
                 }
             } else {
                 None
@@ -189,7 +184,6 @@ impl<F: FieldExt> Iterator for Slices<F> {
 
         let frame_table = match self.frame_table.pop_front().unwrap() {
             TableBackend::Memory(frame_table) => frame_table,
-            TableBackend::Json(path) => FrameTable::read(&path).unwrap(),
         }
         .into();
 
@@ -198,7 +192,6 @@ impl<F: FieldExt> Iterator for Slices<F> {
             |frame_table| {
                 let post_inherited_frame_table = match frame_table {
                     TableBackend::Memory(frame_table) => frame_table.inherited.clone(),
-                    TableBackend::Json(path) => FrameTable::read(path).unwrap().inherited,
                 };
 
                 Arc::new((*post_inherited_frame_table).clone().try_into().unwrap())

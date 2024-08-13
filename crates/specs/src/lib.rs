@@ -9,7 +9,6 @@
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use brtable::BrTable;
@@ -49,7 +48,6 @@ pub enum TraceBackend {
 
 pub enum TableBackend<Table> {
     Memory(Table),
-    Json(PathBuf),
 }
 
 #[derive(Debug)]
@@ -96,12 +94,14 @@ impl Tables {
             .iter()
             .enumerate()
             .for_each(|(slice, frame_table)| {
-                if let TableBackend::Memory(frame_table) = frame_table {
-                    write_file(
-                        dir,
-                        &name_of_frame_table_slice(slice),
-                        &serde_json::to_string_pretty(frame_table).unwrap(),
-                    );
+                match frame_table {
+                    TableBackend::Memory(frame_table)=>{
+                        write_file(
+                            dir,
+                            &name_of_frame_table_slice(slice),
+                            &serde_json::to_string_pretty(frame_table).unwrap(),
+                        );
+                    }
                 }
             });
         write_file(
