@@ -30,7 +30,7 @@ pub struct TableMonitor {
 }
 
 impl TableMonitor {
-    pub fn new(k: u32, phantom_regex: &[String], backend: TraceBackend, env: &HostEnv) -> Self {
+    pub fn new(k: u32, phantom_regex: &[String], _backend: TraceBackend, env: &HostEnv) -> Self {
         let wasm_input = env
             .resolve_func(
                 "wasm_input",
@@ -44,7 +44,6 @@ impl TableMonitor {
                 env.function_description_table(),
                 phantom_regex,
                 wasm_input.clone(),
-                backend,
             ),
             statistic_plugin: StatisticPlugin::new(phantom_regex, wasm_input, None),
         }

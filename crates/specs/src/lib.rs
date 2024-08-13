@@ -44,10 +44,6 @@ pub mod step;
 pub mod types;
 
 pub enum TraceBackend {
-    File {
-        event_table_writer: Box<dyn Fn(usize, &EventTable) -> PathBuf>,
-        frame_table_writer: Box<dyn Fn(usize, &FrameTable) -> PathBuf>,
-    },
     Memory,
 }
 

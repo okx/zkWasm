@@ -1,10 +1,9 @@
-use std::rc::Rc;
+
 
 use specs::etable::EventTable;
 use specs::etable::EventTableEntry;
 use specs::step::StepInfo;
 use specs::TableBackend;
-use specs::TraceBackend;
 use wasmi::DEFAULT_VALUE_STACK_LIMIT;
 
 pub(super) struct ETable {
@@ -12,17 +11,15 @@ pub(super) struct ETable {
     slices: Vec<TableBackend<EventTable>>,
     entries: Vec<EventTableEntry>,
     capacity: u32,
-    backend: Rc<TraceBackend>,
 }
 
 impl ETable {
-    pub(crate) fn new(capacity: u32, backend: Rc<TraceBackend>) -> Self {
+    pub(crate) fn new(capacity: u32) -> Self {
         Self {
             eid: 0,
             slices: Vec::default(),
             entries: Vec::with_capacity(capacity as usize),
             capacity,
-            backend,
         }
     }
 
@@ -30,15 +27,7 @@ impl ETable {
         let empty = Vec::with_capacity(self.capacity as usize);
         let entries = std::mem::replace(&mut self.entries, empty);
 
-        let event_table = match self.backend.as_ref() {
-            TraceBackend::File {
-                event_table_writer, ..
-            } => TableBackend::Json(event_table_writer(
-                self.slices.len(),
-                &EventTable::new(entries),
-            )),
-            TraceBackend::Memory => TableBackend::Memory(EventTable::new(entries)),
-        };
+        let event_table = TableBackend::Memory(EventTable::new(entries));
 
         self.slices.push(event_table);
     }
