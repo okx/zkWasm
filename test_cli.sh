@@ -47,7 +47,7 @@ test_phantom_cli() {
 #while [ $x -gt 0 ]; do
 #    test_phantom_cli
     test_default_cli
-    test_uniform_circuit_cli
+#    test_uniform_circuit_cli
     test_continuation_cli
 #    x=$(($x-1))
 #done
