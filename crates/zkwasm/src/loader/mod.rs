@@ -27,7 +27,6 @@ use anyhow::anyhow;
 
 use self::slice::Slices;
 
-pub use specs::TraceBackend;
 pub use wasmi::Module;
 
 mod err;

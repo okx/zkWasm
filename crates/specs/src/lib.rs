@@ -42,10 +42,6 @@ pub mod state;
 pub mod step;
 pub mod types;
 
-pub enum TraceBackend {
-    Memory,
-}
-
 pub enum TableBackend<Table> {
     Memory(Table),
 }
