@@ -10,7 +10,7 @@ CUDA="--features perf"
 test_default_cli() {
     cargo build --release $CUDA
     rm -rf params/*.data params/*.config output
-    CUDA_VISIBLE_DEVICES=1 $CLI --params ./params wasm_output setup --wasm ./crates/zkwasm/wasm/wasm_output.wasm -k 22 --host standard
+    CUDA_VISIBLE_DEVICES=1 $CLI --params ./params wasm_output setup --wasm ./crates/zkwasm/wasm/wasm_output.wasm -k 23 --host standard
 #    CUDA_VISIBLE_DEVICES=1 $CLI --params ./params wasm_output dry-run --wasm crates/zkwasm/wasm/wasm_output.wasm --private 0x00:bytes-packed --output ./output
     CUDA_VISIBLE_DEVICES=1 $CLI --params ./params wasm_output dry-run --wasm crates/zkwasm/wasm/wasm_output.wasm --public 133:i64 --public 2:i64 --output ./output
 #    CUDA_VISIBLE_DEVICES=1 $CLI --params ./params wasm_output prove --wasm crates/zkwasm/wasm/wasm_output.wasm --private 0x00:bytes-packed --output ./output
@@ -30,7 +30,7 @@ test_uniform_circuit_cli() {
 test_continuation_cli() {
     CUDA_VISIBLE_DEVICES=1  cargo build --release --features continuation $CUDA
     rm -rf params/*.data params/*.config output
-    CUDA_VISIBLE_DEVICES=1 $CLI --params ./params fibonacci setup
+    CUDA_VISIBLE_DEVICES=1 $CLI --params ./params fibonacci setup -k 23
     CUDA_VISIBLE_DEVICES=1  $CLI --params ./params fibonacci dry-run --wasm crates/zkwasm/wasm/fibonacci.wasm --public 25:i64 --output ./output
     CUDA_VISIBLE_DEVICES=1   $CLI --params ./params fibonacci prove --wasm crates/zkwasm/wasm/fibonacci.wasm --public 25:i64 --output ./output
     CUDA_VISIBLE_DEVICES=1  $CLI --params ./params fibonacci verify --output ./output
