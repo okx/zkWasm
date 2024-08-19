@@ -34,7 +34,7 @@ impl From<ExternalHostCallSignature> for Signature {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone,Serialize, Deserialize, Debug)]
 pub struct ExternalHostCallEntry {
     pub op: usize,
     pub value: u64,
@@ -68,7 +68,7 @@ mod serde_sig {
     }
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Clone,Default, Serialize, Deserialize)]
 pub struct ExternalHostCallTable(pub(crate) Vec<ExternalHostCallEntry>);
 
 impl ExternalHostCallTable {

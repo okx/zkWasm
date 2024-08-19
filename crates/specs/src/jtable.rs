@@ -160,7 +160,7 @@ impl CalledFrameTable {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone,Serialize, Deserialize)]
 pub struct FrameTable {
     pub inherited: Arc<InheritedFrameEntries>,
     pub called: CalledFrameTable,

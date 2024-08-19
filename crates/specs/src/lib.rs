@@ -40,7 +40,7 @@ pub mod state;
 pub mod step;
 pub mod types;
 
-#[derive(Debug,Serialize, Deserialize,Clone)]
+#[derive(Clone,Debug,Serialize, Deserialize)]
 pub struct CompilationTable {
     pub itable: Arc<InstructionTable>,
     pub imtable: Arc<InitMemoryTable>,
@@ -51,7 +51,7 @@ pub struct CompilationTable {
     pub initialization_state: Arc<InitializationState<u32>>,
 }
 
-#[derive(Default,Serialize, Deserialize)]
+#[derive(Clone,Default,Serialize, Deserialize)]
 pub struct ExecutionTable {
     pub etable: Vec<EventTable>,
     pub frame_table: Vec<FrameTable>,
@@ -60,6 +60,7 @@ pub struct ExecutionTable {
     pub context_output_table: Vec<u64>,
 }
 
+#[derive(Clone,Serialize, Deserialize)]
 pub struct Tables {
     pub compilation_tables: CompilationTable,
     pub execution_tables: ExecutionTable,
