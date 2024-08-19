@@ -5,7 +5,7 @@ use std::sync::Arc;
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::ParallelSliceMut;
-
+use serde::{Deserialize, Serialize};
 use crate::brtable::BrTable;
 use crate::brtable::ElemTable;
 use crate::configure_table::ConfigureTable;
@@ -24,7 +24,7 @@ use crate::mtable::MemoryTableEntry;
 use crate::state::InitializationState;
 use crate::CompilationTable;
 
-#[derive(Debug)]
+#[derive(Debug,Serialize,Deserialize)]
 pub struct FrameTableSlice {
     pub inherited: Arc<InheritedFrameTable>,
     pub called: CalledFrameTable,
@@ -54,7 +54,7 @@ impl FrameTableSlice {
         lookup_table
     }
 }
-
+#[derive(Serialize,Deserialize)]
 pub struct Slice {
     pub itable: Arc<InstructionTable>,
     pub br_table: Arc<BrTable>,
