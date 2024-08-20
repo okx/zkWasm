@@ -165,7 +165,7 @@ impl<F: FieldExt> Iterator for Slices<F> {
         let post_imtable = Arc::new(self.imtable.update_init_memory_table(&etable));
         let post_initialization_state = Arc::new({
             let next_event_entry = if let Some(_next_event_table) = self.etables.front() {
-                etable.entries().first().cloned()
+                _next_event_table.entries().first().cloned()
             } else {
                 None
             };
