@@ -29,7 +29,8 @@ use crate::circuits::utils::step_status::StepStatus;
 use crate::circuits::utils::table_entry::EventTableWithMemoryInfo;
 use crate::circuits::utils::Context;
 
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::AtomicU32;
+use std::sync::atomic::Ordering;
 
 lazy_static! {
     static ref ETABLE_THREAD: AtomicU32 =
@@ -407,7 +408,12 @@ impl<F: FieldExt> EventTableChip<F> {
         };
 
         let thread: usize = etable_thread() as usize;
-        let chunk_size = (event_table.0.len() + thread - 1) / thread;
+
+        let chunk_size = if event_table.0.is_empty() {
+            1
+        } else {
+            (event_table.0.len() + thread - 1) / thread
+        };
 
         event_table
             .0
