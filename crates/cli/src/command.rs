@@ -156,8 +156,12 @@ impl SetupArg {
         };
 
         let env = env_builder.create_env_without_value(self.k);
-        let mut monitor =
-            TableMonitor::new(self.k, &self.phantom_functions, &env);
+        let mut monitor = TableMonitor::new(
+            self.k,
+            env_builder.create_flush_strategy(self.k),
+            &self.phantom_functions,
+            &env,
+        );
 
         let loader = ZkWasmLoader::new(self.k, env)?;
 

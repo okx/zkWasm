@@ -53,9 +53,10 @@ pub struct CompilationTable {
 
 #[derive(Clone,Default,Serialize, Deserialize)]
 pub struct ExecutionTable {
+
     pub etable: Vec<EventTable>,
     pub frame_table: Vec<FrameTable>,
-    pub external_host_call_table: ExternalHostCallTable,
+    pub external_host_call_table: Vec<ExternalHostCallTable>,
     pub context_input_table: Vec<u64>,
     pub context_output_table: Vec<u64>,
 }
@@ -69,5 +70,6 @@ pub struct Tables {
 impl Tables {
     pub fn write(&self, _dir: &Path, _name_of_frame_table_slice: impl Fn(usize) -> String) {
         panic!("modify by scf")
+
     }
 }

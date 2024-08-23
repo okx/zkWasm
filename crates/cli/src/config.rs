@@ -255,8 +255,12 @@ impl Config {
         let params = self.read_params(params_dir)?;
 
         let env = env_builder.create_env(self.k, arg);
-
-        let mut monitor = TableMonitor::new(self.k, &self.phantom_functions, &env);
+        let mut monitor = TableMonitor::new(
+            self.k,
+            env_builder.create_flush_strategy(self.k),
+            &self.phantom_functions,
+            &env,
+        );
 
         let (result, tables) = {
             println!("{} Executing...", style("[3/8]").bold().dim(),);
