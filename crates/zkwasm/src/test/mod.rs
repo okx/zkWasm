@@ -7,7 +7,6 @@ use crate::runtime::monitor::table_monitor::TableMonitor;
 
 use anyhow::Result;
 use halo2_proofs::pairing::bn256::Fr;
-use specs::TraceBackend;
 use wabt::wat2wasm_with_features;
 use wabt::Features;
 

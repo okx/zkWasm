@@ -7,8 +7,6 @@ use specs::etable::EventTableEntry;
 use specs::external_host_call_table::ExternalHostCallTable;
 use specs::jtable::FrameTable;
 use specs::step::StepInfo;
-use specs::TableBackend;
-use specs::TraceBackend;
 
 use crate::runtime::monitor::plugins::table::Event;
 
@@ -118,16 +116,14 @@ impl From<Vec<Checkpoint>> for Checkpoints {
 }
 
 pub(super) struct Slices {
-    backend: TraceBackend,
-    pub(super) etable: Vec<TableBackend<EventTable>>,
-    pub(super) frame_table: Vec<TableBackend<FrameTable>>,
+    pub(super) etable: Vec<EventTable>,
+    pub(super) frame_table: Vec<FrameTable>,
     pub(super) external_host_call_table: Vec<ExternalHostCallTable>,
 }
 
 impl Slices {
-    fn new(backend: TraceBackend) -> Self {
+    fn new() -> Self {
         Self {
-            backend,
 
             etable: Vec::new(),
             frame_table: Vec::new(),
@@ -136,27 +132,7 @@ impl Slices {
     }
 
     fn push(&mut self, slice: Slice) {
-        let (etable, frame_table) = match &self.backend {
-            TraceBackend::File {
-                event_table_writer,
-                frame_table_writer,
-            } => {
-                let etable =
-                    TableBackend::Json(event_table_writer(self.etable.len(), &slice.etable));
-                let frame_table = TableBackend::Json(frame_table_writer(
-                    self.frame_table.len(),
-                    &slice.frame_table,
-                ));
-
-                (etable, frame_table)
-            }
-            TraceBackend::Memory => {
-                let etable = TableBackend::Memory(slice.etable);
-                let frame_table = TableBackend::Memory(slice.frame_table);
-
-                (etable, frame_table)
-            }
-        };
+        let (etable, frame_table) = (slice.etable, slice.frame_table);
 
         self.etable.push(etable);
         self.frame_table.push(frame_table);
@@ -180,12 +156,11 @@ pub(super) struct HostTransaction {
 
 impl HostTransaction {
     pub(super) fn new(
-        backend: TraceBackend,
         capacity: u32,
         controller: Box<dyn FlushStrategy>,
     ) -> Self {
         Self {
-            slices: Slices::new(backend),
+            slices: Slices::new(),
             slice_builder: SliceBuilder::new(),
             capacity,
 

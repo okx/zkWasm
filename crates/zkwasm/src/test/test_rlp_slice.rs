@@ -6,7 +6,6 @@ use crate::runtime::host::default_env::ExecutionArg;
 
 use anyhow::Result;
 use halo2_proofs::pairing::bn256::Bn256;
-use specs::TraceBackend;
 
 fn test_slices() -> Result<()> {
     let public_inputs = vec![133];

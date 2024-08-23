@@ -22,7 +22,6 @@ use specs::types::ValueType;
 use specs::CompilationTable;
 use specs::ExecutionTable;
 use specs::Tables;
-use specs::TraceBackend;
 use transaction::HostTransaction;
 use transaction::TransactionId;
 use wasmi::func::FuncInstanceInternal;
@@ -124,7 +123,6 @@ impl TablePlugin {
         host_function_desc: HashMap<usize, HostFunctionDesc>,
         phantom_regex: &[String],
         wasm_input: FuncRef,
-        trace_backend: TraceBackend,
     ) -> Self {
         let capacity = compute_slice_capability(k);
 
@@ -145,7 +143,7 @@ impl TablePlugin {
             context_input_table: vec![],
             context_output_table: vec![],
 
-            host_transaction: HostTransaction::new(trace_backend, capacity, flush_strategy),
+            host_transaction: HostTransaction::new( capacity, flush_strategy),
 
             module_ref: None,
             unresolved_event: None,
