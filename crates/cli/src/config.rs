@@ -315,7 +315,6 @@ impl Config {
             .collect::<Vec<_>>();
 
 
-        info!("scf-debug instances={:?}",instances);
         println!("{} Creating proof(s)...", style("[7/8]").bold().dim(),);
 
         let mut proof_load_info =
@@ -402,7 +401,6 @@ impl Config {
 
             let proof = match circuit {
                 ZkWasmCircuit::Ongoing(circuit) => {
-                    println!("scf-debug-1 etable_len={:?} instances={:?} hashtype={:?}",circuit.slice.etable.entries().len(),instances.clone(),proof_load_info.hashtype);
                     proof_piece_info.create_proof::<Bn256, _>(
                     &circuit,
                     &vec![instances.clone()],
@@ -412,7 +410,6 @@ impl Config {
                     OpenSchema::Shplonk,
                 )}
                 ZkWasmCircuit::LastSliceCircuit(circuit) => {
-                    println!("scf-debug etable_len={:?} instances={:?} hashtype={:?}",circuit.slice.etable.entries().len(),instances.clone(),proof_load_info.hashtype);
                     proof_piece_info
                     .create_proof::<Bn256, _>(
                         &circuit,
