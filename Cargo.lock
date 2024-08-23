@@ -90,8 +90,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "ark-std"
-version = "0.3.0"
+name = "ark-ff"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec847af850f44ad29048935519032c33da8aa03340876d351dfab5660d2966ba"
 dependencies = [
@@ -100,11 +100,47 @@ dependencies = [
  "ark-serialize",
  "ark-std",
  "derivative",
- "digest",
- "itertools",
- "num-bigint",
+ "digest 0.10.7",
+ "itertools 0.10.5",
+ "num-bigint 0.4.6",
  "num-traits",
- "rand 0.8.5",
+ "paste",
+ "rustc_version 0.4.0",
+ "zeroize",
+]
+
+[[package]]
+name = "ark-ff-asm"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ed4aa4fe255d0bc6d79373f7e31d2ea147bcf486cba1be5ba7ea85abdb92348"
+dependencies = [
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "ark-ff-macros"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7abe79b0e4288889c4574159ab790824d0033b9fdcb2a112a3182fac2e514565"
+dependencies = [
+ "num-bigint 0.4.6",
+ "num-traits",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "ark-serialize"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "adb7b85a02b83d2f22f89bd5cac66c9c89474240cb6207cb1efc16d098e822a5"
+dependencies = [
+ "ark-std",
+ "digest 0.10.7",
+ "num-bigint 0.4.6",
 ]
 
 [[package]]
@@ -530,7 +566,7 @@ dependencies = [
  "lru",
  "md5",
  "num",
- "num-bigint 0.4.4",
+ "num-bigint 0.4.6",
  "num-derive",
  "num-integer",
  "num-traits",
@@ -899,7 +935,7 @@ dependencies = [
  "hex",
  "lazy_static",
  "log",
- "num-bigint 0.4.4",
+ "num-bigint 0.4.6",
  "num-integer",
  "num-traits",
  "parity-wasm",
@@ -932,7 +968,7 @@ dependencies = [
  "hex",
  "lazy_static",
  "log",
- "num-bigint 0.4.4",
+ "num-bigint 0.4.6",
  "num-integer",
  "num-traits",
  "parity-wasm",
@@ -1206,7 +1242,7 @@ version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dde5a00073374b4d7aa2d3a8359a5709f9c0bfac8393f254655d16b4acdfe823"
 dependencies = [
- "num-bigint 0.4.4",
+ "num-bigint 0.4.6",
  "num-integer",
  "num-traits",
  "proc-macro2",
@@ -1518,7 +1554,7 @@ dependencies = [
  "log",
  "memmap",
  "num",
- "num-bigint 0.4.4",
+ "num-bigint 0.4.6",
  "num-derive",
  "num-integer",
  "num-traits",
@@ -1541,10 +1577,11 @@ dependencies = [
  "halo2_proofs",
  "halo2ecc-s",
  "lazy_static",
- "num-bigint 0.4.4",
+ "num-bigint 0.4.6",
  "num-integer",
  "num-traits",
  "poseidon",
+ "rand_core 0.6.4",
  "sha2 0.10.8",
  "sha3",
  "tera",
@@ -1555,21 +1592,9 @@ name = "halo2ecc-s"
 version = "0.3.2"
 source = "git+https://github.com/DelphinusLab/halo2ecc-s.git?tag=on-prove-pairing-0.6.1#2af5b97bbfd28222510412bc2da53a0ce0d729cb"
 dependencies = [
- "ark-std 0.4.0",
+ "ark-std",
  "halo2_proofs",
- "num-bigint 0.4.4",
- "num-integer",
- "rayon",
-]
-
-[[package]]
-name = "halo2ecc-s"
-version = "0.3.2"
-source = "git+https://github.com/DelphinusLab/halo2ecc-s.git?tag=bisect-lookup-0.5.8#ddad2af04c28c33c2aa1192f4529d59abdf624b8"
-dependencies = [
- "ark-std 0.4.0",
- "halo2_proofs",
- "num-bigint 0.4.4",
+ "num-bigint 0.4.6",
  "num-integer",
  "num-traits",
  "rayon",
@@ -2165,7 +2190,7 @@ version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b05180d69e3da0e530ba2a1dae5110317e49e3b7f3d41be227dc5f92e49ee7af"
 dependencies = [
- "num-bigint 0.4.4",
+ "num-bigint 0.4.6",
  "num-complex 0.4.5",
  "num-integer",
  "num-iter",
@@ -2197,7 +2222,7 @@ dependencies = [
 
 [[package]]
 name = "num-bigint"
-version = "0.4.4"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a5e44f723f1133c9deac646763579fdb3ac745e418f2a7af9cd0c431da1f20b9"
 dependencies = [
@@ -2270,7 +2295,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0638a1c9d0a3c0914158145bc76cff373a75a627e6ecbfb71cbe6f453a5a19b0"
 dependencies = [
  "autocfg",
- "num-bigint 0.4.4",
+ "num-bigint 0.4.6",
  "num-integer",
  "num-traits",
 ]
@@ -2352,6 +2377,8 @@ dependencies = [
  "ec-gpu",
  "ff",
  "group",
+ "num-bigint 0.4.6",
+ "num-traits",
  "rand 0.8.5",
  "rand_core 0.6.4",
  "static_assertions",
@@ -3280,7 +3307,7 @@ dependencies = [
  "halo2_proofs",
  "hex",
  "lazy_static",
- "num-bigint 0.4.4",
+ "num-bigint 0.4.6",
  "num-traits",
  "parity-wasm",
  "rayon",
@@ -4269,7 +4296,9 @@ dependencies = [
  "lazy_static",
  "lru",
  "mongodb",
- "num-bigint 0.4.4",
+ "num-bigint 0.4.6",
+ "num-derive",
+ "num-traits",
  "poseidon",
  "rand 0.8.5",
  "rand_core 0.6.4",

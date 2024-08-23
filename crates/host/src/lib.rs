@@ -46,7 +46,6 @@ pub struct StandardExecutionArg {
 }
 
 #[derive(Serialize, Deserialize)]
-#[derive(Serialize, Deserialize, Debug)]
 pub struct HostEnvConfig {
     pub ops: Vec<OpType>,
     #[serde(skip)]
@@ -80,9 +79,8 @@ impl HostEnvConfig {
         }
     }
 
-    fn register_ops(&self, env: &mut HostEnv, tree_db: Option<Rc<RefCell<dyn TreeDB>>>) {
+    fn register_ops(&self, env: &mut HostEnv, _tree_db: Option<Rc<RefCell<dyn TreeDB>>>) {
         for op in &self.ops {
-            Self::register_op(op, env);
             match op {
                 OpType::BLS381PAIR
                 | OpType::BLS381SUM
@@ -90,7 +88,7 @@ impl HostEnvConfig {
                 | OpType::BN256SUM
                 | OpType::POSEIDONHASH
                 | OpType::KECCAKHASH
-                | OpType::JUBJUBSUM => Self::register_op(op, env),
+                | OpType::JUBJUBSUM => Self::register_op(op, env, None),
                 OpType::MERKLE => {
                     host::merkle_helper::merkle::register_merkle_foreign(env, self.tree_db.clone());
                     host::merkle_helper::datacache::register_datacache_foreign(
@@ -255,7 +253,7 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         register_log_foreign(&mut env);
         register_context_foreign(&mut env, arg.context_inputs);
         host::witness_helper::register_witness_foreign(&mut env, self.indexed_witness.clone());
-        host_env_config.register_ops(&mut env);
+        host_env_config.register_ops(&mut env, None);
         register_external_output_foreign(&mut env, self.indexed_witness.clone());
 
         env.finalize();
