@@ -26,7 +26,6 @@ use halo2_proofs::pairing::bn256::G1Affine;
 use halo2_proofs::plonk::CircuitData;
 use halo2_proofs::poly::commitment::Params;
 use indicatif::ProgressBar;
-use log::info;
 use serde::Deserialize;
 use serde::Serialize;
 
