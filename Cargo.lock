@@ -549,7 +549,7 @@ dependencies = [
 [[package]]
 name = "circuits-batcher"
 version = "0.1.0"
-source = "git+https://github.com/DelphinusLab/continuation-batcher.git?tag=on-prove-pairing-2.1#57f831b20c6937592c817388c03a0e98e9934a65"
+source = "git+https://github.com/DelphinusLab/continuation-batcher.git?tag=on-prove-pairing-2.2#3300127b830848585a8bc75e7e620d39f4fff486"
 dependencies = [
  "anyhow",
  "ark-std",
@@ -1567,8 +1567,8 @@ dependencies = [
 
 [[package]]
 name = "halo2aggregator-s"
-version = "1.0.2"
-source = "git+https://github.com/DelphinusLab/halo2aggregator-s.git?tag=on-prove-pairing-0.6.1#adb1cf488e6cc62cef816050973345144afc1747"
+version = "1.1.0"
+source = "git+https://github.com/DelphinusLab/halo2aggregator-s.git?tag=on-prove-pairing-0.6.2#f699aac4e726b7c27936741846975a5c199fce5a"
 dependencies = [
  "ark-ff",
  "ark-std",
@@ -1582,6 +1582,8 @@ dependencies = [
  "num-traits",
  "poseidon",
  "rand_core 0.6.4",
+ "serde",
+ "serde_json",
  "sha2 0.10.8",
  "sha3",
  "tera",
@@ -1590,7 +1592,7 @@ dependencies = [
 [[package]]
 name = "halo2ecc-s"
 version = "0.3.2"
-source = "git+https://github.com/DelphinusLab/halo2ecc-s.git?tag=on-prove-pairing-0.6.1#2af5b97bbfd28222510412bc2da53a0ce0d729cb"
+source = "git+https://github.com/DelphinusLab/halo2ecc-s.git?tag=on-prove-pairing-0.6.2#15b3baefac2f950e448ff1dca7c8562bf10ba8a0"
 dependencies = [
  "ark-std",
  "halo2_proofs",
@@ -4281,7 +4283,7 @@ dependencies = [
 [[package]]
 name = "zkwasm-host-circuits"
 version = "0.1.0"
-source = "git+https://github.com/DelphinusLab/zkWasm-host-circuits.git?branch=host-op-1.8#f869e9e4724c5b6e7d7a409cd88908556ea5cb56"
+source = "git+https://github.com/scf0220/zkWasm-host-circuits.git?branch=host-op-1.8#df875018686c516b00a54363219b553ba3de1d37"
 dependencies = [
  "anyhow",
  "ark-std",
