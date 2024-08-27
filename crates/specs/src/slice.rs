@@ -54,7 +54,7 @@ impl FrameTableSlice {
         lookup_table
     }
 }
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize,Deserialize,Debug)]
 pub struct Slice {
     pub itable: Arc<InstructionTable>,
     pub br_table: Arc<BrTable>,

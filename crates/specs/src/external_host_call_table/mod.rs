@@ -68,7 +68,7 @@ mod serde_sig {
     }
 }
 
-#[derive(Clone,Default, Serialize, Deserialize)]
+#[derive(Clone,Default, Serialize, Deserialize,Debug)]
 pub struct ExternalHostCallTable(pub(crate) Vec<ExternalHostCallEntry>);
 
 impl ExternalHostCallTable {
