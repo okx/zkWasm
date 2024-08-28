@@ -195,7 +195,7 @@ impl FlushStrategy for StandardHostEnvFlushStrategy {
                     } else if *count == group_size {
                         *total += 1;
                         *count = 0;
-                        println!("total and max round are {} {}", *total, get_max_bound(&optype, self.k as usize));
+                        // println!("total and max round are {} {}", *total, get_max_bound(&optype, self.k as usize));
                         if *total >= get_max_bound(&optype, self.k as usize) {
                             Command::CommitAndAbort(optype as usize)
                         } else {
@@ -213,8 +213,8 @@ impl FlushStrategy for StandardHostEnvFlushStrategy {
                 Command::Noop
             }
         };
-        println!("ret is {:?}", ret);
-        println!("op is {:?}", op);
+        // println!("ret is {:?}", ret);
+        // println!("op is {:?}", op);
         ret
     }
 }
