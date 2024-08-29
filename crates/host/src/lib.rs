@@ -183,6 +183,12 @@ impl FlushStrategy for StandardHostEnvFlushStrategy {
     fn notify(&mut self, op: Event) -> Command {
         let ret = match op {
          Event::HostCall(op) => {
+                let op_type_t= ForeignInst::from_usize(op);
+
+                if op_type_t.is_none(){
+                    return Command::Noop
+                }
+
                 let op_type = ForeignInst::from_usize(op).unwrap().get_optype();
                 if let Some(optype) = op_type {
                     let (count, total) = self.ops.entry(optype.clone() as usize).or_insert((0, 0));
