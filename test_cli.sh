@@ -5,7 +5,7 @@ CLI=./target/release/zkwasm-cli
 set -e
 set -x
 
-CUDACUDA="--features perf profile"
+CUDA="--features perf profile"
 
 test_default_cli() {
     cargo build --release $CUDA
