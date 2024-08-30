@@ -28,11 +28,11 @@ test_uniform_circuit_cli() {
 }
 
 test_continuation_cli() {
-    CUDA_VISIBLE_DEVICES=1 cargo build --release --features continuation $CUDA
+    CUDA_VISIBLE_DEVICES=1 cargo build --release --features continuation $CUDA profile
     rm -rf params/*.data params/*.config output
    CUDA_VISIBLE_DEVICES=1  $CLI --params ./params fibonacci setup
    CUDA_VISIBLE_DEVICES=1  $CLI --params ./params fibonacci dry-run --wasm crates/zkwasm/wasm/fibonacci.wasm --public 25:i64 --output ./output
-    CUDA_VISIBLE_DEVICES=1 $CLI --params ./params fibonacci  prove  --features "profile" --wasm crates/zkwasm/wasm/fibonacci.wasm --public 25:i64 --output ./output
+    CUDA_VISIBLE_DEVICES=1 $CLI --params ./params fibonacci  prove --wasm crates/zkwasm/wasm/fibonacci.wasm --public 25:i64 --output ./output
     CUDA_VISIBLE_DEVICES=1 $CLI --params ./params fibonacci verify --output ./output
 }
 
