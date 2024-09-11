@@ -1,3 +1,5 @@
+use super::TablePlugin;
+use super::DEFAULT_TABLE_INDEX;
 use parity_wasm::elements::ValueType;
 use specs::external_host_call_table::ExternalHostCallSignature;
 use specs::itable::BinOp;
@@ -12,6 +14,7 @@ use specs::itable::UnaryOp;
 use specs::mtable::MemoryReadSize;
 use specs::mtable::MemoryStoreSize;
 use specs::mtable::VarType;
+use specs::slice_backend::SliceBackend;
 use specs::step::StepInfo;
 use specs::types::FunctionType;
 use wasmi::isa;
@@ -28,9 +31,6 @@ use wasmi::runner::ValueInternal;
 use wasmi::runner::ValueStack;
 use wasmi::ModuleRef;
 use wasmi::Signature;
-
-use super::TablePlugin;
-use super::DEFAULT_TABLE_INDEX;
 
 #[derive(Debug)]
 pub struct FuncDesc {
@@ -1046,7 +1046,7 @@ pub(super) fn run_instruction_pre(
     }
 }
 
-impl TablePlugin {
+impl<B: SliceBackend> TablePlugin<B> {
     pub(super) fn run_instruction_post(
         &self,
         module_ref: &ModuleRef,

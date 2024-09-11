@@ -51,18 +51,18 @@ pub struct CompilationTable {
     pub initialization_state: Arc<InitializationState<u32>>,
 }
 
-pub struct ExecutionTable {
-    pub slice_backend: Box<dyn SliceBackend>,
+pub struct ExecutionTable<B: SliceBackend> {
+    pub slice_backend: B,
     pub context_input_table: Vec<u64>,
     pub context_output_table: Vec<u64>,
 }
 
-pub struct Tables {
+pub struct Tables<B: SliceBackend> {
     pub compilation_tables: CompilationTable,
-    pub execution_tables: ExecutionTable,
+    pub execution_tables: ExecutionTable<B>,
 }
 
-impl Tables {
+impl<B: SliceBackend> Tables<B> {
     pub fn write(
         &self,
         dir: &Path,
@@ -87,7 +87,9 @@ impl Tables {
 
         self.execution_tables
             .slice_backend
-            .for_each1(Box::new(|(index, slice)| {
+            .iter()
+            .enumerate()
+            .for_each(|(index, slice)| {
                 if DEBUG {
                     let path = dir.join(name_of_event_table_slice(index));
                     slice.etable.write(&path).unwrap();
@@ -100,6 +102,6 @@ impl Tables {
                     let path = dir.join(name_of_external_host_call_table_slice(index));
                     slice.external_host_call_table.write(&path).unwrap();
                 }
-            }))
+            })
     }
 }

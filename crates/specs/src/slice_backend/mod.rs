@@ -17,9 +17,6 @@ pub trait SliceBackend:
     fn push(&mut self, slice: Slice);
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
-    // An renaming for_each to avoid conflict with Iterator trait and
-    // to avoid consume self.
-    fn for_each1<'a>(&'a self, f: Box<dyn Fn((usize, &Slice)) + 'a>);
 
     fn iter(&self) -> Box<dyn Iterator<Item = Slice> + '_>;
 }

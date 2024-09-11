@@ -86,7 +86,7 @@ pub trait FlushStrategy {
     fn notify(&mut self, op: Event) -> Command;
 }
 
-pub struct TablePlugin {
+pub struct TablePlugin<B: SliceBackend> {
     phantom_helper: PhantomHelper,
 
     host_function_desc: HashMap<usize, HostFunctionDesc>,
@@ -101,7 +101,7 @@ pub struct TablePlugin {
     context_input_table: Vec<u64>,
     context_output_table: Vec<u64>,
 
-    host_transaction: HostTransaction,
+    host_transaction: HostTransaction<B>,
 
     eid: u32,
     last_jump_eid: Vec<u32>,
@@ -110,11 +110,11 @@ pub struct TablePlugin {
     unresolved_host_call: Option<EventTableEntry>,
 }
 
-impl TablePlugin {
+impl<B: SliceBackend> TablePlugin<B> {
     pub fn new(
         k: u32,
         flush_strategy: Box<dyn FlushStrategy>,
-        slice_backend: Box<dyn SliceBackend>,
+        slice_backend: B,
         host_function_desc: HashMap<usize, HostFunctionDesc>,
         phantom_regex: &[String],
         wasm_input: FuncRef,
@@ -184,7 +184,7 @@ impl TablePlugin {
         }
     }
 
-    pub fn into_tables(self) -> Tables {
+    pub fn into_tables(self) -> Tables<B> {
         let compilation_tables = self.into_compilation_table();
         let slice_backend = self.host_transaction.finalized();
 
@@ -199,7 +199,7 @@ impl TablePlugin {
     }
 }
 
-impl TablePlugin {
+impl<B: SliceBackend> TablePlugin<B> {
     fn append_log(
         &mut self,
         fid: u32,
@@ -330,7 +330,7 @@ impl TablePlugin {
     }
 }
 
-impl Monitor for TablePlugin {
+impl<B: SliceBackend> Monitor for TablePlugin<B> {
     fn register_module(
         &mut self,
         module: &parity_wasm::elements::Module,

@@ -237,7 +237,7 @@ impl Config {
         Ok(())
     }
 
-    pub(crate) fn prove(
+    pub(crate) fn prove<B: SliceBackend>(
         self,
         env_builder: &dyn HostEnvBuilder,
         wasm_image: &Path,
@@ -246,7 +246,7 @@ impl Config {
         arg: ExecutionArg,
         context_output_filename: Option<String>,
         mock_test: bool,
-        slice_backend: Box<dyn SliceBackend>,
+        slice_backend: B,
         skip: usize,
         padding: Option<usize>,
     ) -> anyhow::Result<()> {

@@ -44,8 +44,8 @@ impl SafelyAbortPosition {
     }
 }
 
-pub(super) struct HostTransaction {
-    slice_backend: Box<dyn SliceBackend>,
+pub(super) struct HostTransaction<B: SliceBackend> {
+    slice_backend: B,
     capacity: u32,
 
     safely_abort_position: SafelyAbortPosition,
@@ -57,12 +57,8 @@ pub(super) struct HostTransaction {
     pub(crate) slice_builder: SliceBuilder,
 }
 
-impl HostTransaction {
-    pub(super) fn new(
-        slice_backend: Box<dyn SliceBackend>,
-        capacity: u32,
-        controller: Box<dyn FlushStrategy>,
-    ) -> Self {
+impl<B: SliceBackend> HostTransaction<B> {
+    pub(super) fn new(slice_backend: B, capacity: u32, controller: Box<dyn FlushStrategy>) -> Self {
         Self {
             slice_backend,
             slice_builder: SliceBuilder::new(),
@@ -141,14 +137,14 @@ impl HostTransaction {
         }
     }
 
-    pub(super) fn finalized(mut self) -> Box<dyn SliceBackend> {
+    pub(super) fn finalized(mut self) -> B {
         self.abort();
 
         self.slice_backend
     }
 }
 
-impl HostTransaction {
+impl<B: SliceBackend> HostTransaction<B> {
     fn replay(&mut self, logs: Vec<EventTableEntry>) {
         for log in logs {
             self.insert(log);

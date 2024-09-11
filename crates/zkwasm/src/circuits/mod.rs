@@ -1,6 +1,9 @@
 use crate::circuits::utils::Context;
 use crate::error::BuildingCircuitError;
 
+use self::etable::EVENT_TABLE_ENTRY_ROWS;
+use self::image_table::compute_maximal_pages;
+use self::zkwasm_circuit::RESERVE_ROWS;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::dev::MockProver;
 use halo2_proofs::plonk::ConstraintSystem;
@@ -9,10 +12,6 @@ use halo2_proofs::plonk::VirtualCells;
 use num_bigint::BigUint;
 use specs::slice::Slice;
 use std::marker::PhantomData;
-
-use self::etable::EVENT_TABLE_ENTRY_ROWS;
-use self::image_table::compute_maximal_pages;
-use self::zkwasm_circuit::RESERVE_ROWS;
 
 pub(crate) mod cell;
 pub(crate) mod etable;
@@ -38,7 +37,7 @@ pub mod utils;
 pub mod zkwasm_circuit;
 
 pub type CompilationTable = specs::CompilationTable;
-pub type ExecutionTable = specs::ExecutionTable;
+pub type ExecutionTable<B> = specs::ExecutionTable<B>;
 
 pub(crate) fn compute_slice_capability(k: u32) -> u32 {
     ((1 << k) - RESERVE_ROWS as u32 - 1024) / EVENT_TABLE_ENTRY_ROWS as u32

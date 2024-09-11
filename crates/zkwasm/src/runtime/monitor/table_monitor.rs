@@ -25,16 +25,16 @@ use super::plugins::table::FlushStrategy;
 use super::plugins::table::TablePlugin;
 use super::WasmiMonitor;
 
-pub struct TableMonitor {
-    table_plugin: TablePlugin,
+pub struct TableMonitor<B: SliceBackend> {
+    table_plugin: TablePlugin<B>,
     statistic_plugin: StatisticPlugin,
 }
 
-impl TableMonitor {
+impl<B: SliceBackend> TableMonitor<B> {
     pub fn new(
         k: u32,
         flush_strategy: Box<dyn FlushStrategy>,
-        slice_backend: Box<dyn SliceBackend>,
+        slice_backend: B,
         phantom_regex: &[String],
         env: &HostEnv,
     ) -> Self {
@@ -62,12 +62,12 @@ impl TableMonitor {
         self.table_plugin.into_compilation_table()
     }
 
-    pub fn into_tables(self) -> Tables {
+    pub fn into_tables(self) -> Tables<B> {
         self.table_plugin.into_tables()
     }
 }
 
-impl Monitor for TableMonitor {
+impl<B: SliceBackend> Monitor for TableMonitor<B> {
     fn register_module(
         &mut self,
         module: &Module,
@@ -144,7 +144,7 @@ impl Monitor for TableMonitor {
     }
 }
 
-impl WasmiMonitor for TableMonitor {
+impl<B: SliceBackend> WasmiMonitor for TableMonitor<B> {
     fn expose_observer(&self) -> Rc<RefCell<Observer>> {
         self.statistic_plugin.expose_observer()
     }

@@ -52,7 +52,7 @@ impl FileBackend {
 //     }
 // }
 
-impl IntoIterator<Item = Slice> for FileBackend {
+impl IntoIterator for FileBackend {
     type Item = Slice;
     type IntoIter = Box<dyn Iterator<Item = Slice>>;
 
@@ -106,14 +106,7 @@ impl SliceBackend for FileBackend {
         self.slices.is_empty()
     }
 
-    fn for_each1<'a>(&'a self, f: Box<dyn Fn((usize, &Slice)) + 'a>) {
-        self.slices.iter().enumerate().for_each(|(index, slice)| {
-            let slice: Slice = slice.into();
-            f((index, &slice))
-        })
-    }
-
     fn iter(&self) -> Box<dyn Iterator<Item = Slice> + '_> {
-        Box::new(self.slices.iter().map(|slice| (&slice).into()))
+        Box::new(self.slices.iter().map(|slice| (slice).into()))
     }
 }

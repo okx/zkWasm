@@ -14,6 +14,7 @@ use specs::jtable::CalledFrameTable;
 use specs::jtable::InheritedFrameTable;
 use specs::slice::FrameTableSlice;
 use specs::slice::Slice;
+use specs::slice_backend::SliceBackend;
 use specs::state::InitializationState;
 use specs::Tables;
 use std::iter::Peekable;
@@ -45,9 +46,9 @@ impl<F: FieldExt> Slices<F> {
     /*
      * padding: Insert trivial slices so that the number of proofs is at least padding.
      */
-    pub fn new(
+    pub fn new<B: SliceBackend>(
         k: u32,
-        tables: Tables,
+        tables: Tables<B>,
         padding: Option<usize>,
     ) -> Result<Self, BuildingCircuitError> {
         let slices_len = tables.execution_tables.slice_backend.len();
@@ -138,11 +139,6 @@ impl<F: FieldExt> Slices<F> {
 
         ZkWasmCircuit::new(self.k, slice)
     }
-}
-
-pub struct SliceIter<'a, F: FieldExt> {
-    inner: &'a Slices<F>,
-    backend_iter: Peekable<Box<dyn Iterator<Item = specs::slice_backend::Slice>>>,
 }
 
 impl<F: FieldExt> Iterator for Slices<F> {
