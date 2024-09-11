@@ -1,3 +1,7 @@
+use crate::circuits::ZkWasmCircuit;
+use crate::error::BuildingCircuitError;
+use crate::runtime::state::UpdateInitMemoryTable;
+use crate::runtime::state::UpdateInitializationState;
 use halo2_proofs::arithmetic::FieldExt;
 use specs::brtable::BrTable;
 use specs::brtable::ElemTable;
@@ -10,16 +14,10 @@ use specs::jtable::CalledFrameTable;
 use specs::jtable::InheritedFrameTable;
 use specs::slice::FrameTableSlice;
 use specs::slice::Slice;
-use specs::slice_backend::SliceBackend;
 use specs::state::InitializationState;
 use specs::Tables;
 use std::iter::Peekable;
 use std::sync::Arc;
-
-use crate::circuits::ZkWasmCircuit;
-use crate::error::BuildingCircuitError;
-use crate::runtime::state::UpdateInitMemoryTable;
-use crate::runtime::state::UpdateInitializationState;
 
 pub struct Slices<F: FieldExt> {
     k: u32,
@@ -36,7 +34,7 @@ pub struct Slices<F: FieldExt> {
     imtable: Arc<InitMemoryTable>,
     initialization_state: Arc<InitializationState<u32>>,
 
-    slices: Peekable<Box<dyn SliceBackend<Item = specs::slice_backend::Slice>>>,
+    slices: Peekable<Box<dyn Iterator<Item = specs::slice_backend::Slice>>>,
     context_input_table: Arc<Vec<u64>>,
     context_output_table: Arc<Vec<u64>>,
 
@@ -140,6 +138,11 @@ impl<F: FieldExt> Slices<F> {
 
         ZkWasmCircuit::new(self.k, slice)
     }
+}
+
+pub struct SliceIter<'a, F: FieldExt> {
+    inner: &'a Slices<F>,
+    backend_iter: Peekable<Box<dyn Iterator<Item = specs::slice_backend::Slice>>>,
 }
 
 impl<F: FieldExt> Iterator for Slices<F> {

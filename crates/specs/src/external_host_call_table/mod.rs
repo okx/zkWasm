@@ -38,14 +38,14 @@ impl From<ExternalHostCallSignature> for Signature {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ExternalHostCallEntry {
     pub op: usize,
     pub value: u64,
     pub is_ret: bool,
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize, Clone)]
 pub struct ExternalHostCallTable(pub(crate) Vec<ExternalHostCallEntry>);
 
 impl ExternalHostCallTable {

@@ -44,11 +44,20 @@ impl FileBackend {
     }
 }
 
-impl Iterator for FileBackend {
-    type Item = Slice;
+// impl Iterator for FileBackend {
+//     type Item = Slice;
+//
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.slices.pop_front().map(|slice| (&slice).into())
+//     }
+// }
 
-    fn next(&mut self) -> Option<Self::Item> {
-        self.slices.pop_front().map(|slice| (&slice).into())
+impl IntoIterator<Item = Slice> for FileBackend {
+    type Item = Slice;
+    type IntoIter = Box<dyn Iterator<Item = Slice>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Box::new(self.slices.into_iter().map(|slice| (&slice).into()))
     }
 }
 
@@ -102,5 +111,9 @@ impl SliceBackend for FileBackend {
             let slice: Slice = slice.into();
             f((index, &slice))
         })
+    }
+
+    fn iter(&self) -> Box<dyn Iterator<Item = Slice> + '_> {
+        Box::new(self.slices.iter().map(|slice| (&slice).into()))
     }
 }
