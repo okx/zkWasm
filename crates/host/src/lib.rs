@@ -48,8 +48,6 @@ pub struct StandardExecutionArg {
 #[derive(Serialize, Deserialize)]
 pub struct HostEnvConfig {
     pub ops: Vec<OpType>,
-    #[serde(skip)]
-    pub tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
 }
 
 impl Debug for HostEnvConfig {
@@ -79,24 +77,9 @@ impl HostEnvConfig {
         }
     }
 
-    fn register_ops(&self, env: &mut HostEnv, _tree_db: Option<Rc<RefCell<dyn TreeDB>>>) {
+    fn register_ops(&self, env: &mut HostEnv, tree_db: Option<Rc<RefCell<dyn TreeDB>>>) {
         for op in &self.ops {
-            match op {
-                OpType::BLS381PAIR
-                | OpType::BLS381SUM
-                | OpType::BN256PAIR
-                | OpType::BN256SUM
-                | OpType::POSEIDONHASH
-                | OpType::KECCAKHASH
-                | OpType::JUBJUBSUM => Self::register_op(op, env, None),
-                OpType::MERKLE => {
-                    host::merkle_helper::merkle::register_merkle_foreign(env, self.tree_db.clone());
-                    host::merkle_helper::datacache::register_datacache_foreign(
-                        env,
-                        self.tree_db.clone(),
-                    );
-                }
-            }
+            Self::register_op(op, env, tree_db.clone());
         }
     }
 }
@@ -104,14 +87,6 @@ impl HostEnvConfig {
 pub struct StandardHostEnvBuilder {
     k: u32,
     ops: Vec<OpType>,
-    tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
-    pub indexed_witness: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
-}
-
-impl StandardHostEnvBuilder {
-    pub fn set_tree_db(&mut self, tree_db: Option<Rc<RefCell<dyn TreeDB>>>) {
-        self.tree_db = tree_db;
-    }
 }
 
 trait GroupedForeign {
@@ -151,8 +126,6 @@ impl StandardHostEnvBuilder {
                 OpType::KECCAKHASH,
                 OpType::BN256SUM,
             ],
-            tree_db: None,
-            indexed_witness: Rc::new(RefCell::new(HashMap::new())),
         }
     }
 }
@@ -231,7 +204,6 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         let mut env = HostEnv::new(self.k);
         let host_env_config = HostEnvConfig {
             ops: self.ops.clone(),
-            tree_db: None,
         };
         register_wasm_input_foreign(&mut env, vec![], vec![]);
         register_require_foreign(&mut env);
@@ -255,16 +227,15 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         let mut env = HostEnv::new(self.k);
         let host_env_config = HostEnvConfig {
             ops: self.ops.clone(),
-            tree_db: self.tree_db.clone(),
         };
 
         register_wasm_input_foreign(&mut env, arg.public_inputs, arg.private_inputs);
         register_require_foreign(&mut env);
         register_log_foreign(&mut env);
         register_context_foreign(&mut env, arg.context_inputs);
-        host::witness_helper::register_witness_foreign(&mut env, self.indexed_witness.clone());
-        host_env_config.register_ops(&mut env, None);
-        register_external_output_foreign(&mut env, self.indexed_witness.clone());
+        host::witness_helper::register_witness_foreign(&mut env, arg.indexed_witness.clone());
+        host_env_config.register_ops(&mut env, arg.tree_db);
+        register_external_output_foreign(&mut env, arg.indexed_witness.clone());
 
         env.finalize();
 
