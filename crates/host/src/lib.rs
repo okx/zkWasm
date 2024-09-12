@@ -32,19 +32,6 @@ use zkwasm_host_circuits::host::db::TreeDB;
 use zkwasm_host_circuits::host::ForeignInst;
 use zkwasm_host_circuits::proof::OpType;
 
-pub struct StandardExecutionArg {
-    /// Public inputs for `wasm_input(1)`
-    pub public_inputs: Vec<u64>,
-    /// Private inputs for `wasm_input(0)`
-    pub private_inputs: Vec<u64>,
-    /// Context inputs for `wasm_read_context()`
-    pub context_inputs: Vec<u64>,
-    /// indexed witness context
-    pub indexed_witness: Rc<RefCell<HashMap<u64, Vec<u64>>>>,
-    /// db src
-    pub tree_db: Option<Rc<RefCell<dyn TreeDB>>>,
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct HostEnvConfig {
     pub ops: Vec<OpType>,
