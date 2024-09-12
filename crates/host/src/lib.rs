@@ -21,9 +21,7 @@ use halo2_proofs::pairing::bn256::Fr;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
-use std::fmt;
 use std::fmt::Debug;
-use std::fmt::Formatter;
 use zkwasm_host_circuits::circuits::babyjub::AltJubChip;
 use zkwasm_host_circuits::circuits::host::HostOpSelector;
 use zkwasm_host_circuits::circuits::merkle::MerkleChip;
@@ -32,17 +30,9 @@ use zkwasm_host_circuits::host::db::TreeDB;
 use zkwasm_host_circuits::host::ForeignInst;
 use zkwasm_host_circuits::proof::OpType;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct HostEnvConfig {
     pub ops: Vec<OpType>,
-}
-
-impl Debug for HostEnvConfig {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("HostEnvConfig")
-            .field("ops", &self.ops)
-            .finish()
-    }
 }
 
 pub const MERKLE_TREE_HEIGHT: usize = 32;
