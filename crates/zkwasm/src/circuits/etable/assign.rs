@@ -14,6 +14,7 @@ use specs::slice::FrameTableSlice;
 use specs::state::InitializationState;
 use std::borrow::Borrow;
 use std::collections::BTreeMap;
+use std::env;
 use std::sync::Arc;
 
 use super::EventTableChip;
@@ -27,6 +28,18 @@ use crate::circuits::utils::step_status::Status;
 use crate::circuits::utils::step_status::StepStatus;
 use crate::circuits::utils::table_entry::EventTableWithMemoryInfo;
 use crate::circuits::utils::Context;
+
+use std::sync::atomic::AtomicU32;
+use std::sync::atomic::Ordering;
+
+lazy_static! {
+    static ref ETABLE_THREAD: AtomicU32 =
+        AtomicU32::new(env::var("ETABLE_THREAD").map_or(20, |k| k.parse().unwrap()));
+}
+
+pub fn etable_thread() -> u32 {
+    ETABLE_THREAD.load(Ordering::Relaxed)
+}
 
 /*
  * Etable Layouter with Continuation
@@ -394,11 +407,12 @@ impl<F: FieldExt> EventTableChip<F> {
             status
         };
 
-        const THREAD: usize = 16;
+        let thread: usize = etable_thread() as usize;
+
         let chunk_size = if event_table.0.is_empty() {
             1
         } else {
-            (event_table.0.len() + THREAD - 1) / THREAD
+            (event_table.0.len() + thread - 1) / thread
         };
 
         event_table

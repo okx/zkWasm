@@ -33,6 +33,9 @@ rayon.workspace = true
 regex.workspace = true
 wasmi.workspace = true
 
+primitive-types = "0.12.1"
+franklin_crypto = {package = "franklin-crypto",git="https://github.com/okx/franklin-crypto.git",branch="beta" , features = ["multicore", "plonk"]}
+
 # TODO put the host circuits into features
 
 zkwasm-host-circuits.workspace = true
