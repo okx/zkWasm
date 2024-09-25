@@ -29,6 +29,7 @@ use crate::circuits::utils::step_status::StepStatus;
 use crate::circuits::utils::table_entry::EventTableWithMemoryInfo;
 use crate::circuits::utils::Context;
 
+use lazy_static::lazy_static;
 use std::sync::atomic::AtomicU32;
 use std::sync::atomic::Ordering;
 

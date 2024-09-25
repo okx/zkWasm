@@ -4,12 +4,12 @@ use franklin_crypto::bellman::PrimeField;
 use franklin_crypto::jubjub::edwards;
 use franklin_crypto::jubjub::edwards::Point;
 use franklin_crypto::jubjub::Unknown;
+use lazy_static::lazy_static;
+use specs::external_host_call_table::ExternalHostCallSignature;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::Write;
 use std::rc::Rc;
-
-use specs::external_host_call_table::ExternalHostCallSignature;
 
 use crate::runtime::host::host_env::HostEnv;
 use crate::runtime::host::ForeignContext;
