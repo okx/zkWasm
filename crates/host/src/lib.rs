@@ -157,7 +157,11 @@ impl FlushStrategy for StandardHostEnvFlushStrategy {
         match op {
             Event::HostCall(op) => {
                 let inst: ForeignInst = ForeignInst::from_usize(op).unwrap();
-                let op_type = inst.get_optype();
+                let op_type = ForeignInst::from_usize(op);
+                if op_type.is_none() {
+                    return Command::Noop;
+                }
+                let op_type = op_type.unwrap().get_optype();
                 if let Some(optype) = op_type {
                     // cargo clippy false positive
                     #[allow(clippy::redundant_clone)]
