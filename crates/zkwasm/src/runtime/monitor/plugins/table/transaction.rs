@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::usize;
 
 use specs::etable::EventTable;
@@ -85,6 +85,10 @@ impl SafelyAbortPosition {
     }
 
     fn update(&mut self, len: usize) {
+        if let Some(cursor) = self.cursor.as_ref() {
+            assert!(len >= *cursor);
+        }
+
         self.cursor = Some(len);
     }
 
@@ -102,8 +106,9 @@ pub(super) struct HostTransaction {
     capacity: u32,
 
     safely_abort_position: SafelyAbortPosition,
+    lazy_committed: HashMap<TransactionId, usize>,
     logs: Vec<EventTableEntry>,
-    started: BTreeMap<TransactionId, Checkpoint>,
+    started: HashMap<TransactionId, Checkpoint>,
     controller: Box<dyn FlushStrategy>,
     host_is_full: bool,
 
@@ -122,8 +127,9 @@ impl HostTransaction {
             capacity,
 
             safely_abort_position: SafelyAbortPosition::new(capacity),
+            lazy_committed: HashMap::new(),
             logs: Vec::new(),
-            started: BTreeMap::new(),
+            started: HashMap::new(),
             controller,
             host_is_full: false,
         }
@@ -137,6 +143,10 @@ impl HostTransaction {
         self.logs.len()
     }
 
+    fn in_transaction(&self) -> bool {
+        !self.started.is_empty() || !self.lazy_committed.is_empty()
+    }
+
     // begin the transaction
     fn start(&mut self, idx: TransactionId) {
         if self.started.contains_key(&idx) {
@@ -145,18 +155,29 @@ impl HostTransaction {
 
         let checkpoint = Checkpoint { start: self.now() };
 
-        if self.started.is_empty() {
+        if !self.in_transaction() {
             self.safely_abort_position.update(checkpoint.start);
         }
 
         self.started.insert(idx, checkpoint);
     }
 
-    fn commit(&mut self, idx: TransactionId) {
-        self.started.remove(&idx).unwrap();
+    fn commit(&mut self, idx: TransactionId, lazy: bool) {
+        let checkpoint = self.started.remove(&idx).unwrap();
 
-        if self.started.is_empty() {
-            self.safely_abort_position.update(self.now());
+        let now = self.now();
+
+        // If there exists a same plugin transaciton lazied,
+        // we can safely commit the previous transaction
+        self.lazy_committed.remove(&idx);
+
+        if !self.in_transaction() {
+            self.safely_abort_position
+                .update(if lazy { checkpoint.start } else { now });
+        }
+
+        if lazy {
+            self.lazy_committed.insert(idx, now);
         }
     }
 
@@ -165,7 +186,7 @@ impl HostTransaction {
             return;
         }
 
-        if self.started.is_empty() {
+        if !self.in_transaction() {
             let now = self.now();
             self.safely_abort_position.update(now);
         }
@@ -183,6 +204,7 @@ impl HostTransaction {
         {
             self.host_is_full = false;
             self.safely_abort_position.reset();
+            self.lazy_committed.clear();
             self.started.clear();
         }
 
@@ -232,17 +254,17 @@ impl HostTransaction {
                 self.start(id);
                 self.logs.push(log);
             }
-            Command::Commit(id) => {
+            Command::Commit(id, lazy) => {
                 self.logs.push(log);
-                self.commit(id);
+                self.commit(id, lazy);
             }
             Command::Abort => {
                 self.insert(log);
                 self.host_is_full = true;
             }
-            Command::CommitAndAbort(id) => {
+            Command::CommitAndAbort(id, lazy) => {
                 self.logs.push(log);
-                self.commit(id);
+                self.commit(id, lazy);
                 self.host_is_full = true;
             }
         }
