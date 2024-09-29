@@ -6,7 +6,6 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use delphinus_zkwasm::foreign::context::runtime::register_context_foreign;
-use delphinus_zkwasm::foreign::log_helper::register_external_output_foreign;
 use delphinus_zkwasm::foreign::log_helper::register_log_foreign;
 use delphinus_zkwasm::foreign::require_helper::register_require_foreign;
 use delphinus_zkwasm::foreign::wasm_input_helper::runtime::register_wasm_input_foreign;
@@ -21,7 +20,6 @@ use halo2_proofs::pairing::bn256::Fr;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
-use std::fmt::Debug;
 use zkwasm_host_circuits::circuits::babyjub::AltJubChip;
 use zkwasm_host_circuits::circuits::host::HostOpSelector;
 use zkwasm_host_circuits::circuits::merkle::MerkleChip;
@@ -68,6 +66,7 @@ pub struct StandardHostEnvBuilder {
 
 trait GroupedForeign {
     fn get_optype(&self) -> Option<OpType>;
+    fn should_lazy_commit_group(&self) -> bool;
 }
 
 impl GroupedForeign for ForeignInst {
@@ -90,6 +89,14 @@ impl GroupedForeign for ForeignInst {
             _ => None,
         }
     }
+
+    // indicates current group should not be committed immediately
+    fn should_lazy_commit_group(&self) -> bool {
+        match self {
+            ForeignInst::MerkleGet => true,
+            _ => false,
+        }
+    }
 }
 
 impl StandardHostEnvBuilder {
@@ -108,9 +115,16 @@ impl StandardHostEnvBuilder {
 }
 
 #[derive(Default)]
+struct PluginFlushState {
+    current: usize,
+    group: usize,
+    should_lazy: bool,
+}
+
+#[derive(Default)]
 struct StandardHostEnvFlushStrategy {
     k: u32,
-    ops: HashMap<usize, (usize, usize)>,
+    ops: HashMap<usize, PluginFlushState>,
 }
 
 trait OpTypeFlushHelper {
@@ -142,40 +156,44 @@ impl FlushStrategy for StandardHostEnvFlushStrategy {
     fn notify(&mut self, op: Event) -> Command {
         match op {
             Event::HostCall(op) => {
-                let op_type = ForeignInst::from_usize(op);
-                if op_type.is_none() {
-                    return Command::Noop;
-                }
-                let op_type = op_type.unwrap().get_optype();
-
+                let inst: ForeignInst = ForeignInst::from_usize(op).unwrap();
+                let op_type = inst.get_optype();
                 if let Some(optype) = op_type {
                     // cargo clippy false positive
                     #[allow(clippy::redundant_clone)]
-                    let (count, total) = self.ops.entry(optype.clone() as usize).or_insert((0, 0));
+                    let status = self
+                        .ops
+                        .entry(optype.clone() as usize)
+                        .or_insert(PluginFlushState::default());
 
-                    *count += 1;
+                    status.current += 1;
 
-                    if *count == 1 {
-                        Command::Start(optype as usize)
-                    } else if *count == optype.get_group_size() {
-                        *total += 1;
-                        *count = 0;
-
-                        if *total >= optype.get_max_bound(self.k as usize) {
-                            Command::CommitAndAbort(optype as usize)
-                        } else {
-                            Command::Commit(optype as usize)
-                        }
-                    } else {
-                        Command::Noop
+                    if inst.should_lazy_commit_group() {
+                        status.should_lazy = true;
                     }
-                } else {
-                    Command::Noop
+
+                    if status.current == 1 {
+                        return Command::Start(optype as usize);
+                    } else if status.current == optype.get_group_size() {
+                        let lazy = status.should_lazy;
+
+                        status.group += 1;
+                        status.current = 0;
+                        status.should_lazy = false;
+
+                        if status.group >= optype.get_max_bound(self.k as usize) {
+                            return Command::CommitAndAbort(optype as usize, lazy);
+                        } else {
+                            return Command::Commit(optype as usize, lazy);
+                        }
+                    }
                 }
+
+                return Command::Noop;
             }
             Event::Reset => {
                 self.ops.clear();
-                Command::Noop
+                return Command::Noop;
             }
         }
     }
@@ -197,9 +215,6 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         );
         host_env_config.register_ops(&mut env, None);
 
-        let external_output = Rc::new(RefCell::new(HashMap::new()));
-        host::witness_helper::register_witness_foreign(&mut env, external_output.clone());
-        register_external_output_foreign(&mut env, external_output);
         env.finalize();
 
         env
@@ -215,9 +230,8 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         register_require_foreign(&mut env);
         register_log_foreign(&mut env);
         register_context_foreign(&mut env, arg.context_inputs);
-        host::witness_helper::register_witness_foreign(&mut env, arg.indexed_witness.clone());
+        host::witness_helper::register_witness_foreign(&mut env, arg.indexed_witness);
         host_env_config.register_ops(&mut env, arg.tree_db);
-        register_external_output_foreign(&mut env, arg.indexed_witness.clone());
 
         env.finalize();
 
