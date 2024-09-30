@@ -160,7 +160,7 @@ impl FlushStrategy for StandardHostEnvFlushStrategy {
                     return Command::Noop;
                 }
             let inst=op_type.unwrap();
-                let op_type = instget_optype();
+                let op_type = inst.get_optype();
 
                 if let Some(optype) = op_type {
                     // cargo clippy false positive
