@@ -192,6 +192,7 @@ impl<B: SliceBackendBuilder> HostTransaction<B> {
 
     pub(super) fn finalized(mut self) -> Vec<B::Output> {
         self.abort();
+        assert!(self.logs.is_empty());
 
         self.slices
     }
