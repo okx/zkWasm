@@ -1,21 +1,74 @@
 use std::collections::BTreeMap;
 use std::usize;
 
+use specs::etable::EventTable;
 use specs::etable::EventTableEntry;
-use specs::slice_backend::SliceBackendBuilder;
+use specs::external_host_call_table::ExternalHostCallTable;
+use specs::jtable::FrameTable;
 use specs::step::StepInfo;
+use specs::TableBackend;
+use specs::TraceBackend;
 
 use crate::runtime::monitor::plugins::table::Event;
 
 use super::slice_builder::SliceBuilder;
 use super::Command;
 use super::FlushStrategy;
+use super::Slice;
 
 pub(crate) type TransactionId = usize;
 
 struct Checkpoint {
     // transaction start index
     start: usize,
+}
+
+pub(super) struct Slices {
+    backend: TraceBackend,
+    pub(super) etable: Vec<TableBackend<EventTable>>,
+    pub(super) frame_table: Vec<TableBackend<FrameTable>>,
+    pub(super) external_host_call_table: Vec<ExternalHostCallTable>,
+}
+
+impl Slices {
+    fn new(backend: TraceBackend) -> Self {
+        Self {
+            backend,
+
+            etable: Vec::new(),
+            frame_table: Vec::new(),
+            external_host_call_table: Vec::new(),
+        }
+    }
+
+    fn push(&mut self, slice: Slice) {
+        let (etable, frame_table) = match &self.backend {
+            TraceBackend::File {
+                event_table_writer,
+                frame_table_writer,
+            } => {
+                let etable =
+                    TableBackend::Json(event_table_writer(self.etable.len(), &slice.etable));
+                let frame_table = TableBackend::Json(frame_table_writer(
+                    self.frame_table.len(),
+                    &slice.frame_table,
+                ));
+
+                (etable, frame_table)
+            }
+            TraceBackend::Memory => {
+                let etable = TableBackend::Memory(slice.etable);
+                let frame_table = TableBackend::Memory(slice.frame_table);
+
+                (etable, frame_table)
+            }
+        };
+
+        self.etable.push(etable);
+        self.frame_table.push(frame_table);
+        self.external_host_call_table
+            .push(slice.external_host_call_table);
+    }
 }
 
 struct SafelyAbortPosition {
@@ -48,9 +101,8 @@ impl SafelyAbortPosition {
     }
 }
 
-pub(super) struct HostTransaction<B: SliceBackendBuilder> {
-    slice_backend_builder: B,
-    slices: Vec<B::Output>,
+pub(super) struct HostTransaction {
+    slices: Slices,
     capacity: u32,
 
     safely_abort_position: SafelyAbortPosition,
@@ -72,16 +124,15 @@ struct LazyCommitted {
     transaction_id: TransactionId,
     checkpoint: usize,
 }
-impl<B: SliceBackendBuilder> HostTransaction<B> {
 
+impl HostTransaction {
     pub(super) fn new(
+        backend: TraceBackend,
         capacity: u32,
-        slice_backend_builder: B,
         controller: Box<dyn FlushStrategy>,
     ) -> Self {
         Self {
-            slice_backend_builder,
-            slices: Vec::new(),
+            slices: Slices::new(backend),
             slice_builder: SliceBuilder::new(),
             capacity,
 
@@ -155,12 +206,16 @@ impl<B: SliceBackendBuilder> HostTransaction<B> {
         self.try_update_lazy_committed(now);
     }
 
-    fn abort(&mut self) {
+    fn abort(&mut self, last_slice: bool) {
         if self.len() == 0 {
             return;
         }
 
-        if !self.is_in_transaction() && !self.is_in_lazy_transaction() {
+        if last_slice && self.is_in_transaction() {
+            panic!("there exists uncommitted transaction");
+        }
+
+        if !self.is_in_transaction() && (!self.is_in_lazy_transaction() || last_slice) {
             let now = self.now();
             self.safely_abort_position.update(now);
         }
@@ -172,7 +227,7 @@ impl<B: SliceBackendBuilder> HostTransaction<B> {
             let committed_logs = logs.drain(0..rollback);
 
             let slice = self.slice_builder.build(committed_logs.collect());
-            self.slices.push(self.slice_backend_builder.build(slice));
+            self.slices.push(slice);
         }
 
         {
@@ -190,15 +245,16 @@ impl<B: SliceBackendBuilder> HostTransaction<B> {
         }
     }
 
-    pub(super) fn finalized(mut self) -> Vec<B::Output> {
-        self.abort();
+    pub(super) fn finalized(mut self) -> Slices {
+        self.abort(true);
+
         assert!(self.logs.is_empty());
 
         self.slices
     }
 }
 
-impl<B: SliceBackendBuilder> HostTransaction<B> {
+impl HostTransaction {
     fn replay(&mut self, logs: Vec<EventTableEntry>) {
         for log in logs {
             self.insert(log);
@@ -207,13 +263,13 @@ impl<B: SliceBackendBuilder> HostTransaction<B> {
 
     pub(crate) fn insert(&mut self, log: EventTableEntry) {
         if self.logs.len() == self.capacity as usize {
-            self.abort();
+            self.abort(false);
         }
 
         let command = match log.step_info {
             StepInfo::ExternalHostCall { op, .. } => {
                 if self.host_is_full {
-                    self.abort();
+                    self.abort(false);
                 }
 
                 self.controller.notify(Event::HostCall(op))
