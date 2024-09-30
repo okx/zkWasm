@@ -206,12 +206,16 @@ impl HostTransaction {
         self.try_update_lazy_committed(now);
     }
 
-    fn abort(&mut self) {
+    fn abort(&mut self, last_slice: bool) {
         if self.len() == 0 {
             return;
         }
 
-        if !self.is_in_transaction() && !self.is_in_lazy_transaction() {
+        if last_slice && self.is_in_transaction() {
+            panic!("there exists uncommitted transaction");
+        }
+
+        if !self.is_in_transaction() && (!self.is_in_lazy_transaction() || last_slice) {
             let now = self.now();
             self.safely_abort_position.update(now);
         }
@@ -242,7 +246,7 @@ impl HostTransaction {
     }
 
     pub(super) fn finalized(mut self) -> Slices {
-        self.abort();
+        self.abort(true);
 
         assert!(self.logs.is_empty());
 
@@ -259,13 +263,13 @@ impl HostTransaction {
 
     pub(crate) fn insert(&mut self, log: EventTableEntry) {
         if self.logs.len() == self.capacity as usize {
-            self.abort();
+            self.abort(false);
         }
 
         let command = match log.step_info {
             StepInfo::ExternalHostCall { op, .. } => {
                 if self.host_is_full {
-                    self.abort();
+                    self.abort(false);
                 }
 
                 self.controller.notify(Event::HostCall(op))
