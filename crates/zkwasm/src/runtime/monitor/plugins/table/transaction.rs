@@ -244,6 +244,8 @@ impl HostTransaction {
     pub(super) fn finalized(mut self) -> Slices {
         self.abort();
 
+        assert!(self.logs.is_empty());
+
         self.slices
     }
 }
