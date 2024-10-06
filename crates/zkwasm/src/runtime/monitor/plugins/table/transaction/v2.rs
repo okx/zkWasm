@@ -84,15 +84,17 @@ impl Checkpoint {
                     .unwrap_or_default();
 
                 let number = *group_number - applied;
-                if number == limit {
-                    ordering = Ordering::Equal;
-                } else if number > limit {
-                    return Ordering::Greater;
+                match number.cmp(&limit) {
+                    Ordering::Less => (),
+                    Ordering::Equal => {
+                        ordering = Ordering::Equal;
+                    }
+                    Ordering::Greater => return Ordering::Greater,
                 }
             }
         }
 
-        return ordering;
+        ordering
     }
 }
 
@@ -149,7 +151,7 @@ impl Checkpoints {
         let start = self
             .transactions
             .remove(&tx)
-            .expect(&format!("commit a not existing transaction {}", tx));
+            .unwrap_or_else(|| panic!("commit a not existing transaction {}", tx));
 
         let committed_tx = self.total_transactions_group_number.entry(tx).or_default();
         *committed_tx += 1;
@@ -298,7 +300,7 @@ impl Checkpoints {
         if checkpoint.range.before(upper_bound) {
             self.checkpoints.drain(0..=index);
 
-            return checkpoint.range.end.unwrap();
+            checkpoint.range.end.unwrap()
         } else {
             let position = upper_bound;
 
@@ -311,7 +313,7 @@ impl Checkpoints {
                 self.checkpoints.drain(0..=index);
             }
 
-            return position;
+            position
         }
     }
 
@@ -344,7 +346,7 @@ impl Checkpoints {
         self.checkpoints[..=last]
             .iter()
             .rev()
-            .position(|checkpoint| filter(checkpoint))
+            .position(filter)
             .map(|position| self.checkpoints.len() - 1 - position)
     }
 
