@@ -68,14 +68,14 @@ impl Checkpoint {
 
     // return value:
     // Ordering::Greater: at least one of transaction is overflow
-    // Ordering::Equal:   at least one of transaction is full
-    // Ordering::Less :   all transactions are not full
+    // Ordering::Equal: all transactions are full
+    // Ordering::Less : no transaction overflow and at least one of transacion is not full
     fn transactions_group_number_ordering(
         &self,
         applied_transactions_group_number: &HashMap<TransactionId, usize>,
         flush_strategy_controller: &dyn FlushStrategy,
     ) -> Ordering {
-        let mut ordering = Ordering::Less;
+        let mut ordering = Ordering::Equal;
 
         for (tx, group_number) in &self.transactions_group_number {
             if let Some(limit) = flush_strategy_controller.maximal_group(*tx) {
@@ -86,10 +86,8 @@ impl Checkpoint {
 
                 let number = *group_number - applied;
                 match number.cmp(&limit) {
-                    Ordering::Less => (),
-                    Ordering::Equal => {
-                        ordering = Ordering::Equal;
-                    }
+                    Ordering::Less => ordering = Ordering::Less,
+                    Ordering::Equal => {}
                     Ordering::Greater => return Ordering::Greater,
                 }
             }
@@ -100,11 +98,14 @@ impl Checkpoint {
 }
 
 struct WeakCommittedTransaction {
+    first_tx_start: usize,
     last: usize,
     count: usize,
 }
 
 struct Checkpoints {
+    slice_capacity: usize,
+
     // the group number of the transaction which applied in slice
     applied_transactions_group_number: HashMap<TransactionId, usize>,
     // how many committed transactions exist now
@@ -115,12 +116,13 @@ struct Checkpoints {
     // committed weak transactions
     weak_committed: HashMap<TransactionId, WeakCommittedTransaction>,
 
-    checkpoints: Vec<Checkpoint>,
+    pub checkpoints: Vec<Checkpoint>,
 }
 
 impl Checkpoints {
-    fn new() -> Self {
+    fn new(slice_capacity: usize) -> Self {
         Self {
+            slice_capacity,
             applied_transactions_group_number: HashMap::default(),
             total_transactions_group_number: HashMap::default(),
             transactions: HashMap::default(),
@@ -164,6 +166,7 @@ impl Checkpoints {
                 tx.last = offset;
             })
             .or_insert(WeakCommittedTransaction {
+                first_tx_start: start,
                 last: offset,
                 count: 1,
             });
@@ -180,6 +183,15 @@ impl Checkpoints {
         let desc = self.weak_committed.remove(&tx);
 
         if let Some(desc) = desc {
+            if desc.last - desc.first_tx_start > self.slice_capacity {
+                panic!(
+                    "Transactions (transaction id: {}, count: {}) cannot be placed in \
+                a slice because the first transaction(start at {}) is more than \
+                the slice size away from the last transaction(commit at {})",
+                    tx, desc.count, desc.first_tx_start, desc.last
+                );
+            }
+
             self.active_release_weak_dependencies_for_checkpoint_from(tx, desc.last);
         }
     }
@@ -324,31 +336,36 @@ impl Checkpoints {
         filter: impl Fn(&Checkpoint) -> bool,
         flush_strategy_controller: &dyn FlushStrategy,
     ) -> Option<usize> {
-        let last = self
-            .checkpoints
-            .binary_search_by(|checkpoint| {
-                let group_number_ordering = checkpoint.transactions_group_number_ordering(
-                    &self.applied_transactions_group_number,
-                    flush_strategy_controller,
-                );
+        let last = self.checkpoints.binary_search_by(|checkpoint| {
+            let group_number_ordering = checkpoint.transactions_group_number_ordering(
+                &self.applied_transactions_group_number,
+                flush_strategy_controller,
+            );
 
-                if checkpoint.range.after(upper_bound) || group_number_ordering.is_gt() {
-                    return Ordering::Greater;
-                }
+            if checkpoint.range.after(upper_bound) || group_number_ordering.is_gt() {
+                return Ordering::Greater;
+            }
 
-                if checkpoint.range.contains(upper_bound) || group_number_ordering.is_eq() {
-                    return Ordering::Equal;
-                }
+            if checkpoint.range.contains(upper_bound) && group_number_ordering.is_eq() {
+                return Ordering::Equal;
+            }
 
-                Ordering::Less
-            })
-            .unwrap();
+            Ordering::Less
+        });
+        let last = match last {
+            Ok(index) => index,
+            Err(index) => {
+                assert!(index > 0);
+                index - 1
+            }
+        };
 
         self.checkpoints[..=last]
             .iter()
+            .enumerate()
             .rev()
-            .position(filter)
-            .map(|position| self.checkpoints.len() - 1 - position)
+            .find(|(_, checkpoint)| filter(checkpoint))
+            .map(|(index, _)| index)
     }
 
     fn checkpoint(
@@ -370,17 +387,11 @@ impl Checkpoints {
             },
             flush_strategy_controller,
         );
-        if let Some(index) = index {
-            return self.apply_checkpoint(index, upper_bound);
-        }
 
-        // otherwise latest committed
-        let index = self.find(upper_bound, |_checkpoint| true, flush_strategy_controller);
-        if let Some(index) = index {
-            return self.apply_checkpoint(index, upper_bound);
-        }
-
-        unreachable!("cannot find a checkpoint")
+        self.apply_checkpoint(
+            index.expect("cannot find a checkpoint to meet host circuit"),
+            upper_bound,
+        )
     }
 }
 
@@ -417,7 +428,7 @@ impl<B: SliceBackendBuilder> HostTransaction<B> {
             capacity,
             last_committed_event_cursor: 0,
             events: Vec::with_capacity(capacity * MAX_SLICES_IN_MEMORY),
-            checkpoints: Checkpoints::new(),
+            checkpoints: Checkpoints::new(capacity),
             controller,
 
             timers: LinkedList::new(),
