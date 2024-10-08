@@ -41,6 +41,7 @@ impl From<ExternalHostCallSignature> for Signature {
 
 #[derive(Serialize, Deserialize)]
 pub struct ExternalHostCallEntry {
+    pub eid: usize,
     pub op: usize,
     pub value: u64,
     pub is_ret: bool,
