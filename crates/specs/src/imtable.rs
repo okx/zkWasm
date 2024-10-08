@@ -16,7 +16,7 @@ pub struct InitMemoryTableEntry {
     pub eid: u32,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct InitMemoryTable(pub BTreeMap<(LocationType, u32), InitMemoryTableEntry>);
 
 impl InitMemoryTable {
