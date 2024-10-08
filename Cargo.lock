@@ -966,6 +966,7 @@ dependencies = [
  "franklin-crypto",
  "halo2_proofs",
  "hex",
+ "lazy_static",
  "log",
  "num-bigint 0.4.6",
  "num-integer",

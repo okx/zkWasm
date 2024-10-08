@@ -28,9 +28,10 @@ use crate::circuits::utils::Context;
 use super::MEMORY_TABLE_ENTRY_ROWS;
 
 use std::env;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::AtomicU32;
+use std::sync::atomic::Ordering;
 
-lazy_static! {
+lazy_static::lazy_static! {
     static ref MTABLE_THREAD: AtomicU32 =
         AtomicU32::new(env::var("MTABLE_THREAD").map_or(8, |k| k.parse().unwrap()));
 }

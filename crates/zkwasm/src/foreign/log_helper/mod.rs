@@ -20,7 +20,7 @@ use zkwasm_host_circuits::host::ForeignInst::LogChar;
 use crate::foreign::log_helper::ExternalOutputForeignInst::*;
 use crate::runtime::host::ForeignPlugin;
 
-lazy_static! {
+lazy_static::lazy_static! {
     pub static ref JUBJUB_PARAMS: AltJubjubBn256 = AltJubjubBn256::new();
 }
 

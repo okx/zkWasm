@@ -32,7 +32,7 @@ use crate::circuits::utils::Context;
 use std::sync::atomic::AtomicU32;
 use std::sync::atomic::Ordering;
 
-lazy_static! {
+lazy_static::lazy_static! {
     static ref ETABLE_THREAD: AtomicU32 =
         AtomicU32::new(env::var("ETABLE_THREAD").map_or(20, |k| k.parse().unwrap()));
 }
