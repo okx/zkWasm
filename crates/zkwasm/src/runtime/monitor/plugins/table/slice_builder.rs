@@ -20,7 +20,7 @@ impl SliceBuilder {
     pub(super) fn build(&mut self, logs: Vec<EventTableEntry>) -> Slice {
         let external_host_call_table = ExternalHostCallTable::new(
             logs.iter()
-                .filter_map(|entry| ExternalHostCallEntry::try_from(entry).ok())
+                .filter_map(|entry| ExternalHostCallEntry::try_from(&entry.step_info).ok())
                 .collect(),
         );
 

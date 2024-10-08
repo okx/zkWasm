@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use std::collections::LinkedList;
 use std::rc::Rc;
 
-use log::info;
 use log::warn;
 use specs::etable::EventTableEntry;
 use specs::slice_backend::SliceBackendBuilder;
@@ -458,8 +457,6 @@ impl<B: SliceBackendBuilder> HostTransaction<B> {
             ),
             &*self.controller,
         );
-
-        info!("Slice at {}", checkpoint);
 
         assert!(
             checkpoint != self.last_committed_event_cursor,
