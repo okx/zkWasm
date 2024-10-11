@@ -26,7 +26,7 @@ use crate::mtable::MemoryTableEntry;
 use crate::state::InitializationState;
 use crate::CompilationTable;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct FrameTableSlice {
     pub inherited: Arc<InheritedFrameTable>,
     pub called: CalledFrameTable,
@@ -57,7 +57,7 @@ impl FrameTableSlice {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Slice {
     pub itable: Arc<InstructionTable>,
     pub br_table: Arc<BrTable>,

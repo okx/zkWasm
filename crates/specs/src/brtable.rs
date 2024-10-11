@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct BrTableEntry {
     pub fid: u32,
     pub iid: u32,
@@ -11,7 +11,7 @@ pub struct BrTableEntry {
     pub dst_pc: u32,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 pub struct BrTable(Vec<BrTableEntry>);
 
 impl BrTable {
@@ -24,7 +24,7 @@ impl BrTable {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ElemEntry {
     pub table_idx: u32,
     pub type_idx: u32,
@@ -32,7 +32,7 @@ pub struct ElemEntry {
     pub func_idx: u32,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq)]
 pub struct ElemTable(Vec<ElemEntry>);
 
 impl ElemTable {

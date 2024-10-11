@@ -590,7 +590,7 @@ impl From<&Opcode> for OpcodeClassPlain {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct InstructionTableEntry {
     pub fid: u32,
     // pub function_name: String,
@@ -648,7 +648,7 @@ impl InstructionTableInternal {
 }
 
 // Use Option because iid may be discontinuous
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
 pub struct InstructionTable(Arc<Vec<Vec<Option<InstructionTableEntry>>>>);
 
 impl InstructionTable {

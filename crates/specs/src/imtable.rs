@@ -5,7 +5,7 @@ use crate::mtable::VarType;
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct InitMemoryTableEntry {
     pub ltype: LocationType,
     pub is_mutable: bool,
@@ -16,7 +16,7 @@ pub struct InitMemoryTableEntry {
     pub eid: u32,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize, PartialEq)]
 pub struct InitMemoryTable(pub HashMap<(LocationType, u32), InitMemoryTableEntry>);
 
 impl InitMemoryTable {
