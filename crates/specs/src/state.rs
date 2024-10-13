@@ -17,6 +17,21 @@ pub struct InitializationState<T> {
     pub maximal_memory_pages: T,
 }
 
+impl PartialEq for InitializationState<u32> {
+    fn eq(&self, other: &Self) -> bool {
+        self.eid == other.eid
+            && self.fid == other.fid
+            && self.iid == other.iid
+            && self.frame_id == other.frame_id
+            && self.sp == other.sp
+            && self.host_public_inputs == other.host_public_inputs
+            && self.context_in_index == other.context_in_index
+            && self.context_out_index == other.context_out_index
+            && self.initial_memory_pages == other.initial_memory_pages
+            && self.maximal_memory_pages == other.maximal_memory_pages
+    }
+}
+
 impl<T> InitializationState<T> {
     // TODO: try to remove the magic number
     pub fn field_count() -> usize {

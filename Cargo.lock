@@ -4268,6 +4268,7 @@ dependencies = [
  "delphinus-zkwasm",
  "env_logger",
  "halo2_proofs",
+ "halo2aggregator-s",
  "hex",
  "indicatif",
  "log",

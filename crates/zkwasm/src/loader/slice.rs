@@ -144,6 +144,8 @@ pub struct ZkWasmCircuitIter<F: FieldExt, B: SliceBackend> {
     initialization_state: Arc<InitializationState<u32>>,
     slices: Peekable<SlicesIter<B>>,
 
+    last_slice: Option<Slice>,
+
     mark: PhantomData<F>,
 }
 
@@ -166,6 +168,7 @@ impl<F: FieldExt, B: SliceBackend> IntoIterator for Slices<F, B> {
             imtable: self.imtable,
             initialization_state: self.initialization_state,
             slices: SlicesWrap(self.slices).into_iter().peekable(),
+            last_slice: None,
             mark: PhantomData,
         }
     }
@@ -274,6 +277,22 @@ impl<F: FieldExt, B: SliceBackend> Iterator for ZkWasmCircuitIter<F, B> {
 
             is_last_slice: self.slices.peek().is_none(),
         };
+
+        if let Some(last_slice) = self.last_slice.take() {
+            assert_eq!(last_slice.itable, slice.itable,);
+            assert_eq!(last_slice.br_table, slice.br_table,);
+            assert_eq!(last_slice.elem_table, slice.elem_table,);
+            assert_eq!(
+                last_slice.post_inherited_frame_table,
+                slice.frame_table.inherited,
+            );
+            assert_eq!(
+                last_slice.post_initialization_state,
+                slice.initialization_state,
+            );
+            assert_eq!(last_slice.post_imtable, slice.imtable,);
+        };
+        self.last_slice = Some(slice.clone());
 
         self.imtable = post_imtable;
         self.initialization_state = post_initialization_state;

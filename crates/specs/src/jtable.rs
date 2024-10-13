@@ -21,7 +21,7 @@ pub const INHERITED_FRAME_TABLE_ENTRIES: usize = 4096;
 
 const JSON: bool = false;
 
-#[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct FrameTableEntryInternal {
     // caller eid (unique)
     pub frame_id: u32,
@@ -32,7 +32,7 @@ pub struct FrameTableEntryInternal {
     pub returned: bool,
 }
 
-#[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct InheritedFrameTableEntry(pub Option<FrameTableEntryInternal>);
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -44,7 +44,7 @@ impl From<Vec<InheritedFrameTableEntry>> for InheritedFrameEntries {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct InheritedFrameTable(pub Box<[InheritedFrameTableEntry; INHERITED_FRAME_TABLE_ENTRIES]>);
 
 impl Default for InheritedFrameTable {
@@ -140,10 +140,10 @@ impl InheritedFrameTable {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct CalledFrameTableEntry(pub FrameTableEntryInternal);
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct CalledFrameTable(Vec<CalledFrameTableEntry>);
 
 impl CalledFrameTable {
