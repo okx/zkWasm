@@ -279,6 +279,7 @@ impl<F: FieldExt, B: SliceBackend> Iterator for ZkWasmCircuitIter<F, B> {
         };
 
         if let Some(last_slice) = self.last_slice.take() {
+            println!("sinka-log assert");
             assert_eq!(last_slice.itable, slice.itable,);
             assert_eq!(last_slice.br_table, slice.br_table,);
             assert_eq!(last_slice.elem_table, slice.elem_table,);
