@@ -7,7 +7,6 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use circuits_batcher::args::HashType;
-use circuits_batcher::args::OpenSchema;
 use circuits_batcher::proof::ProofGenerationInfo;
 use circuits_batcher::proof::ProofInfo;
 use circuits_batcher::proof::ProofPieceInfo;
@@ -31,6 +30,7 @@ use serde::Serialize;
 use specs::slice_backend::SliceBackendBuilder;
 
 use crate::args::HostMode;
+use crate::args::Scheme;
 use crate::names::name_of_circuit_data;
 use crate::names::name_of_etable_slice;
 use crate::names::name_of_external_host_call_table_slice;
@@ -74,6 +74,8 @@ pub(crate) struct Config {
     pub(crate) checksum: (String, String),
     pub(crate) phantom_functions: Vec<String>,
     pub(crate) host_mode: HostMode,
+
+    pub(crate) scheme: Scheme,
 }
 
 impl Config {
@@ -341,6 +343,9 @@ impl Config {
             println!("skip first {} slice(s)", skip);
         }
 
+        #[cfg(feature = "continuation")]
+        let mut last_post_image_table_commitment: Option<(String, String)> = None;
+
         let mut slices = Slices::new(self.k, tables, padding)?
             .into_iter()
             .enumerate()
@@ -406,25 +411,58 @@ impl Config {
                 transcript: name_of_transcript(&self.name, index),
             };
 
+            let pkey = &cached_proving_key.as_ref().unwrap().1;
+
             let proof = match circuit {
                 ZkWasmCircuit::Ongoing(circuit) => proof_piece_info.create_proof::<Bn256, _>(
                     &circuit,
                     &vec![instances.clone()],
                     &params,
-                    &cached_proving_key.as_ref().unwrap().1,
+                    pkey,
                     proof_load_info.hashtype,
-                    OpenSchema::Shplonk,
+                    self.scheme.into(),
                 ),
                 ZkWasmCircuit::LastSliceCircuit(circuit) => proof_piece_info
                     .create_proof::<Bn256, _>(
                         &circuit,
                         &vec![instances.clone()],
                         &params,
-                        &cached_proving_key.as_ref().unwrap().1,
+                        pkey,
                         proof_load_info.hashtype,
-                        OpenSchema::Shplonk,
+                        self.scheme.into(),
                     ),
             };
+
+            #[cfg(feature = "continuation")]
+            {
+                use crate::utils::get_named_advice_commitment;
+                use delphinus_zkwasm::circuits::image_table::IMAGE_COL_NAME;
+                use delphinus_zkwasm::circuits::post_image_table::POST_IMAGE_TABLE;
+
+                // checks pre image col equals to last's post image col commitment
+                let pre_image_table_msm =
+                    get_named_advice_commitment(pkey.get_vk(), &proof, IMAGE_COL_NAME);
+
+                let last_post_image_table_msm = last_post_image_table_commitment.take();
+                if let Some(last_post_image_table_msm) = last_post_image_table_msm {
+                    assert_eq!(
+                        pre_image_table_msm.x.to_string(),
+                        last_post_image_table_msm.0
+                    );
+                    assert_eq!(
+                        pre_image_table_msm.y.to_string(),
+                        last_post_image_table_msm.1
+                    );
+                }
+
+                let post_image_table_msm =
+                    get_named_advice_commitment(pkey.get_vk(), &proof, POST_IMAGE_TABLE);
+
+                last_post_image_table_commitment = Some((
+                    post_image_table_msm.x.to_string(),
+                    post_image_table_msm.y.to_string(),
+                ));
+            }
 
             proof_piece_info.save_proof_data(&vec![instances.clone()], &proof, output_dir);
 
@@ -448,6 +486,8 @@ impl Config {
     }
 
     pub(crate) fn verify(self, params_dir: &Path, output_dir: &PathBuf) -> anyhow::Result<()> {
+        let mut maximal_public_inputs_size = 0;
+
         let mut proofs = {
             println!(
                 "{} Reading proofs from {:?}",
@@ -461,6 +501,16 @@ impl Config {
             let proofs: Vec<ProofInfo<Bn256>> =
                 ProofInfo::load_proof(output_dir, params_dir, &proof_load_info);
 
+            for proof in &proofs {
+                maximal_public_inputs_size = usize::max(
+                    maximal_public_inputs_size,
+                    proof
+                        .instances
+                        .iter()
+                        .fold(0, |acc, x| usize::max(acc, x.len())),
+                );
+            }
+
             proofs
         }
         .into_iter()
@@ -472,18 +522,13 @@ impl Config {
             proofs.len()
         );
 
+        let params_verifier = {
+            let params = self.read_params(params_dir)?;
+            params.verifier(maximal_public_inputs_size)?
+        };
+
         let progress_bar = ProgressBar::new(proofs.len() as u64);
         while let Some(proof) = proofs.next() {
-            let params_verifier = {
-                let public_inputs_size = proof
-                    .instances
-                    .iter()
-                    .fold(0, |acc, x| usize::max(acc, x.len()));
-
-                let params = self.read_params(params_dir)?;
-                params.verifier(public_inputs_size)?
-            };
-
             {
                 let mut buf = Vec::new();
                 proof.vkey.write(&mut Cursor::new(&mut buf))?;
@@ -509,44 +554,8 @@ impl Config {
             };
 
             proof
-                .verify_proof(&params_verifier, OpenSchema::Shplonk)
+                .verify_proof(&params_verifier, self.scheme.into())
                 .unwrap();
-
-            // TODO: handle checksum sanity check
-            // #[cfg(feature = "uniform-circuit")]
-            // {
-            //     use delphinus_zkwasm::circuits::image_table::IMAGE_COL_NAME;
-            //     use halo2_proofs::plonk::get_advice_commitments_from_transcript;
-            //     use halo2aggregator_s::transcript::poseidon::PoseidonRead;
-
-            //     let _img_col_idx = proof
-            //         .vkey
-            //         .cs
-            //         .named_advices
-            //         .iter()
-            //         .find(|(k, _)| k == IMAGE_COL_NAME)
-            //         .unwrap()
-            //         .1;
-            //     let _img_col_commitment: Vec<G1Affine> =
-            //         get_advice_commitments_from_transcript::<Bn256, _, _>(
-            //             &proof.vkey,
-            //             &mut PoseidonRead::init(&proof.transcripts[..]),
-            //         )
-            //         .unwrap();
-
-            //     assert!(
-            //         vec![_img_col_commitment[_img_col_idx as usize]][0]
-            //             .x
-            //             .to_string()
-            //             == self.checksum.0
-            //     );
-            //     assert!(
-            //         vec![_img_col_commitment[_img_col_idx as usize]][0]
-            //             .y
-            //             .to_string()
-            //             == self.checksum.1
-            //     );
-            // }
 
             progress_bar.inc(1);
         }
