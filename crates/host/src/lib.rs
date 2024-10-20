@@ -1,7 +1,6 @@
 #![deny(warnings)]
 
 use delphinus_zkwasm::foreign::context::runtime::register_context_foreign;
-use delphinus_zkwasm::foreign::log_helper::register_external_output_foreign;
 use delphinus_zkwasm::foreign::log_helper::register_log_foreign;
 use delphinus_zkwasm::foreign::require_helper::register_require_foreign;
 use delphinus_zkwasm::foreign::wasm_input_helper::runtime::register_wasm_input_foreign;
@@ -20,7 +19,6 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::fmt::Debug;
 use std::rc::Rc;
 use zkwasm_host_circuits::host::db::TreeDB;
 use zkwasm_host_circuits::host::ForeignInst;
@@ -219,9 +217,6 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         );
         host_env_config.register_ops(&mut env, None);
 
-        let external_output = Rc::new(RefCell::new(HashMap::new()));
-        host::witness_helper::register_witness_foreign(&mut env, external_output.clone());
-        register_external_output_foreign(&mut env, external_output);
         env.finalize();
 
         env
@@ -237,9 +232,8 @@ impl HostEnvBuilder for StandardHostEnvBuilder {
         register_require_foreign(&mut env);
         register_log_foreign(&mut env);
         register_context_foreign(&mut env, arg.context_inputs);
-        host::witness_helper::register_witness_foreign(&mut env, arg.indexed_witness.clone());
+        host::witness_helper::register_witness_foreign(&mut env, arg.indexed_witness);
         host_env_config.register_ops(&mut env, arg.tree_db);
-        register_external_output_foreign(&mut env, arg.indexed_witness.clone());
 
         env.finalize();
 
